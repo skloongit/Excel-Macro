@@ -1,0 +1,131 @@
+Sub FileCopy()
+    Dim mySuccess As String
+    Dim myWarning As String
+    Dim myError As String
+    '
+    myTodayDate = Date
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myCopyTotal = Range("B" & Rows.Count).End(xlUp).Row
+    For myCounterA = 5 To myCopyTotal
+        myToPath = Range("B" & myCounterA).Value
+        myFromPath = Range("C" & myCounterA).Value
+        myFilename = Range("D" & myCounterA).Value & Format(myTodayDate, Range("E" & myCounterA).Value) & Range("F" & myCounterA).Value
+        myTerFilename = Range("D" & myCounterA).Value & Format(myTodayDate, Range("E" & myCounterA).Value) & Range("F" & myCounterA).Value
+        myFileCheck = Dir(myFromPath & "\" & myFilename)
+        If myFileCheck = "" Then
+            myError = myError & Range("D" & myCounterA).Value & Format(myTodayDate, Range("E" & myCounterA).Value) & Range("F" & myCounterA).Value & " not found!<br>"
+        Else
+            If myCounterA = 5 Then
+            Workbooks.Open myFromPath & "\" & myFilename, ReadOnly:=True
+                myTempTotal = Range("I" & Rows.Count).End(xlUp).Row
+                Columns("A:A").Insert
+                Range("A3:A" & myTempTotal).Value = "=IF(OR(J3=198,J3=260,J3=318),Row(J3),""Delete"")"
+                Range("A3:A" & myTempTotal).Value = Range("A3:A" & myTempTotal).Value
+                Range("A3:AT" & myTempTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+                Columns("A:A").Delete
+                ActiveWorkbook.SaveAs Filename:=myToPath & "\" & myFilename, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"    'Password:="888"
+                    'Ver1.1: Change path
+                    'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\TER " & myFilename, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"   'Password:="888"
+                    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\TER " & myFilename, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"   'Password:="888"
+                ActiveWorkbook.Close
+            End If
+            mySuccess = mySuccess & Range("D" & myCounterA).Value & Format(myTodayDate, Range("E" & myCounterA).Value) & Range("F" & myCounterA).Value & " have been save in share drive.<br>"
+        End If
+    Next myCounterA
+    
+    
+    If mySuccess <> "" Then
+        Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "File Copy Macro run succeesfully...", mySuccess)
+    End If
+    'If myWarning <> "" Then
+    '    Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "16 Weeks Reports Existed in share drive!", myWarning)
+    'End If
+    If myError <> "" Then
+        Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Error in File Copy Macro", myError)
+    End If
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub EmailSending(myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String)
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .to = myTo
+        .Cc = myCc
+        .BCC = myBcc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        '.Display
+        .Send
+    End With
+End Sub
+Sub PasteAll()
+    On Error Resume Next
+    Range("A1").PasteSpecial xlPasteAll
+End Sub
+Sub ReadAllData()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("^a")
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    SendKeys "^{C}"
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Sub GetCursorPosDemo()
+Dim llCoord As POINTAPI
+' Get the cursor positions
+GetCursorPos llCoord
+' Display the cursor position coordinates
+MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+End Sub
+Private Sub MoveSingle(myX, myY)
+    SetCursorPos myX, myY 'x and y position
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub MoveSingleClick(myX, myY)
+  SetCursorPos myX, myY 'x and y position
+  Application.Wait (Now + TimeValue("00:00:01"))
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub SingleClick()
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub DoubleClick()
+  'Double click as a quick series of two clicks
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub RightClick()
+  'Right click
+  SetCursorPos 200, 200 'x and y position
+  mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+Sub TypeInCurrentWindow()
+DoEvents
+Application.EnableEvents = False
+Sleep 5000
+
+SendKeys "a"
+SendKeys "^a", True 'Select All
+Sleep 400 'Wait 0.4 seconds (400 milliseconds)
+SendKeys "^c", True 'Copy
+Sleep 400 'Wait 0.4 seconds
+'SendKeys "abcd", True 'Type abcd
+'Sleep 400 'Wait 0.4 seconds
+Application.EnableEvents = True
+End Sub
