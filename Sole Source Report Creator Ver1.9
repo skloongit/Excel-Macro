@@ -1,0 +1,1027 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myMacroPath As String
+Dim myFoundCol As String
+Dim myAttachement() As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub SearchColumn(myPart1 As String, myRow1 As Integer, myPart2 As String, myRow2 As Integer, myPart3 As String, myRow3 As Integer)
+    myFoundCol = ""
+    If Cells(myRow1, 1) = myPart1 Then
+        mySearchValue = myPart1
+        myActiveCol1 = 1
+    Else
+        Set mySearchValue = Rows(myRow1 & ":" & myRow1).Find(What:=myPart1, after:=Cells(myRow1, Columns.Count), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    End If
+    
+    If IsEmpty(mySearchValue) Then
+        Exit Sub
+    Else
+        If myActiveCol1 = "" Then
+            myActiveCol1 = Rows(myRow1 & ":" & myRow1).Find(What:=myFind1, after:=Cells(myRow1, myActiveCol1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        End If
+        
+        If Cells(myRow2, 1) = myPart2 Then
+            mySearchValue = myPart2
+            myActiveCol2 = 1
+        Else
+            Set mySearchValue = Rows(myRow2 & ":" & myRow2).Find(What:=myPart2, after:=Cells(myRow2, myActiveCol1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+        End If
+            If IsEmpty(mySearchValue) Then
+                Exit Sub
+            Else
+                If Cells(myRow3, 1) = myPart3 Then
+                    mySearchValue = myPart3
+                    myActiveCol3 = 1
+                Else
+                    Set mySearchValue = Rows(myRow3 & ":" & myRow3).Find(What:=myPart3, after:=Cells(myRow3, myActiveCol2), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                End If
+            End If
+                If IsEmpty(mySearchValue) Then
+                    Exit Sub
+                Else
+                    myActiveCol3 = Rows(myRow3 & ":" & myRow3).Find(What:=myPart3, after:=Cells(myRow3, myActiveCol2), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                    myFoundCol = Split(Cells(1, myActiveCol3).Address, "$")(1)
+                End If
+    End If
+End Sub
+Sub SoleSource()
+    ReDim myAttachement(0)
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySharePath = Range("B4").Value
+    myDay = 1
+    myYear = Year(Date)
+    
+    'Ver1.5: Check Folder Availbility
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+    
+    'Ver1.4: Changing path
+    'Harmonic Product Model List
+    'myHarmonicFile = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Harmonic Product Model List.xlsx"
+        'Ver1.7: Change to new drive
+        'myHarmonicFile = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\MISC\Site_Reports\MTM\Dashboard\Harmonic Product Model List.xlsx"
+        myHarmonicFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Materials\" & myYear & "\MISC\Site_Reports\MTM\Dashboard\Harmonic Product Model List.xlsx"
+    If Dir(myHarmonicFile) = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Sole Source Macro: Harmonic Product Model List file not found!"
+        '    .HTMLBody = "Harmonic Product Model List file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Harmonic Product Model List file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    'Ver1.4: Changing path
+    'Micron Product Model List
+    'myMicronFile = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Micron Product Model List.xlsx"
+        'Ver1.7: Change to new drive
+        'myMicronFile = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\MISC\Site_Reports\MTM\Dashboard\Micron Product Model List.xlsx"
+        myMicronFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Materials\" & myYear & "\MISC\Site_Reports\MTM\Dashboard\Micron Product Model List.xlsx"
+    If Dir(myMicronFile) = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Sole Source Macro: Micron Product Model List file not found!"
+        '    .HTMLBody = "Micron Product Model List file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Micron Product Model List file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    'Sole Source
+    mySoleSource = mySharePath & "830_Part Source." & Format(Date - myDay, "YYYYMMDD") & "*.xlsx"
+    If Dir(mySoleSource) = "" Then 'Yesterday date
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Sole Source Macro: 830_Part Source file not found!"
+        '    .HTMLBody = "830_Part Source file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_Part Source file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    Else
+        'Ver1.2: Add in Teradyne requested by Sing Yee on 11/18/2020
+        myTerSoleSource = mySharePath & "830_Part Source_TER." & Format(Date - myDay, "YYYYMMDD") & "*.xlsx"
+        If Dir(myTerSoleSource) = "" Then 'Yesterday date
+            'With CreateObject("Outlook.Application").CreateItem(0)
+            '    .To = "sk.loon@plexus.com"
+            '    .CC = "Sing-Yee.Ho@plexus.com"
+            '    .Subject = "Sole Source Macro: 830_Part Source Teradyne file not found!"
+            '    .HTMLBody = "830_Part Source Teradyne file not found!"
+            '    '.Display
+            '    .Send
+            'End With
+            Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ActiveWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Sole Source Macro: 830_Part Source Teradyne file not found!</html>", _
+                myAttachement(), _
+                0, 0)
+            
+            GoTo myEnd
+        End If
+        Workbooks.Open myTerSoleSource, ReadOnly:=True
+        myTerSoleSourceFilename = ActiveWorkbook.Name
+        myTerSoleSourceSheet = ActiveSheet.Name
+        myTerTotalSole = Range("A" & Rows.Count).End(xlUp).Row
+        'Range("BA3:BA" & myTerTotalSole).Value = "=IF(OR(RIGHT(B3,3)=""198"",RIGHT(B3,3)=""260"",RIGHT(B3,3)=""318""),ROW(B3),""Delete"")"
+            'Ver1.4: Make it dynamic
+            Columns("BA:BA").Insert
+            Rows("1:3").Copy
+            Sheets.Add after:=Sheets(Sheets.Count)
+            Rows("1:1").Insert
+            myLastCol = Range("A1").SpecialCells(xlCellTypeLastCell).Column
+            For myA = 1 To 3
+                For myB = 1 To myLastCol
+                    If Cells(myA, myB).MergeCells Then
+                        myValue = Cells(myA, myB).Value
+                        Cells(myA, myB).Select
+                        Selection.MergeCells = False
+                        Selection.Value = myValue
+                    End If
+                Next myB
+            Next myA
+            Range(Cells(4, 1), Cells(4, myLastCol)).Value = "=A1&A2&A3"
+            Range(Cells(4, 1), Cells(4, myLastCol)).Value = Range(Cells(4, 1), Cells(4, myLastCol)).Value
+            ActiveSheet.Name = "Header"
+            Sheets(myTerSoleSourceSheet).Select
+            myPartCol = Application.CountIf(Sheets("Header").Rows("4:4"), "PartNumber")
+            If myPartCol = 0 Then
+                myError = "PartNumber header not found"
+                ActiveWorkbook.Close False
+                GoTo myEnd
+            Else
+                myPartCol = Application.Match("PartNumber", Sheets("Header").Rows("4:4"), 0)
+                myPartCol = Split(Cells(1, myPartCol).Address, "$")(1)
+            End If
+            'Range("BA3:BA" & myTerTotalSole).Value = "=IF(OR(RIGHT(B3,3)=""318""),ROW(B3),""Delete"")"
+            Range("BA3:BA" & myTerTotalSole).Value = "=IF(OR(RIGHT(" & myPartCol & "3,3)=""318""),ROW(B3),""Delete"")"
+        Range("BA3:BA" & myTerTotalSole).Value = Range("BA3:BA" & myTerTotalSole).Value
+            'Ver1.4: Make it dynamic
+            'Range("A3:BA" & myTerTotalSole).RemoveDuplicates Columns:=53, Header:=xlNo
+            myLastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+            myLastCol = Split(Cells(1, myLastCol).Address, "$")(1)
+            'Range("A3:BA" & myTerTotalSole).RemoveDuplicates Columns:=53, Header:=xlNo
+            Range("A3:" & myLastCol & myTerTotalSole).RemoveDuplicates Columns:=53, Header:=xlNo
+            'Columns("BA:BA").ClearContents
+            Columns("BA:BA").Delete
+        myTerTotalSole = Range("A" & Rows.Count).End(xlUp).Row
+        
+        Workbooks.Open myHarmonicFile, ReadOnly:=True
+        myHarmonic = ActiveWorkbook.Name
+        ActiveSheet.Name = "temp"
+        Workbooks.Open myMicronFile, ReadOnly:=True
+        myMicron = ActiveWorkbook.Name
+        ActiveSheet.Name = "temp"
+        Workbooks.Open Filename:=mySoleSource, ReadOnly:=True
+        mySoleSourceFilename = ActiveWorkbook.Name
+        mySoleSourceSheet = ActiveSheet.Name
+        myTotalSole = Range("A" & Rows.Count).End(xlUp).Row
+        Columns("B:C").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("B3").Value = "MPF"
+        Range("C3").Value = "Family"
+        Range("B3:C3").Interior.Color = 65535
+            'Ver1.4: Change to Dynamic
+            Rows("1:3").Copy
+            Sheets.Add after:=Sheets(Sheets.Count)
+            Rows("1:1").Insert
+            myLastCol = Range("A1").SpecialCells(xlCellTypeLastCell).Column
+            For myA = 1 To 3
+                For myB = 1 To myLastCol
+                    If Cells(myA, myB).MergeCells Then
+                        myValue = Cells(myA, myB).Value
+                        Cells(myA, myB).Select
+                        Selection.MergeCells = False
+                        Selection.Value = myValue
+                    End If
+                Next myB
+            Next myA
+            Range(Cells(4, 1), Cells(4, myLastCol)).Value = "=A1&A2&A3"
+            Range(Cells(4, 1), Cells(4, myLastCol)).Value = Range(Cells(4, 1), Cells(4, myLastCol)).Value
+            ActiveSheet.Name = "Header"
+            Sheets(mySoleSourceSheet).Select
+                myAllPartCol = Application.CountIf(Sheets("Header").Rows("4:4"), "PartNumber")
+                If myAllPartCol = 0 Then
+                    myError = "PartNumber header not found"
+                    ActiveWorkbook.Close False
+                    Workbooks(myHarmonic).Close False
+                    Workbooks(myMicron).Close False
+                    Workbooks(myTerSoleSourceFilename).Close False
+                    GoTo myEnd
+                Else
+                    myAllPartCol = Application.Match("PartNumber", Sheets("Header").Rows("4:4"), 0)
+                    myAllPartCol = Split(Cells(1, myAllPartCol).Address, "$")(1)
+                End If
+            'Range("B4:B" & myTotalSole).Value = "=RIGHT(D4,3)"
+            Range("B4:B" & myTotalSole).Value = "=RIGHT(" & myAllPartCol & "4,3)"
+            'Range("B4:B" & myTotalSole).Value = Range("B4:B" & myTotalSole).Value
+            'Ver1.4: Change to Dynamic
+            'Range("C4:C" & myTotalSole).Value = "=IF(RIGHT(D4,4)=""-148"",VLOOKUP(D4,'[" & myMicron & "]temp'!$A:$B,2,0),IF(OR(RIGHT(D4,4)=""-586"",RIGHT(F4,4)=""-321""),VLOOKUP(D4,'[" & myHarmonic & "]temp'!$A:$B,2,0),""""))"
+            Range("C4:C" & myTotalSole).Value = "=IF(RIGHT(" & myAllPartCol & "4,4)=""-148"",VLOOKUP(" & myAllPartCol & "4,'[" & myMicron & "]temp'!$A:$B,2,0),IF(OR(RIGHT(" & myAllPartCol & "4,4)=""-586"",RIGHT(" & myAllPartCol & "4,4)=""-321""),VLOOKUP(" & myAllPartCol & "4,'[" & myHarmonic & "]temp'!$A:$B,2,0),""""))"
+            
+        Range("C4:C" & myTotalSole).Value = Range("C4:C" & myTotalSole).Value
+            myCancelWindowCol = Application.CountIf(Sheets("Header").Rows("4:4"), "CancellationWindow")
+                If myCancelWindowCol = 0 Then
+                    myError = "CancellationWindow header not found"
+                    ActiveWorkbook.Close False
+                    Workbooks(myHarmonic).Close False
+                    Workbooks(myMicron).Close False
+                    Workbooks(myTerSoleSourceFilename).Close False
+                    GoTo myEnd
+                Else
+                    myCancelWindowCol = Application.Match("CancellationWindow", Sheets("Header").Rows("4:4"), 0)
+                    myCatCol = Split(Cells(1, myCancelWindowCol + 1).Address, "$")(1)
+                End If
+            Columns(myCatCol & ":" & myCatCol).Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+            'Ver1.4: Update Header Sheet
+            'Sheets("Header").Columns("AI:AI").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+            Sheets("Header").Columns(myCatCol & ":" & myCatCol).Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        'Range("AI3").Value = "Category"
+        'Range("AI3").Interior.Color = 65535
+        Range(myCatCol & "3").Value = "Category"
+        Range(myCatCol & "3").Interior.Color = 65535
+            'Ver1.4: Change to Dynamic
+            myGroupCol = Application.CountIf(Sheets("Header").Rows("4:4"), "Commodity Code InformationGroup")
+                If myGroupCol = 0 Then
+                    myError = "Commodity Code InformationGroup header not found"
+                    ActiveWorkbook.Close False
+                    Workbooks(myHarmonic).Close False
+                    Workbooks(myMicron).Close False
+                    Workbooks(myTerSoleSourceFilename).Close False
+                    GoTo myEnd
+                Else
+                    myGroupCol = Application.Match("Commodity Code InformationGroup", Sheets("Header").Rows("4:4"), 0)
+                    myGroupCol = Split(Cells(1, myGroupCol).Address, "$")(1)
+                End If
+            mySubgroupCol = Application.CountIf(Sheets("Header").Rows("4:4"), "Commodity Code InformationSubgroup")
+                If mySubgroupCol = 0 Then
+                    myError = "Commodity Code InformationSubgroup header not found"
+                    ActiveWorkbook.Close False
+                    Workbooks(myHarmonic).Close False
+                    Workbooks(myMicron).Close False
+                    Workbooks(myTerSoleSourceFilename).Close False
+                    GoTo myEnd
+                Else
+                    mySubgroupCol = Application.Match("Commodity Code InformationSubgroup", Sheets("Header").Rows("4:4"), 0)
+                    mySubgroupCol = Split(Cells(1, mySubgroupCol).Address, "$")(1)
+                End If
+            'Range("AI4:AI" & myTotalSole).Value = "=IF(OR(AJ4=""CEC"",AK4=""Custom Packaging"",AK4=""Packaging""),""Customized"",""SMT"")"
+            Range(myCatCol & "4:" & myCatCol & myTotalSole).Value = "=IF(OR(" & myGroupCol & "4=""CEC""," & mySubgroupCol & "4=""Custom Packaging""," & mySubgroupCol & "4=""Packaging""),""Customized"",""SMT"")"
+            'Range("AI4:AI" & myTotalSole).Value = Range("AI4:AI" & myTotalSole).Value
+            Range(myCatCol & "4:" & myCatCol & myTotalSole).Value = Range(myCatCol & "4:" & myCatCol & myTotalSole).Value
+        'Columns("O:O").EntireColumn.AutoFit
+            'VEr1.4:
+            myMfgPartCol = Application.CountIf(Sheets("Header").Rows("4:4"), "SupplierMfg Part")
+                If myMfgPartCol = 0 Then
+                    myError = "SupplierMfg Part header not found"
+                    ActiveWorkbook.Close False
+                    Workbooks(myHarmonic).Close False
+                    Workbooks(myMicron).Close False
+                    Workbooks(myTerSoleSourceFilename).Close False
+                    GoTo myEnd
+                Else
+                    myMfgPartCol = Application.Match("SupplierMfg Part", Sheets("Header").Rows("4:4"), 0)
+                    myMfgPartNumber = myMfgPartCol
+                    myMfgPartCol = Split(Cells(1, myMfgPartCol).Address, "$")(1)
+                End If
+                'Columns("O:O").ColumnWidth = 22.17
+                Columns(myMfgPartCol & ":" & myMfgPartCol).ColumnWidth = 22.17
+                'Columns("P:S").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+                Range(Cells(1, myMfgPartNumber + 1), Cells(1, myMfgPartNumber + 4)).EntireColumn.Insert
+                
+            'Ver1.4: Update Header Sheet
+            Sheets("Header").Range(Sheets("Header").Cells(1, myMfgPartNumber + 1), Sheets("Header").Cells(1, myMfgPartNumber + 4)).EntireColumn.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        'VEr1.4
+        'Range("P3:S3").Interior.Color = 65535
+        Range(Cells(3, myMfgPartNumber + 1), Cells(3, myMfgPartNumber + 4)).Interior.Color = 65535
+        'Range("P3").Value = "Concat"
+        myConcatCol = Split(Cells(1, myMfgPartNumber + 1).Address, "$")(1)
+        myNoOfSourceCol = Split(Cells(1, myMfgPartNumber + 2).Address, "$")(1)
+        mySourceTypeCol = Split(Cells(1, myMfgPartNumber + 3).Address, "$")(1)
+        
+        Cells(3, myMfgPartNumber + 1).Value = "Concat"
+        'Range("P4:P" & myTotalSole).Value = "=D4&O4"
+            'Range("P4:P" & myTotalSole).Value = "=IF(D4&O4=D3&O3,"""",IF(O4="""","""",D4&O4))"
+            Range(myConcatCol & "4:" & myConcatCol & myTotalSole).Value = "=IF(" & myAllPartCol & "4&" & myMfgPartCol & "4=" & myAllPartCol & "3&" & myMfgPartCol & "3,"""",IF(" & myMfgPartCol & "4="""",""""," & myAllPartCol & "4&" & myMfgPartCol & "4))"
+            'Range("P4:P" & myTotalSole).Value = Range("P4:P" & myTotalSole).Value
+            Range(myConcatCol & "4:" & myConcatCol & myTotalSole).Value = Range(myConcatCol & "4:" & myConcatCol & myTotalSole).Value
+        'Range("Q3").Value = "No. of Source"
+        Range(myNoOfSourceCol & "3").Value = "No. of Source"
+        Sheets.Add after:=ActiveSheet
+        ActiveSheet.Name = "No. of Source"
+        Range("A3").Select
+            'Ver1.4
+            'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'" & mySoleSourceSheet & "'!R3C1:R" & myTotalSole & "C17").CreatePivotTable TableDestination:="'No. of Source'!R3C1", TableName:="PivotTable1"
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'" & mySoleSourceSheet & "'!R3C1:R" & myTotalSole & "C" & myMfgPartNumber + 1).CreatePivotTable TableDestination:="'No. of Source'!R3C1", TableName:="PivotTable1"
+        ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable1").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Number").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Concat"), "Count of Concat", xlCount
+        Sheets(mySoleSourceSheet).Select
+            'Range("Q4:Q" & myTotalSole).Value = "=VLOOKUP(RC[-13],'No. of Source'!C[-16]:C[-15],2,0)"
+            Range(myNoOfSourceCol & "4:" & myNoOfSourceCol & myTotalSole).Value = "=VLOOKUP(" & myAllPartCol & "4,'No. of Source'!A:B,2,0)"
+            'Range("Q4:Q" & myTotalSole).Value = Range("Q4:Q" & myTotalSole).Value
+            Range(myNoOfSourceCol & "4:" & myNoOfSourceCol & myTotalSole).Value = Range(myNoOfSourceCol & "4:" & myNoOfSourceCol & myTotalSole).Value
+            'Columns("Q:Q").EntireColumn.AutoFit
+            Range(myNoOfSourceCol & "4:" & myNoOfSourceCol & myTotalSole).EntireColumn.AutoFit
+            'Columns("S:S").Delete Shift:=xlToLeft
+            Cells(1, myMfgPartNumber + 4).EntireColumn.Delete
+            Sheets("Header").Cells(1, myMfgPartNumber + 4).EntireColumn.Delete
+            'Range("R3").Value = "Source Type"
+            Range(mySourceTypeCol & "3").Value = "Source Type"
+            'Range("R4:R" & myTotalSole).Value = "=IF(Q4=0,"""",IF(Q4=1,""Sole source"",""Multiple Source""))"
+            Range(mySourceTypeCol & "4:" & mySourceTypeCol & myTotalSole).Value = "=IF(" & myNoOfSourceCol & "4=0,"""",IF(" & myNoOfSourceCol & "4=1,""Sole source"",""Multiple Source""))"
+            'Range("R4:R" & myTotalSole).Value = Range("R4:R" & myTotalSole).Value
+            Range(mySourceTypeCol & "4:" & mySourceTypeCol & myTotalSole).Value = Range(mySourceTypeCol & "4:" & mySourceTypeCol & myTotalSole).Value
+            myPivotTotalCol = Cells(3, Columns.Count).End(xlToLeft).Column
+        Sheets.Add after:=Sheets("No. of Source")
+        ActiveSheet.Name = "Source Type"
+        Range("A3").Select
+            'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'" & mySoleSourceSheet & "'!R3C1:R" & myTotalSole & "C58").CreatePivotTable TableDestination:="'Source Type'!R3C1", TableName:="PivotTable2"
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'" & mySoleSourceSheet & "'!R3C1:R" & myTotalSole & "C" & myPivotTotalCol).CreatePivotTable TableDestination:="'Source Type'!R3C1", TableName:="PivotTable2"
+        ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable2").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable2").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields("Number"), "Count of Number", xlCount
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Category").Orientation = xlColumnField
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Source Type").Orientation = xlColumnField
+            'If Application.WorksheetFunction.CountIf(Sheets(mySoleSourceSheet).Range("R4:R" & myTotalSole), "") > 0 Then
+            If Application.WorksheetFunction.CountIf(Sheets(mySoleSourceSheet).Range(mySourceTypeCol & "4:" & mySourceTypeCol & myTotalSole), "") > 0 Then
+                ActiveSheet.PivotTables("PivotTable2").PivotFields("Source Type").PivotItems("(blank)").Visible = False
+            End If
+        myPivotCol = Cells(4, Columns.Count).End(xlToLeft).Column
+        myPivotrow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(5, 2), Cells(myPivotrow, myPivotCol)).NumberFormat = "_(* #,##0_);_(* (#,##0);_(* ""-""??_);_(@_)"
+        
+        For Each pvtFld In ActiveSheet.PivotTables
+            pvtFld.PivotFields("Category").Subtotals(1) = False
+        Next pvtFld
+        If Application.WorksheetFunction.CountIf(Sheets(mySoleSourceSheet).Range("B4:B" & myTotalSole), "006") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems("006").Visible = False
+        End If
+        If Application.WorksheetFunction.CountIf(Sheets(mySoleSourceSheet).Range("B4:B" & myTotalSole), "875") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems("875").Visible = False
+        End If
+        
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("AML Type").Orientation = xlPageField
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Demand").Orientation = xlPageField
+        For Each pvtFld In ActiveSheet.PivotTables("PivotTable2").PivotFields("AML Type").PivotItems
+            If pvtFld.Name = "A" Or pvtFld.Name = "I" Or pvtFld.Name = "P" Then
+            
+            Else
+                pvtFld.Visible = False
+            End If
+        Next pvtFld
+        
+        'Ver1.3: Column Changed
+        'If Application.WorksheetFunction.CountIf(Sheets(mySoleSourceSheet).Range("Z4:Z" & myTotalSole), "0") > 0 Then
+        myTotalDemandCol = Application.CountIf(Sheets("Header").Rows("4:4"), "TotalDemand")
+                If myTotalDemandCol = 0 Then
+
+                Else
+                    myTotalDemandCol = Application.Match("TotalDemand", Sheets("Header").Rows("4:4"), 0)
+                    myTotalDemandCol = Split(Cells(1, myTotalDemandCol).Address, "$")(1)
+                    If Application.WorksheetFunction.CountIf(Sheets(mySoleSourceSheet).Range(myTotalDemandCol & "4:" & myTotalDemandCol & myTotalSole), "0") > 0 Then
+                        ActiveSheet.PivotTables("PivotTable2").PivotFields("Demand").PivotItems("0").Visible = False
+                    End If
+                End If
+        'If Application.WorksheetFunction.CountIf(Sheets(mySoleSourceSheet).Range("AB4:AB" & myTotalSole), "0") > 0 Then
+        '    ActiveSheet.PivotTables("PivotTable2").PivotFields("Demand").PivotItems("0").Visible = False
+        'End If
+        
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Source Type").PivotItems("Sole source").Position = 1
+        
+        ActiveSheet.PivotTables("PivotTable2").TableRange2.Copy Range("H1")
+        myNewPvTable = Range("H1").PivotTable.Name
+        'ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfParent
+        'ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").BaseField = "MPF"
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").NumberFormat = "0.00%"
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfParentRow
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfParentColumn
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfColumn
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfRow
+        ActiveWorkbook.ShowPivotTableFieldList = False
+        Cells.EntireColumn.AutoFit
+        
+        'Ver1.2: Add in Teradyne requested by Sing Yee on 11/18/2020
+        Workbooks(myTerSoleSourceFilename).Sheets(myTerSoleSourceSheet).Copy after:=Sheets("Source Type")
+        ActiveSheet.Name = "Part Source_318"
+        myTotalSole = Range("A" & Rows.Count).End(xlUp).Row
+        Columns("B:C").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("B3").Value = "MPF"
+        Range("C3").Value = "Family"
+        Range("B3:C3").Interior.Color = 65535
+            'Ver1.4: Change to Dynamic
+            Rows("1:3").Copy
+            Sheets.Add after:=Sheets(Sheets.Count)
+            Rows("1:1").Insert
+            myLastCol = Range("A1").SpecialCells(xlCellTypeLastCell).Column
+            For myA = 1 To 3
+                For myB = 1 To myLastCol
+                    If Cells(myA, myB).MergeCells Then
+                        myValue = Cells(myA, myB).Value
+                        Cells(myA, myB).Select
+                        Selection.MergeCells = False
+                        Selection.Value = myValue
+                    End If
+                Next myB
+            Next myA
+            Range(Cells(4, 1), Cells(4, myLastCol)).Value = "=A1&A2&A3"
+            Range(Cells(4, 1), Cells(4, myLastCol)).Value = Range(Cells(4, 1), Cells(4, myLastCol)).Value
+            ActiveSheet.Name = "Header_318"
+            Sheets("Part Source_318").Select
+                myTerPartCol = Application.CountIf(Sheets("Header_318").Rows("4:4"), "PartNumber")
+                If myTerPartCol = 0 Then
+                    myError = "PartNumber header not found"
+                    ActiveWorkbook.Close False
+                    Workbooks(myHarmonic).Close False
+                    Workbooks(myMicron).Close False
+                    Workbooks(myTerSoleSourceFilename).Close False
+                    GoTo myEnd
+                Else
+                    myTerPartCol = Application.Match("PartNumber", Sheets("Header_318").Rows("4:4"), 0)
+                    myTerPartCol = Split(Cells(1, myTerPartCol).Address, "$")(1)
+                End If
+        
+            'Range("B4:B" & myTotalSole).Value = "=RIGHT(D4,3)"
+            Range("B4:B" & myTotalSole).Value = "=RIGHT(" & myTerPartCol & "4,3)"
+        'Range("B4:B" & myTotalSole).Value = Range("B4:B" & myTotalSole).Value
+            'Range("C4:C" & myTotalSole).Value = "=IF(RIGHT(D4,4)=""-148"",VLOOKUP(D4,'[" & myMicron & "]temp'!$A:$B,2,0),IF(OR(RIGHT(D4,4)=""-586"",RIGHT(F4,4)=""-321""),VLOOKUP(D4,'[" & myHarmonic & "]temp'!$A:$B,2,0),""""))"
+            Range("C4:C" & myTotalSole).Value = "=IF(RIGHT(" & myTerPartCol & "4,4)=""-148"",VLOOKUP(" & myTerPartCol & "4,'[" & myMicron & "]temp'!$A:$B,2,0),IF(OR(RIGHT(" & myTerPartCol & "4,4)=""-586"",RIGHT(" & myTerPartCol & "4,4)=""-321""),VLOOKUP(" & myTerPartCol & "4,'[" & myHarmonic & "]temp'!$A:$B,2,0),""""))"
+        Range("C4:C" & myTotalSole).Value = Range("C4:C" & myTotalSole).Value
+        
+        
+        
+        myCancelWindowCol = Application.CountIf(Sheets("Header_318").Rows("4:4"), "CancellationWindow")
+                If myCancelWindowCol = 0 Then
+                    myError = "CancellationWindow header not found"
+                    ActiveWorkbook.Close False
+                    Workbooks(myHarmonic).Close False
+                    Workbooks(myMicron).Close False
+                    Workbooks(myTerSoleSourceFilename).Close False
+                    GoTo myEnd
+                Else
+                    myCancelWindowCol = Application.Match("CancellationWindow", Sheets("Header_318").Rows("4:4"), 0)
+                    myCatCol = Split(Cells(1, myCancelWindowCol + 1).Address, "$")(1)
+                End If
+            Columns(myCatCol & ":" & myCatCol).Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+            'Ver1.4: Update Header Sheet
+            Sheets("Header_318").Columns(myCatCol & ":" & myCatCol).Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        'Range("AI3").Value = "Category"
+        'Range("AI3").Interior.Color = 65535
+        Range(myCatCol & "3").Value = "Category"
+        Range(myCatCol & "3").Interior.Color = 65535
+        
+        
+        'Columns("AI:AI").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        'Range("AI3").Value = "Category"
+        'Range("AI3").Interior.Color = 65535
+        
+        'Range("AI4:AI" & myTotalSole).Value = "=IF(OR(AJ4=""CEC"",AK4=""Custom Packaging"",AK4=""Packaging""),""Customized"",""SMT"")"
+        Range(myCatCol & "4:" & myCatCol & myTotalSole).Value = "=IF(OR(" & myGroupCol & "4=""CEC""," & mySubgroupCol & "4=""Custom Packaging""," & mySubgroupCol & "4=""Packaging""),""Customized"",""SMT"")"
+        'Range("AI4:AI" & myTotalSole).Value = Range("AI4:AI" & myTotalSole).Value
+        Range(myCatCol & "4:" & myCatCol & myTotalSole).Value = Range(myCatCol & "4:" & myCatCol & myTotalSole).Value
+        'Columns("O:O").EntireColumn.AutoFit
+        'VEr1.4:
+            myMfgPartCol = Application.CountIf(Sheets("Header_318").Rows("4:4"), "SupplierMfg Part")
+                If myMfgPartCol = 0 Then
+                    myError = "SupplierMfg Part header not found"
+                    ActiveWorkbook.Close False
+                    Workbooks(myHarmonic).Close False
+                    Workbooks(myMicron).Close False
+                    Workbooks(myTerSoleSourceFilename).Close False
+                    GoTo myEnd
+                Else
+                    myMfgPartCol = Application.Match("SupplierMfg Part", Sheets("Header_318").Rows("4:4"), 0)
+                    myMfgPartNumber = myMfgPartCol
+                    myMfgPartCol = Split(Cells(1, myMfgPartCol).Address, "$")(1)
+                End If
+                'Columns("O:O").ColumnWidth = 22.17
+                Columns(myMfgPartCol & ":" & myMfgPartCol).ColumnWidth = 22.17
+                'Columns("P:S").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+                Range(Cells(1, myMfgPartNumber + 1), Cells(1, myMfgPartNumber + 4)).EntireColumn.Insert
+                
+            'Ver1.4: Update Header Sheet
+            Sheets("Header_318").Range(Sheets("Header_318").Cells(1, myMfgPartNumber + 1), Sheets("Header_318").Cells(1, myMfgPartNumber + 4)).EntireColumn.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        'VEr1.4
+        'Range("P3:S3").Interior.Color = 65535
+        Range(Cells(3, myMfgPartNumber + 1), Cells(3, myMfgPartNumber + 4)).Interior.Color = 65535
+        
+        'Range("P3").Value = "Concat"
+        Cells(3, myMfgPartNumber + 1).Value = "Concat"
+        myConcatCol = Split(Cells(1, myMfgPartNumber + 1).Address, "$")(1)
+        myNoOfSourceCol = Split(Cells(1, myMfgPartNumber + 2).Address, "$")(1)
+        mySourceTypeCol = Split(Cells(1, myMfgPartNumber + 3).Address, "$")(1)
+        'Range("P4:P" & myTotalSole).Value = "=D4&O4"
+            'Range("P4:P" & myTotalSole).Value = "=IF(D4&O4=D3&O3,"""",IF(O4="""","""",D4&O4))"
+            Range(myConcatCol & "4:" & myConcatCol & myTotalSole).Value = "=IF(" & myAllPartCol & "4&" & myMfgPartCol & "4=" & myAllPartCol & "3&" & myMfgPartCol & "3,"""",IF(" & myMfgPartCol & "4="""",""""," & myAllPartCol & "4&" & myMfgPartCol & "4))"
+            'Range("P4:P" & myTotalSole).Value = Range("P4:P" & myTotalSole).Value
+            Range(myConcatCol & "4:" & myConcatCol & myTotalSole).Value = Range(myConcatCol & "4:" & myConcatCol & myTotalSole).Value
+        'Range("Q3").Value = "No. of Source"
+        Range(myNoOfSourceCol & "3").Value = "No. of Source"
+
+        Sheets.Add after:=ActiveSheet
+        ActiveSheet.Name = "No. of Source_318"
+        Range("A3").Select
+            'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'Part Source_318'!R3C1:R" & myTotalSole & "C17").CreatePivotTable TableDestination:="'No. of Source_318'!R3C1", TableName:="PivotTable1"
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'Part Source_318'!R3C1:R" & myTotalSole & "C" & myMfgPartNumber + 1).CreatePivotTable TableDestination:="'No. of Source_318'!R3C1", TableName:="PivotTable1"
+        ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable1").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Number").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Concat"), "Count of Concat", xlCount
+        Sheets("Part Source_318").Select
+            'Range("Q4:Q" & myTotalSole).Value = "=VLOOKUP(RC[-13],'No. of Source_318'!C[-16]:C[-15],2,0)"
+            Range(myNoOfSourceCol & "4:" & myNoOfSourceCol & myTotalSole).Value = "=VLOOKUP(" & myAllPartCol & "4,'No. of Source_318'!A:B,2,0)"
+            'Range("Q4:Q" & myTotalSole).Value = Range("Q4:Q" & myTotalSole).Value
+            Range(myNoOfSourceCol & "4:" & myNoOfSourceCol & myTotalSole).Value = Range(myNoOfSourceCol & "4:" & myNoOfSourceCol & myTotalSole).Value
+            'Columns("Q:Q").EntireColumn.AutoFit
+            Range(myNoOfSourceCol & "4:" & myNoOfSourceCol & myTotalSole).EntireColumn.AutoFit
+            'Columns("S:S").Delete Shift:=xlToLeft
+            Cells(1, myMfgPartNumber + 4).EntireColumn.Delete
+            Sheets("Header_318").Cells(1, myMfgPartNumber + 4).EntireColumn.Delete
+            'Range("R3").Value = "Source Type"
+            Range(mySourceTypeCol & "3").Value = "Source Type"
+            'Range("R4:R" & myTotalSole).Value = "=IF(Q4=0,"""",IF(Q4=1,""Sole source"",""Multiple Source""))"
+            Range(mySourceTypeCol & "4:" & mySourceTypeCol & myTotalSole).Value = "=IF(" & myNoOfSourceCol & "4=0,"""",IF(" & myNoOfSourceCol & "4=1,""Sole source"",""Multiple Source""))"
+            'Range("R4:R" & myTotalSole).Value = Range("R4:R" & myTotalSole).Value
+            Range(mySourceTypeCol & "4:" & mySourceTypeCol & myTotalSole).Value = Range(mySourceTypeCol & "4:" & mySourceTypeCol & myTotalSole).Value
+            myPivotTotalCol = Cells(3, Columns.Count).End(xlToLeft).Column
+            
+        Sheets.Add after:=Sheets("No. of Source_318")
+        ActiveSheet.Name = "Source Type_318"
+        Range("A3").Select
+            'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'Part Source_318'!R3C1:R" & myTotalSole & "C58").CreatePivotTable TableDestination:="'Source Type_318'!R3C1", TableName:="PivotTable2"
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'Part Source_318'!R3C1:R" & myTotalSole & "C" & myPivotTotalCol).CreatePivotTable TableDestination:="'Source Type_318'!R3C1", TableName:="PivotTable2"
+        ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable2").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable2").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields("Number"), "Count of Number", xlCount
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Category").Orientation = xlColumnField
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Source Type").Orientation = xlColumnField
+        'If Application.WorksheetFunction.CountIf(Sheets(mySoleSourceSheet).Range("R4:R" & myTotalSole), "") > 0 Then
+        If Application.WorksheetFunction.CountIf(Sheets("Part Source_318").Range(mySourceTypeCol & "4:" & mySourceTypeCol & myTotalSole), "") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("Source Type").PivotItems("(blank)").Visible = False
+        End If
+        myPivotCol = Cells(4, Columns.Count).End(xlToLeft).Column
+        myPivotrow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(5, 2), Cells(myPivotrow, myPivotCol)).NumberFormat = "_(* #,##0_);_(* (#,##0);_(* ""-""??_);_(@_)"
+        
+        For Each pvtFld In ActiveSheet.PivotTables
+            pvtFld.PivotFields("Category").Subtotals(1) = False
+        Next pvtFld
+        If Application.WorksheetFunction.CountIf(Sheets("Part Source_318").Range("B4:B" & myTotalSole), "006") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems("006").Visible = False
+        End If
+        If Application.WorksheetFunction.CountIf(Sheets("Part Source_318").Range("B4:B" & myTotalSole), "875") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems("875").Visible = False
+        End If
+        
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("AML Type").Orientation = xlPageField
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Demand").Orientation = xlPageField
+        For Each pvtFld In ActiveSheet.PivotTables("PivotTable2").PivotFields("AML Type").PivotItems
+            If pvtFld.Name = "A" Or pvtFld.Name = "I" Or pvtFld.Name = "P" Or pvtFld.Name = "O" Then
+            
+            Else
+                pvtFld.Visible = False
+            End If
+        Next pvtFld
+        
+        
+        myTotalDemandCol = Application.CountIf(Sheets("Header_318").Rows("4:4"), "TotalDemand")
+                If myTotalDemandCol = 0 Then
+
+                Else
+                    myTotalDemandCol = Application.Match("TotalDemand", Sheets("Header_318").Rows("4:4"), 0)
+                    myTotalDemandCol = Split(Cells(1, myTotalDemandCol).Address, "$")(1)
+                    If Application.WorksheetFunction.CountIf(Sheets("Part Source_318").Range(myTotalDemandCol & "4:" & myTotalDemandCol & myTotalSole), "0") > 0 Then
+                        ActiveSheet.PivotTables("PivotTable2").PivotFields("Demand").PivotItems("0").Visible = False
+                    End If
+                End If
+        
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Source Type").PivotItems("Sole source").Position = 1
+        
+        ActiveSheet.PivotTables("PivotTable2").TableRange2.Copy Range("H1")
+        myNewPvTable = Range("H1").PivotTable.Name
+        'ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfParent
+        'ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").BaseField = "MPF"
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").NumberFormat = "0.00%"
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfParentRow
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfParentColumn
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfColumn
+        ActiveSheet.PivotTables(myNewPvTable).PivotFields("Count of Number").Calculation = xlPercentOfRow
+        ActiveWorkbook.ShowPivotTableFieldList = False
+        Cells.EntireColumn.AutoFit
+        Sheets("Source Type").Select
+        
+        'Ver1.4: Delete Header Sheet
+        Application.DisplayAlerts = False
+        Sheets("Header").Delete
+        Sheets("Header_318").Delete
+        Application.DisplayAlerts = True
+        
+'        'Check Folder Availbility
+'        'Year
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\"
+'        End If
+'        'MTM
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\"
+'        End If
+'        'Dashboard
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\"
+'        End If
+'        'Sole Source
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Sole Source\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Sole Source\"
+'        End If
+'        'Month  Year
+'        myMonthYear = Format(Date - myDay + 1, "MM. MmmYYYY")
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Sole Source\" & myMonthYear & "\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Sole Source\" & myMonthYear & "\"
+'        End If
+'        mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Sole Source\" & myMonthYear & "\"
+        
+        Application.EnableEvents = False
+        ActiveWorkbook.SaveAs Filename:=mySavePath & "Sole Source " & Format(Date - myDay + 1, "MMDDYYYY"), FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"  'Password:="888"
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Sole Source " & Format(Date - myDay + 1, "MMDDYYYY"), FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888" 'Password:="888"
+        ActiveWorkbook.Close False
+        Workbooks(myHarmonic).Close False
+        Workbooks(myMicron).Close False
+        'Workbooks(myCalendarFilename).Close False
+        'Workbooks(myThisWeekFilename).Close False
+        'Workbooks(myRopFilename).Close False
+        'Ver1.2: Add in Teradyne requested by Sing Yee on 11/18/2020
+        Workbooks(myTerSoleSourceFilename).Close False
+        
+        Application.EnableEvents = True
+        
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "Sing-Yee.Ho@plexus.com;sk.loon@plexus.com"
+        '    '.BCC = "sk.loon@plexus.com"
+        '    '.To = "PLXS-MFGIslandViewPurchasingDAs@plexus.com"
+        '    '.CC = "isl_purch_mtm@plexus.com; Sonia.Chor@plexus.com; Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Sole Source Report have been save in Share drive"
+        '    .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p><a href=""" & mySavePath & """>" & mySavePath & "</a>" & _
+        '              "<br><br>Thanks.<br/><br>This is an auto generated email. No reply required...</html>"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "Sing-Yee.Ho@plexus.com", _
+                "", _
+                "sk.loon@plexus.com", _
+                "Sole Source Report have been save in Share drive", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>" & mySavePath & "</html>", _
+                myAttachement(), _
+                0, 0)
+        
+    End If
+    
+
+'    Next myRetry
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub SheetSelect(mySheet)
+    On Error Resume Next
+    Sheets(mySheet).Select
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub ItemBpPurchasingSelect()
+    myItemBpPurchasingFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Item BP Purchasing Data file")
+    If myItemBpPurchasingFile = False Then
+    Else
+        Range("B8").Value = myItemBpPurchasingFile
+    End If
+End Sub
+Sub OpenPoSelect()
+    myOpenPoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO file")
+    If myOpenPoFile = False Then
+    Else
+        Range("B10").Value = myOpenPoFile
+    End If
+End Sub
+Sub SupplierAgreementSelect()
+    mySupplierAgreementFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Supplier Agreement file")
+    If mySupplierAgreementFile = False Then
+    Else
+        Range("B12").Value = mySupplierAgreementFile
+    End If
+End Sub
+Sub DataIntegritySelect()
+    myDataIntegrityFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Data Integrity file")
+    If myDataIntegrityFile = False Then
+    Else
+        Range("B14").Value = myDataIntegrityFile
+    End If
+End Sub
+Sub BucketsReportSelect()
+    myBucketsFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select 16 Buckets Report_Monthly (Buy) file")
+    If myBucketsFile = False Then
+    Else
+        Range("B16").Value = myBucketsFile
+    End If
+End Sub
+Sub OpenPoRrSelect()
+    myOpenPoRrFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO report (RR) file")
+    If myOpenPoRrFile = False Then
+    Else
+        Range("B18").Value = myOpenPoRrFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+Sub SharePath()
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select a Folder"
+        If .Show = -1 Then ' if OK is pressed
+            Range("B4").Value = .SelectedItems(1)
+        End If
+    End With
+    
+'    If sFolder <> "" Then ' if a file was chosen
+'        ' *********************
+'        ' put your code in here
+'        ' *********************
+'    End If
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .CC = myCc
+        .BCC = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+
