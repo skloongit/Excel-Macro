@@ -1,0 +1,291 @@
+Dim myCutInsertCounter As Integer
+Dim myFindCol As String
+Sub MaterialReview()
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myStrTime = Time
+    
+    myRrRawFile = Range("B4").Value
+    myMasterFile = Range("B6").Value
+    myCrdDateFrom = Range("B8").Value
+    myCrdDateTo = Range("D8").Value
+    mySupplierStart = Range("B10").Value
+    
+    Workbooks.Open Filename:=myMasterFile, UpdateLinks:=False, ReadOnly:=True
+    myMasterFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    Call CutInsertColumn("Part", 1, 1, "A")
+    Call CutInsertColumn("Type", 1, 1, "B")
+    Call CutInsertColumn("Description", 1, 1, "C")
+    Call CutInsertColumn("Model ", 1, 1, "D")
+        Workbooks.Open Filename:=myRrRawFile, UpdateLinks:=False, ReadOnly:=True
+        myRrRawFilename = ActiveWorkbook.Name
+            'Ver1.1: Find sheetname start with Detail
+            For Each ws In ActiveWorkbook.Worksheets
+                If Left(ws.Name, 6) = "Detail" Then
+                    ws.Select
+                Else
+                    Application.DisplayAlerts = False
+                    If Sheets.Count = 1 Then
+                        'Ver1.3: Speeling error
+                        'MsgBox "Detial sheet not found!"
+                        MsgBox "Detail sheet not found!"
+                        End
+                    Else
+                        ws.Delete
+                    End If
+                    Application.DisplayAlerts = True
+                End If
+            Next
+            If Left(ActiveSheet.Name, 6) <> "Detail" Then
+                'Ver1.3: Speeling error
+                'MsgBox "Detial sheet not found!"
+                MsgBox "Detail sheet not found!"
+                End
+            End If
+        ActiveSheet.Name = "Customer"
+        
+        'CutInsertColumn
+        If ActiveSheet.AutoFilterMode = True Then
+           Rows("1:1").AutoFilter
+        End If
+        myTotalRr = Range("A" & Rows.Count).End(xlUp).Row
+        Call FindColumn("Open", 2)
+        Call CutInsertColumn("Open", 2, myFindCol, "A")
+        Range("A1:A2").ClearContents
+        Range("A3").Value = "Qty"
+        Call FindColumn("Product", 2)
+        Call CutInsertColumn("Number:Line", 3, myFindCol, "B")
+        Range("B3").Value = "PO#"
+        Call FindColumn("Product", 2)
+        Call CutInsertColumn("Part", 3, myFindCol, "C")
+        Range("C3").Value = "System:"
+        Columns("D:D").Insert
+        Range("D4:D" & myTotalRr).Interior.Pattern = xlNone
+        Range("D3").Value = "Description"
+        Range("D4:D" & myTotalRr).Value = "=VLOOKUP(C4,[" & myMasterFilename & "]Temp!$A:$C,3,0)"
+        Range("D4:D" & myTotalRr).Value = Range("D4:D" & myTotalRr).Value
+        Call FindColumn("Peg Supply (Work Order)", 1)
+        Call CutInsertColumn("Assy Part", 3, myFindCol, "E")
+        Range("E1:E2").ClearContents
+        Range("E3").Value = "Option"
+        Call FindColumn("Peg Supply (Work Order)", 1)
+        Call CutInsertColumn("Order Id", 3, myFindCol, "F")
+        Range("F1:F2").ClearContents
+        Range("F3").Value = "Number:Line"
+        Columns("G:G").Insert
+        Range("G4:G" & myTotalRr).Value = "=VLOOKUP(C4,[" & myMasterFilename & "]Temp!$A:$D,3,0)&"" x""&A4"
+        Range("G4:G" & myTotalRr).Value = Range("G4:G" & myTotalRr).Value
+        Range("G3").Value = "Model"
+        Range("G4:G" & myTotalRr).Interior.Pattern = xlNone
+        Call FindColumn("Supply Order (PO & WO)", 1)
+            'Ver1.1: Change ETA to Available
+            'Call CutInsertColumn("ETA", 3, myFindCol, "H")
+            Call CutInsertColumn("Available", 3, myFindCol, "H")
+        Range("H1:H2").ClearContents
+        Call FindColumn("Split Avail.", 3)
+        Call CutInsertColumn("Need", 3, myFindCol, "I")
+        Range("I1:I2").ClearContents
+        Call FindColumn("Split Avail.", 3)
+        Call CutInsertColumn("Type", 3, myFindCol, "J")
+        Call FindColumn("Category", 2)
+        Call CutInsertColumn("Code7", 3, myFindCol, "K")
+        'Call CutInsertColumn("ETA", 3, myFindCol, "O")
+        Columns("L:L").Insert
+        Range("L4:L" & myTotalRr).Interior.Pattern = xlNone
+        Range("L4:L" & myTotalRr).Value = "=IF(H4=""Past"",""Onhand"",IF(J4=""M"",+I4,IF(J4=""S"",+I4,IF(K4=""JITM"",+I4,+H4))))"
+        Range("L3").Value = "CTB"
+        Call FindColumn("Driver Order (Sales Order)", 1)
+        Call CutInsertColumn("Due", 3, myFindCol, "M")
+        Range("M3").Value = "CRD (ETD)"
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Part", 3, myFindCol, "N")
+        Range("N1:N2").ClearContents
+        Range("N3").Value = "Remarks"
+        
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Name", 3, myFindCol, "O")
+        Range("O1:O2").ClearContents
+        Range("O3").Value = "Detail"
+        Columns("P:P").Insert
+        Range("P4:P" & myTotalRr).Value = "=IF(O4=0,"""",""("" & SUBSTITUTE(IFERROR(LEFT(O4,FIND("" "",O4," & mySupplierStart & ")-1),O4),"","","""") &"") ETA ""&TEXT(L4,""MM/DD""))"
+        Range("P4:P" & myTotalRr).Value = Range("P4:P" & myTotalRr).Value
+        Range("O4:O" & myTotalRr).Value = Range("P4:P" & myTotalRr).Value
+        Range("P4:P" & myTotalRr).ClearContents
+        Range("P4:P" & myTotalRr).Interior.Pattern = xlNone
+        Range("P3").Value = "Status"
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Description", 3, myFindCol, "Q")
+        Range("Q1:Q2").ClearContents
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Planner", 3, myFindCol, "R")
+        Range("R1:R2").ClearContents
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Time", 3, myFindCol, "S")
+        Range("S1:S2").ClearContents
+        Range("S3").Value = "LT"
+            'Ver1:1: No need to find RYG
+            'Call FindColumn("Supply Order (PO & WO)", 1)
+            'Call CutInsertColumn("RYG", 3, myFindCol, "T")
+            'Range("T4:T" & myTotalRr).Value = "=IF(L4=""onhand"",""G"",IF(L4=""mfg"",""Y"",IF(L4=""M"",""Y"",IF(L4-2<=I4,""Y"",""R""))))"
+            'Range("T1:T2").ClearContents
+            Columns("T:T").Insert
+            Range("T3").Value = "RYG"
+            Range("T4:T" & myTotalRr).Value = "=IF(L4=""onhand"",""G"",IF(L4=""mfg"",""Y"",IF(L4=""M"",""Y"",IF(L4-2<=I4,""Y"",""R""))))"
+            
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Type", 3, myFindCol, "U")
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Status", 3, myFindCol, "V")
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Per", 3, myFindCol, "W")
+        Range("W1:W2").ClearContents
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Supply", 3, myFindCol, "X")
+        Range("X1:X2").ClearContents
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Need", 3, myFindCol, "Y")
+        Range("Y1:Y2").ClearContents
+        Call FindColumn("Peg Supply (Work Order)", 1)
+        Call CutInsertColumn("Status", 3, myFindCol, "Z")
+        Range("Z1:Z2").ClearContents
+        Range("Z3").Value = "Assy Status"
+        Call FindColumn("Peg Supply (Work Order)", 1)
+        Call CutInsertColumn("Qty", 3, myFindCol, "AA")
+        Range("AA1:AA2").ClearContents
+        Range("AA3").Value = "Assy Qty"
+        Call FindColumn("Peg Supply (Work Order)", 1)
+        Call CutInsertColumn("Start", 3, myFindCol, "AB")
+        Range("AB1:AB2").ClearContents
+        Range("AB3").Value = "Assy Start"
+        Call FindColumn("Supply Order (PO & WO)", 1)
+        Call CutInsertColumn("Number:Line", 3, myFindCol, "AC")
+        Range("AC1:AC2").ClearContents
+        Range("AC3").Value = "OrderId:Line"
+            'Ver1.1: Direct use formula
+            'Call FindColumn("Supply Order (PO & WO)", 1)
+            'Call CutInsertColumn("Gap", 3, myFindCol, "AD")
+            'Range("AD1:AD2").ClearContents
+            Columns("AD:AE").Insert
+            Range("AE3").Value = "Remarks"
+            Range("AD3").Value = "Gap"
+            Range("AD4:AD" & myTotalRr).Value = "=IFERROR(IF(H4=""Past"",""Onhand"",IF(J4=""M"",+I4,IF(J4=""S"",+I4,IF(K4=""JITM"",+I4,+H4))))-I4,0)"
+            'Call FindColumn("Supply Order (PO & WO)", 1)
+            'Call CutInsertColumn("Remarks", 3, myFindCol, "AE")
+            'Range("AE1:AE2").ClearContents
+            Columns("T:T").Select
+            'Conditional Formatting
+            Selection.FormatConditions.Add Type:=xlCellValue, Operator:=xlEqual, _
+                Formula1:="=""R"""
+            Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+            With Selection.FormatConditions(1).Font
+                .Color = -16383844
+                .TintAndShade = 0
+            End With
+            With Selection.FormatConditions(1).Interior
+                .PatternColorIndex = xlAutomatic
+                .Color = 13551615
+                .TintAndShade = 0
+            End With
+            Selection.FormatConditions(1).StopIfTrue = False
+            Selection.FormatConditions.Add Type:=xlCellValue, Operator:=xlEqual, _
+                Formula1:="=""Y"""
+            Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+            With Selection.FormatConditions(1).Font
+                .Color = -16751204
+                .TintAndShade = 0
+            End With
+            With Selection.FormatConditions(1).Interior
+                .PatternColorIndex = xlAutomatic
+                .Color = 10284031
+                .TintAndShade = 0
+            End With
+            Selection.FormatConditions(1).StopIfTrue = False
+            Selection.FormatConditions.Add Type:=xlCellValue, Operator:=xlEqual, _
+                Formula1:="=""G"""
+            Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+            With Selection.FormatConditions(1).Font
+                .Color = -16752384
+                .TintAndShade = 0
+            End With
+            With Selection.FormatConditions(1).Interior
+                .PatternColorIndex = xlAutomatic
+                .Color = 13561798
+                .TintAndShade = 0
+            End With
+            Selection.FormatConditions(1).StopIfTrue = False
+        myLastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+        Range(Cells(1, 32), Cells(1, myLastCol)).EntireColumn.Delete
+        Rows("1:2").Delete
+        Columns("L:L").NumberFormat = "m/d/yyyy"
+        Columns("A:AE").AutoFit
+        Columns("H:K").Hidden = True
+        ActiveWindow.FreezePanes = False
+    'Ver1.2: Add new Sheet
+    Sheets("Customer").Copy After:=ActiveWorkbook.Sheets(Sheets.Count)
+    ActiveSheet.Name = "Simplified"
+    Columns("A:A").Insert
+    myTotalSimplified = Range("C" & Rows.Count).End(xlUp).Row
+    Range("A1").Value = "Delete"
+    Range("A2:A" & myTotalSimplified).Value = "=IF(OR(L2=""JITM"",V2=""WO"",V2=""PlannedWO"",U2=""G""),""Delete"",ROW(L2))"
+    Range("A2:A" & myTotalSimplified).Value = Range("A2:A" & myTotalSimplified).Value
+    Range("A1:AK" & myTotalSimplified).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalSimplified = Range("C" & Rows.Count).End(xlUp).Row
+    Range("A2:A" & myTotalSimplified).Value = "=IF(AND(N2>='[" & myMacrofile & "]Macro'!$B$8,N2<='[" & myMacrofile & "]Macro'!$D$8),ROW(N2),""Delete"")"
+    Range("A2:A" & myTotalSimplified).Value = Range("A2:A" & myTotalSimplified).Value
+    Range("A1:AK" & myTotalSimplified).RemoveDuplicates Columns:=1, Header:=xlNo
+    Sheets("Customer").Select
+    
+    Workbooks(myMasterFilename).Close False
+    myEndTime = Time
+    MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub FindColumn(myHeaderCol, myHeaderRowCol)
+    myFindCol = ""
+    Set mySearchValue = Rows(myHeaderRowCol & ":" & myHeaderRowCol).Find(What:=myHeaderCol, After:=Range("A" & myHeaderRowCol), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeaderCol & " column not found! The Macro will stop here!"
+        End
+    Else
+        myFindCol = Rows(myHeaderRowCol & ":" & myHeaderRowCol).Find(What:=myHeaderCol, After:=Range("A" & myHeaderRowCol), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+    End If
+End Sub
+Sub CutInsertColumn(myHeader, myHeaderRow, myHeaderCol, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Range(Cells(myHeaderRow, myHeaderCol + 0), Cells(myHeaderRow, Columns.Count)).Find(What:=myHeader, After:=Cells(myHeaderRow, myHeaderCol + 0), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Range(Cells(myHeaderRow, myHeaderCol + 0), Cells(myHeaderRow, Columns.Count)).Find(What:=myHeader, After:=Cells(myHeaderRow, myHeaderCol + 0), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Copy
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub RrRawSelect()
+    myRrRawFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please RR Raw file")
+    If myRrRawFile = False Then
+    Else
+        Range("B4").Value = myRrRawFile
+    End If
+End Sub
+Sub MasterSelect()
+    myMasterFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Master file")
+    If myMasterFile = False Then
+    Else
+        Range("B6").Value = myMasterFile
+    End If
+End Sub
+Sub PriceBookSelect()
+    myPriceBookFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Price Book file")
+    If myPriceBookFile = False Then
+    Else
+        Range("B8").Value = myPriceBookFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+
