@@ -1,0 +1,763 @@
+Dim myAttachement() As String
+Sub CommonPartSharing()
+    Dim myBody As String
+    ReDim myAttachement(0)
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+    
+'    'Ver2.0: Cater for Guad
+'    myTotalGuadFolder = Sheets("SavePath").Range("D" & Rows.Count).End(xlUp).Row
+'    myGuadSavePath = Sheets("SavePath").Range("D2").Value
+'    For myCountB = 3 To myTotalGuadFolder
+'        myFolderCheck = Dir(myGuadSavePath & Sheets("SavePath").Range("D" & myCountB).Value, vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir myGuadSavePath & Sheets("SavePath").Range("D" & myCountB).Value
+'        End If
+'        myGuadSavePath = myGuadSavePath & Sheets("SavePath").Range("D" & myCountB).Value
+'    Next myCountB
+
+    myMacroCheck = Dir(myMacroPath & "\" & Year(Date) & "\", vbDirectory)
+        If myMacroCheck = "" Then
+            MkDir myMacroPath & "\" & Year(Date) & "\"
+        End If
+    
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myMonthYear = Format(Date - 1, "MM. MmmYYYY")
+    If Dir(myMacroPath & "\PleaseSelect.jpg") = "" Then
+        Dim fso As Scripting.FileSystemObject
+        Set fso = New Scripting.FileSystemObject
+        'Call FSO.CopyFile("\\ap\penadata\Site\Islandview\Purchasing_II\Materials\Macro_Backup\Common Part Sharing Report\PleaseSelect.jpg", myMacroPath & "\PleaseSelect.jpg", OverWrite)
+        Call fso.CopyFile("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\Macro_Backup\Common Part Sharing Report\PleaseSelect.jpg", myMacroPath & "\PleaseSelect.jpg", OverWrite)
+    End If
+    '\\ap\penadata\Site\Islandview\Materials\Macro_Backup\Common Part Sharing Report\purchasing_II
+    'Year
+    '
+    'myYear = Year(Date - 1)
+    myYear = Year(Date)
+    'myWmsFile = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Weekly Report\WMS report\" & myMonthYear & "\WMS Report - " & Format(Date - 1, "MMDDYYYY") & ".xlsx")
+    'Ver1.1: No longer need
+    'myWmsFile = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Weekly Report\WMS report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx")
+    
+'    If myWmsFile = "" Then
+'        With CreateObject("Outlook.Application").CreateItem(0)
+'            .To = "sk.loon@plexus.com"
+'            '.CC = "Sing-Yee.Ho@plexus.com"
+'            .Subject = "Common Part Sharing Macro Error!"
+'            .HTMLBody = "WMS Report file not found!"
+'            .Send
+'        End With
+'        GoTo myEnd1
+'    End If
+'    'Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Weekly Report\WMS report\" & myMonthYear & "\WMS Report - " & Format(Date - 1, "MMDDYYYY") & ".xlsx", ReadOnly:=True
+'    Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Weekly Report\WMS report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx", ReadOnly:=True
+'    myWmsFilename = ActiveWorkbook.Name
+'    myWmsSheetname = ActiveSheet.Name
+'    If ActiveSheet.AutoFilterMode = True Then
+'       Rows("1:1").AutoFilter
+'    End If
+'    'Range("H9").Select
+'    Columns("T:T").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+'    myTotalWms = Range("S" & Rows.Count).End(xlUp).Row
+'    Range("T2:T" & myTotalWms).Value = "=RC[-2]&RC[-1]"
+'    Range("T2:T" & myTotalWms).Value = Range("T2:T" & myTotalWms).Value
+    
+    'myIntMatExc = Dir("\\ap\penadata\Applications\Report_Kinaxis\Material\830 E&O Internal Material Exchange Detail." & Format(Date - 2, "YYYYMMDD") & "*.xlsx")
+        'Ver1.9: New RR Path
+        'myIntMatExc = Dir("\\ap\penadata\Applications\Report_Kinaxis\Material\830 E&O Internal Material Exchange Detail." & Format(Date - 1, "YYYYMMDD") & "*.xlsx")
+        
+        'Ver2.1:
+        'myIntMatExc = Dir("\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\830 E&O Internal Material Exchange Detail." & Format(Date - 1, "YYYYMMDD") & "*.xlsx")
+        'Ver2.4: New version
+        ''Ver2.2
+        'myIntMatExc = Dir("\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\830 E&O Internal Material Exchange Detail." & Format(Date - 1, "YYYYMMDD") & "*.xlsx")
+        myIntMatExc = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\830 E&O Internal Material Exchange Detail." & Format(Date - 1, "YYYYMMDD") & "*.xlsx")
+        
+    'myIntMatExc = "\\ap\penadata\Site\Islandview\Purchasing\Materials\2020\Weekly Report\Common Parts Sharing Report\04. Apr2020\Raw\830 E&O Internal Material Exchange Detail 04202020.xlsx"
+    If myIntMatExc = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    '.CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "830 E&O Internal Material Exchange Detail file not found!"
+        '    .HTMLBody = "830 E&O Internal Material Exchange Detail file not found!"
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830 E&O Internal Material Exchange Detail file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd1
+    End If
+    
+    'Ver2.1:
+    ''Ver1.9: New RR Path
+    ''Workbooks.Open Filename:="\\ap\penadata\Applications\Report_Kinaxis\Material\" & myIntMatExc
+    'Workbooks.Open Filename:="\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\" & myIntMatExc
+        'Ver2.2:
+        'Workbooks.Open Filename:="\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\" & myIntMatExc
+        Workbooks.Open Filename:="\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\" & myIntMatExc
+    
+    'Workbooks.Open "\\ap\penadata\Site\Islandview\Purchasing\Materials\2020\Weekly Report\Common Parts Sharing Report\04. Apr2020\Raw\830 E&O Internal Material Exchange Detail 04202020.xlsx"
+    
+    'Ver2.4: New version
+    Columns("AO:AO").Delete 'GMM to Sell
+    Columns("E:E").Delete 'GMM to Buy
+    Columns("Z:Z").Delete 'Delta
+    
+    'Ver1.7: Delete Short Date on 5/31/2021
+    Columns("Q:Q").Delete
+    
+    'Ver1.3: Delete QCode Column
+    Columns("AP:AP").Delete
+    
+    myIntMatExcFilename = ActiveWorkbook.Name
+    myIntMatExcSheetname = ActiveSheet.Name
+    'Ver1.1: NEW format
+    Range("AC2").Value = Range("AC1").Value & " " & Range("AC2").Value
+    Range("AD2").Value = Range("AD1").Value & " " & Range("AD2").Value
+    Rows("1:1").Delete
+    
+    If ActiveSheet.AutoFilterMode = True Then
+       Rows("3:3").AutoFilter
+       Rows("3:3").AutoFilter
+    End If
+    Range("A1:Z3").Interior.Color = 65535
+    Columns("E:E").Columns.Group
+    Range("G4").Select
+    ActiveWindow.FreezePanes = False
+    ActiveWindow.FreezePanes = True
+    'Rows("3:3").AutoFilter
+        'Ver1.1: New Format
+        'Columns("BJ:BJ").Style = "Currency"
+        'Columns("BJ:BJ").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        Columns("AS:AS").Style = "Currency"
+        Columns("AS:AS").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        'Columns("BB:BI").Columns.Group
+        'Range("AG1:BI3").Interior.Color = 49407
+        Range("AI1:AR3").Interior.Color = 49407
+        Columns("AA:AB").Columns.Group
+        Columns("AD:AH").Columns.Group
+    
+    'Ver1.1: New Format
+    'Columns("AE:AF").Delete Shift:=xlToLeft
+    'Columns("AI:AI").Columns.Group
+    'Columns("AD:AD").Columns.Group
+    'Columns("X:AB").Columns.Group
+    myTotal = Range("E" & Rows.Count).End(xlUp).Row
+        'Ver1.1: New Format
+        'Range("BI3:BI" & myTotal).Value = "=IF(AND(A3<>""830"",AE3<>""830""),""Delete"",IF(C3=""875"",""Delete"",ROW(AE3)))"
+        Range("BI3:BI" & myTotal).Value = "=IF(AND(A3<>""830"",AI3<>""830""),""Delete"",IF(C3=""875"",""Delete"",ROW(AE3)))"
+    Range("BI3:BI" & myTotal).Value = Range("BI3:BI" & myTotal).Value
+    Range("A3:BK" & myTotal).RemoveDuplicates Columns:=61, Header:=xlNo
+    myTotal = Range("E" & Rows.Count).End(xlUp).Row
+    
+    'Ver1.2: New criteria: Delete Buyer name that doesn't end with @Plexus.com
+    Range("BI3:BI" & myTotal).Value = "=IF(RIGHT(F3,11)<>""@PLEXUS.COM"",""Delete"",ROW(AE3))"
+    Range("BI3:BI" & myTotal).Value = Range("BI3:BI" & myTotal).Value
+    Range("A3:BK" & myTotal).RemoveDuplicates Columns:=61, Header:=xlNo
+    myTotal = Range("E" & Rows.Count).End(xlUp).Row
+    Columns("AZ:BI").ClearContents
+    
+    'Ver1.1: New Format
+    'Columns("J:K").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    'Range("J4:J" & myTotal).Value = "=RC[-2]&RC[-3]"
+    'Range("K4:K" & myTotal).Value = "=IFERROR(VLOOKUP(RC[-1],'[" & myWmsFilename & "]" & myWmsSheetname & "'!C20,1,0),""NA"")"
+    'Range("K4:K" & myTotal).Value = Range("K4:K" & myTotal).Value
+    'Range("BK4:BK" & myTotal).Value = "=IF(K4=""NA"",""Delete"",Row(K4))"
+    'Range("BK4:BK" & myTotal).Value = Range("BK4:BK" & myTotal).Value
+    'Range("A3:BK" & myTotal).RemoveDuplicates Columns:=63, Header:=xlNo
+    'myTotal = Range("E" & Rows.Count).End(xlUp).Row
+    'Columns("J:K").Delete Shift:=xlToLeft
+    'Windows(myWmsFilename).Close False
+    
+    'Ver1.1: New Format
+    'Range("BI3").Value = "Able To Buy"
+    'Range("BJ3").Value = "Reason Code"
+    'Range("BK3").Value = "Buyer Comment"
+    'Range("BL3").Value = "Able To Sell"
+    'Range("BM3").Value = "Reason Code"
+    'Range("BN3").Value = "Buyer Comment"
+    Range("AT3").Value = "Able To Buy"
+    Range("AU3").Value = "Reason Code"
+    Range("AV3").Value = "Buyer Comment"
+    Range("AW3").Value = "Able To Sell"
+    Range("AX3").Value = "Reason Code"
+    Range("AY3").Value = "Buyer Comment"
+    'Range("BI1:AY3").Interior.ThemeColor = xlThemeColorAccent6
+    'Range("BI1:BK3").Interior.TintAndShade = 0.399975585192419
+    Range("AT1:AV3").Interior.ThemeColor = xlThemeColorAccent6
+    Range("AT1:AV3").Interior.TintAndShade = 0.399975585192419
+    'Range("BL1:BN3").Interior.ThemeColor = xlThemeColorAccent3
+    Range("AW1:AY3").Interior.ThemeColor = xlThemeColorAccent3
+    'Range("BI1:BN3").Font.Bold = True
+    Range("AT1:AY3").Font.Bold = True
+    'Columns("BI:BN").EntireColumn.AutoFit
+    
+        'Add filter and hide the column
+        'Rows("3:3").AutoFilter
+        Range("A3:AY3").AutoFilter
+        ActiveSheet.Outline.ShowLevels RowLevels:=0, ColumnLevels:=1
+    'Range("BN2").Select
+    
+    Sheets.Add ActiveSheet
+    ActiveSheet.Name = "PV"
+    Range("A4").Select
+    'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myIntMatExcSheetname & "!R3C1:R" & myTotal & "C61").CreatePivotTable TableDestination:="PV!R4C1", TableName:="PivotTable1"
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myIntMatExcSheetname & "!R3C1:R" & myTotal & "C51").CreatePivotTable TableDestination:="PV!R4C1", TableName:="PivotTable1"
+    With ActiveSheet.PivotTables("PivotTable1").PivotFields("Site")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    With ActiveSheet.PivotTables("PivotTable1").PivotFields("Site")
+        .Orientation = xlPageField
+        .Position = 1
+    End With
+    With ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    With ActiveSheet.PivotTables("PivotTable1").PivotFields("Buyer")
+        .Orientation = xlRowField
+        .Position = 2
+    End With
+    'ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("> $200"), "Sum of > $200", xlSum
+    'ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("> $500"), "Sum of > $500", xlSum
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("> $ 0"), "Sum of > $ 0", xlSum
+    
+    With ActiveSheet.PivotTables("PivotTable1")
+        .InGridDropZones = True
+        .RowAxisLayout xlTabularRow
+    End With
+    ActiveSheet.PivotTables("PivotTable1").ShowDrillIndicators = False
+    Columns("C:C").Select
+    Selection.Style = "Currency"
+    'Selection.NumberFormat = "_($* #,##0.0_);_($* (#,##0.0);_($* ""-""??_);_(@_)"
+    Selection.NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+    'ActiveSheet.PivotTables("PivotTable1").PivotFields("Buyer").AutoSort xlDescending, "Sum of > $200", ActiveSheet.PivotTables("PivotTable1").PivotColumnAxis.PivotLines(1), 1
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("Buyer").AutoSort xlDescending, "Sum of > $500", ActiveSheet.PivotTables("PivotTable1").PivotColumnAxis.PivotLines(1), 1
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Buyer").AutoSort xlDescending, "Sum of > $0", ActiveSheet.PivotTables("PivotTable1").PivotColumnAxis.PivotLines(1), 1
+    
+    ActiveSheet.PivotTables("PivotTable1").TableStyle2 = "PivotStyleMedium9"
+    For Each myPvtFld In ActiveSheet.PivotTables("PivotTable1").PivotFields("Site").PivotItems
+        If myPvtFld.Name <> "830" Then
+            myPvtFld.Visible = False
+        End If
+    Next myPvtFld
+
+    'Range("F4").Select
+    'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="E&O Internal Material Exchange !R3C1:R" & myTotal & "C61").CreatePivotTable TableDestination:="PV!R4C6", TableName:="PivotTable2"
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="E&O Internal Material Exchange !R3C1:R" & myTotal & "C51").CreatePivotTable TableDestination:="PV!R4C6", TableName:="PivotTable2"
+    With ActiveSheet.PivotTables("PivotTable2").PivotFields("Site2")
+        .Orientation = xlPageField
+        .Position = 1
+    End With
+    With ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF2")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    With ActiveSheet.PivotTables("PivotTable2").PivotFields("Buyer2")
+        .Orientation = xlRowField
+        .Position = 2
+    End With
+    ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields(" Opportuntity"), "Sum of  Opportuntity", xlSum
+    For Each myPvtFld In ActiveSheet.PivotTables("PivotTable2").PivotFields("Site2").PivotItems
+        If myPvtFld.Name <> "830" Then
+            myPvtFld.Visible = False
+        End If
+    Next myPvtFld
+    With ActiveSheet.PivotTables("PivotTable2")
+        .InGridDropZones = True
+        .ShowDrillIndicators = False
+        .RowAxisLayout xlTabularRow
+    End With
+    Columns("H:H").Style = "Currency"
+    Columns("H:H").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+    ActiveSheet.PivotTables("PivotTable2").PivotSelect "MPF2[All]", xlLabelOnly, True
+    ActiveSheet.PivotTables("PivotTable2").TableStyle2 = "PivotStyleMedium9"
+    ActiveWorkbook.ShowPivotTableFieldList = False
+        'Ver1.1: New format needed
+        Sheets(myIntMatExcSheetname).Select
+        Columns("AA:AB").Insert
+        Range("AA1").Value = "Buying Site WA -"
+        Range("AA2").Value = "Selling Site QC"
+        Range("AA3").Value = "Cost Delta"
+        Range("AB1").Value = "PPV Created"
+        Range("AB2").Value = "Cost Delta"
+        Range("AB3").Value = "Extended"
+        Range("AA1:AB3").Interior.Color = 16751052
+        Range("AA4:AA" & myTotal).Value = "=X4-AS4"
+        Range("AB4:AB" & myTotal).Value = "=AA4*(MIN(V4,AQ4))"
+    
+    'Ver1.6: Add in Data Validation (Requested by Sing Yee on 12/9/2020
+    Workbooks(myMacroFile).Sheets("List").Copy after:=Sheets(Sheets.Count)
+    myTotalDropDown = Range("A" & Rows.Count).End(xlUp).Row
+    Sheets("List").Visible = False
+    Range("AW4:AW" & myTotal).Select
+    With Selection.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
+        xlBetween, Formula1:="=List!$A$1:$A$" & myTotalDropDown
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = True
+    End With
+    
+    Range("AZ4:AZ" & myTotal).Select
+    With Selection.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
+        xlBetween, Formula1:="=List!$A$1:$A$" & myTotalDropDown
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = True
+    End With
+    Columns("AV:BA").AutoFit
+    Columns("AW:AW").ColumnWidth = 30
+    Columns("AZ:AZ").ColumnWidth = 30
+    
+    With ActiveWorkbook
+        .KeepChangeHistory = True
+        .ChangeHistoryDuration = 30
+    End With
+    'Check Folder Availbility
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    'Year
+    myYear = Year(Date)
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\"
+'    End If
+''    'Daily Report
+''    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Weekly Report\", vbDirectory)
+''    If myFolderCheck = "" Then
+''        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Weekly Report\"
+''    End If
+'    'PO Commit Date More Than 3 Days
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Common Parts Sharing Report\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Common Parts Sharing Report\"
+'    End If
+'
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Common Parts Sharing Report\" & myMonthYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'       MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Common Parts Sharing Report\" & myMonthYear & "\"
+'    End If
+'    mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Common Parts Sharing Report\" & myMonthYear & "\"
+    
+    'Range("A4").Value = "Demand Parts"
+    'Range("F4").Value = "Excess Parts"
+    Sheets("PV").Range("A4").Value = "Demand Parts"
+    Sheets("PV").Range("F4").Value = "Excess Parts"
+    
+    Sheets("PV").Copy
+    myTempPivotFile = ActiveWorkbook.Name
+    Workbooks(myIntMatExcFilename).Activate
+    Application.EnableEvents = False
+    ActiveWorkbook.SaveAs Filename:=mySavePath & "830 E&O Internal Material Exchange Detail - " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, AccessMode:=xlShared
+        
+'    'Ver2.0: Cater for Guad Buyer
+'    ActiveWorkbook.SaveAs Filename:=myGuadSavePath & "830 E&O Internal Material Exchange Detail - " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, AccessMode:=xlShared
+    
+        
+        'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\830 E&O Internal Material Exchange Detail - " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, AccessMode:=xlShared
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\830 E&O Internal Material Exchange Detail - " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, AccessMode:=xlShared
+    ActiveWorkbook.Close False
+    Application.EnableEvents = True
+    Columns("D:D").Delete
+    Columns("D:D").Interior.ThemeColor = xlThemeColorDark1
+    Columns("D:D").ColumnWidth = 5
+    Columns("A:G").AutoFit
+    'Range("A1:G" & myPivotLast).Copy
+    'Range("A1").PasteSpecial xlPasteAll
+    
+    myPivotLast = Range("A" & Rows.Count).End(xlUp).Row
+    If myPivotLast = Range("E" & Rows.Count).End(xlUp).Row Then
+        
+    ElseIf myPivotLast < Range("E" & Rows.Count).End(xlUp).Row Then
+        Range("A" & myPivotLast + 1 & ":C" & Range("E" & Rows.Count).End(xlUp).Row).Interior.ThemeColor = xlThemeColorDark1
+        myPivotLast = Range("E" & Rows.Count).End(xlUp).Row
+    Else
+        Range("E" & Range("E" & Rows.Count).End(xlUp).Row + 1 & ":G" & myPivotLast).Interior.ThemeColor = xlThemeColorDark1
+    End If
+    'Range(Cells(4, 1), Cells(myLastRow, myLastCol)).Select
+    Range("A1").Select
+    Range("A4:G" & myPivotLast).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Application.Wait (Now + TimeValue("00:00:03"))
+    ActiveSheet.Range("I1").PasteSpecial
+    'Application.Range(Cells(4, 1), Cells(myLastRow, myLastCol)).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Application.Wait (Now + TimeValue("00:00:01"))
+    '
+    'ActiveSheet.Range("AA1").PasteSpecial
+    myObject = Selection.Name
+    Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+    Selection.ShapeRange.PictureFormat.Brightness = 0.5:
+    Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+    Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+    Selection.ShapeRange.Fill.Visible = msoFalse:
+    Selection.ShapeRange.Line.Visible = msoFalse:
+    Selection.ShapeRange.Rotation = 0#:
+    Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+    Selection.ShapeRange.PictureFormat.CropRight = 0#:
+    Selection.ShapeRange.PictureFormat.CropTop = 0#:
+    Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+    Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+    Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+    Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Set oDia = ActiveSheet.ChartObjects.Add(0, 0, ActiveSheet.Shapes(1).Width, ActiveSheet.Shapes(1).Height)
+    Set oChartArea = oDia.Chart
+    oDia.Activate
+    oChartArea.ChartArea.Select
+    oChartArea.Paste
+    oChartArea.Export (myMacroPath & "\Temp.jpg")
+    Application.EnableEvents = False
+    ActiveWorkbook.Close False
+    Application.EnableEvents = True
+        
+    'Send Email
+'    With CreateObject("Outlook.Application").CreateItem(0)
+'        '.To = "Sing-Yee.Ho@plexus.com; sk.loon@plexus.com"
+'        .Bcc = "sk.loon@plexus.com"
+'        '.To = "Purchasing_IslandView_Buyers@plexus.com; Arturo.Matuz@plexus.com; Paulina.Garcia@plexus.com; Leonardo.Galicia@plexus.com; Alison.Diaz@plexus.com; Carlos.Vega@plexus.com"
+'        .To = "Purchasing_IslandView_Buyers@plexus.com"
+'        .Cc = "isl_purch_mtm@plexus.com; julie.chew@plexus.com; Sing-Yee.Ho@plexus.com; se-hui.tan@plexus.com"
+'        '.Subject = "Coronavirus Outbreak Poses Threat to Supply Chain"
+'        .Subject = "E&O Internal Material Exchange " & Format(Date, "DMmmYyyy")
+'
+'        'myStatement = "<br><img src=cid:Temp.jpg></img><br>"
+'        .Attachments.Add myMacroPath & "\Temp.jpg"
+'        .Attachments.Add myMacroPath & "\PleaseSelect.jpg"
+'
+'        .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>Hi Buyers," & _
+'                  "<html><br><br>This link shows the latest common MPN part list: " & _
+'                  "<html><a href=""" & mySavePath & "830 E&O Internal Material Exchange Detail - " & Format(Date, "MMDDYYYY") & ".xlsx"">830 E&O Internal Material Exchange Detail - " & Format(Date, "MMDDYYYY") & ".xlsx</a>" & _
+'                  "<html><br><br>This link shows the latest common MPN part list (For Guad Team): " & _
+'                  "<html><a href=""" & myGuadSavePath & "830 E&O Internal Material Exchange Detail - " & Format(Date, "MMDDYYYY") & ".xlsx"">830 E&O Internal Material Exchange Detail - " & Format(Date, "MMDDYYYY") & ".xlsx</a>" & _
+'                  "<html><br><br>Please help to work on buying from another Plexus site instead of buying from outside supply base." & _
+'                  "<html><br>If any new POs have been released to supplier on those excess MPN, buyers are requested to cancel the supplier POs unless the reason is justifiable." & _
+'                  "<html><br><br>Please update <b><font color=green>Column AV-AX</font></b> for Demand Part that want to buy and <b><font color=green>Column AY-BA</font></b> for E&O Part that want to sell by <b><font color=red>" & Format(Date + 3, "D MMM Yyyy (Dddd)") & ", before 10:00AM.</font></b><br/>" & _
+'                  "<html><br><b><font color=red>Below are the summary of opportunities to buy from / sell to other sites /do conversion:</font></b>" & _
+'                  "<html><br><img src=cid:Temp.jpg></img>" & _
+'                  "<html><br><br>NOTE:" & _
+'                  "<html><li>Column A ~ Z : ""Want to Buy"" Part info</li>" & _
+'                  "<html><br><li>Column AK ~ AT : ""Want to Sell Excess and Obsolete"" Part info</li>" & _
+'                  "<html><br><br><u>E-Conversion/E-Inventory Management System:</u>" & _
+'                  "<html><br>Under e-Conversion/E-Inventory Management System, column: ""Reason"" - pls utilize the usage of ""Deplete Excess"" or ""Support production"". Should there be any further remark need to be indicated, pls select " & _
+'                  "<html>""Others, pls specify"" and indicate the remark as ""Deplete excess: xxxxxxxxxx"" or ""Support production: xxxxxxxxx"". " & _
+'                  "<html><br><br>""eConversion.REASON CODE"" link has some of the guidelines for your references:" & _
+'                  "<html><br><a href=""\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Materials\" & myYear & "\Common Parts Sharing Report\" & myMonthYear & "\eConversion REASON CODE.xlsx"">Penang Team: eConversion REASON CODE.xlsx</a>" & _
+'                  "<html><br><a href=""\\ap\mfg\PenaData\APAC_Operations\Teradyne_AdvancedPO\Common Part Sharing Report\eConversion REASON CODE.xlsx"">Guad Team: eConversion REASON CODE.xlsx</a>" & _
+'                  "<html><br><br><html><img src=cid:PleaseSelect.jpg></img>" & _
+'                  "<html><br><br>Should there be any doubt, pls let me know." & _
+'                  "<html><br><br>Thanks.<br/>This is an auto generated email. No reply required</html>"
+'
+''
+'        '.Attachments.Add Workbooks(myMacroFile).Sheets("Po Impact").Range("C" & 35).Value & Workbooks(myMacroFile).Sheets("Po Impact").Range("C17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx"
+'        '.Attachments.Add myMacroPath & "\830_Open PO Report." & myFileSaveDate
+'        '.Display
+'        .Send
+'    End With
+    ReDim myAttachement(1)
+    'Dim myStatement(1) As String
+    myAttachement(0) = myMacroPath & "\Temp.jpg"
+    myAttachement(1) = myMacroPath & "\PleaseSelect.jpg"
+'    myStatement(0) = "<br><img
+'    myStatement(1) = myMacroPath & "\PleaseSelect.jpg"
+    myBody = "<html><font style=""font-family: Arial; font-size: 10.5pt;""/font><p>******** Automated Reporting *******<br>Hi Buyers," & _
+                  "<html><br><br>This link shows the latest common MPN part list: " & _
+                  "<html><br>" & mySavePath & "830 E&O Internal Material Exchange Detail - " & Format(Date, "MMDDYYYY") & ".xlsx" & _
+                  "<html><br><br>Please help to work on buying from another Plexus site instead of buying from outside supply base." & _
+                  "<html><br>If any new POs have been released to supplier on those excess MPN, buyers are requested to cancel the supplier POs unless the reason is justifiable." & _
+                  "<html><br><br>Please update <b><font color=green>Column AV-AX</font></b> for Demand Part that want to buy and <b><font color=green>Column AY-BA</font></b> for E&O Part that want to sell by <b><font color=red>" & Format(Date + 3, "D MMM Yyyy (Dddd)") & ", before 10:00AM.</font></b><br/>" & _
+                  "<html><br><b><font color=red>Below are the summary of opportunities to buy from / sell to other sites /do conversion:</font></b>" & _
+                  "<html><br><img src=cid:Image1>" & _
+                  "<html><br><br>NOTE:" & _
+                  "<html><br> * Column A ~ Z : ""Want to Buy"" Part info" & _
+                  "<html><br> * Column AK ~ AT : ""Want to Sell Excess and Obsolete"" Part info" & _
+                  "<html><br><br><u>E-Conversion/E-Inventory Management System:</u>" & _
+                  "<html><br>Under e-Conversion/E-Inventory Management System, column: ""Reason"" - pls utilize the usage of ""Deplete Excess"" or ""Support production"". Should there be any further remark need to be indicated, pls select " & _
+                  "<html>""Others, pls specify"" and indicate the remark as ""Deplete excess: xxxxxxxxxx"" or ""Support production: xxxxxxxxx"". " & _
+                  "<html><br><br>""eConversion.REASON CODE"" link has some of the guidelines for your references:" & _
+                  "<html><br>\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Materials\" & myYear & "\Common Parts Sharing Report\" & myMonthYear & "\eConversion REASON CODE.xlsx" & _
+                  "<html><br><br><html><img src=cid:Image2>" & _
+                  "<html><br><br>Should there be any doubt, pls let me know.<br>Thanks."
+    Call SendSmtpEmail( _
+        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+        "Purchasing_IslandView_Buyers@plexus.com; plxs-mfg.apac.supply.chain.operation@plexus.com; plxs-mfg.penang.central.buyer@plexus.com", _
+        "isl_purch_mtm@plexus.com; julie.chew@plexus.com; Sing-Yee.Ho@plexus.com; se-hui.tan@plexus.com; chian-li.yew@plexus.com", _
+        "sk.loon@plexus.com", _
+        "E&O Internal Material Exchange " & Format(Date, "DMmmYyyy"), _
+        myBody, _
+        myAttachement(), _
+        2, 2)
+    
+    'Workbooks.Open Filename:="D:\Materials\IA Reports\2020\02. Feb2020\02072020\Coronavirus\Potential PO Impacted by Coronavirus Outbreak_masterfile 02072020.xlsx"
+    'Workbooks.Open myMacroPath & "\Temp.xlsx"
+    'MsgBox "Done!"
+myEnd1:
+    Application.DisplayAlerts = False
+    'Application.EnableEvents = False
+    Application.Quit
+    'Application.EnableEvents = True
+End Sub
+Sub MergeMacro()
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    'Sheets("TempSheet").Select
+    'Sheets("TempSheet").Cells.ClearContents
+    
+    'myYear = Year(Date)
+    myDate = Format(Date, "MMDDYYYY")
+    mySharePath = Range("C35").Value
+    myLatestFile = Dir(mySharePath & Range("C17").Value & " " & myDate & ".xlsx")
+    If myLatestFile = "" Then
+        For myA = 1 To 20
+            myDate = Format(Date - myA, "MMDDYYYY")
+            myLatestFile = Dir(mySharePath & Range("C17").Value & " " & myDate & ".xlsx")
+            If myLatestFile <> "" Then
+                Exit For
+            End If
+        Next myA
+    End If
+    If myLatestFile = "" Then
+        With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "sk.loon@plexus.com"
+            .Cc = "Sing-Yee.Ho@plexus.com"
+            .Subject = "CoronaVirus Latest file not found!"
+            .HTMLBody = "CoronaVirus Latest file not found!"
+            .Send
+        End With
+        GoTo myEnd
+    End If
+    
+    Call fso.CopyFile(mySharePath & Range("C17").Value & " " & myDate & ".xlsx", myMacroPath & "\Temp.xlsx", True)
+    'Workbooks.Open Range("C4").Value ', ReadOnly:=True
+    Workbooks.Open myMacroPath & "\Temp.xlsx", UpdateLinks:=False
+    myMasterFile = ActiveWorkbook.Name
+    Application.DisplayAlerts = False
+    If Workbooks(myMasterFile).MultiUserEditing Then
+        Workbooks(myMasterFile).ExclusiveAccess
+    End If
+    Application.DisplayAlerts = True
+    For Each myX In Worksheets
+        If Left(myX.Name, 7) = "Open PO" Then
+            Sheets(myX.Name).Select
+            Exit For
+        End If
+    Next
+    If Left(myX.Name, 7) <> "Open PO" Then
+        Application.Quit
+    End If
+    If ActiveSheet.AutoFilterMode = True Then
+       Rows("3:3").AutoFilter
+    End If
+    myOpoSheet = ActiveSheet.Name
+    myTempLastRow = Range("B" & Rows.Count).End(xlUp).Row
+    myB = 5
+    For myA = 1 To 5
+        Workbooks.Open Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & myDate & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+        For Each myX In Worksheets
+            If Left(myX.Name, 7) = "Open PO" Then
+                Sheets(myX.Name).Select
+                Exit For
+            End If
+        Next
+        If ActiveSheet.AutoFilterMode = True Then
+           Rows("3:3").AutoFilter
+        End If
+        myLastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+        'Header Check
+        For myX = 1 To myLastCol
+            If Cells(3, myX).Value <> Workbooks(myMasterFile).Sheets(myOpoSheet).Cells(3, myX).Value Then
+                With CreateObject("Outlook.Application").CreateItem(0)
+                    .To = "sk.loon@plexus.com"
+                    .Cc = "Sing-Yee.Ho@plexus.com"
+                    .Subject = "CoronaVirus Different format detected!"
+                    .HTMLBody = Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value
+                    .Send
+                End With
+                GoTo myEnd
+            End If
+        Next myX
+        myTempLastRowCopy = Range("A" & Rows.Count).End(xlUp).Row
+        myTempLastRow = Workbooks(myMasterFile).Sheets(myOpoSheet).Range("A" & Rows.Count).End(xlUp).Row
+        'myAddBookLastRow = Workbooks(myMacroFile).Sheets("TempSheet").Range("A" & Rows.Count).End(xlUp).Row
+        myAddBookLastRow = Workbooks(myMasterFile).Sheets("Address Book").Range("A" & Rows.Count).End(xlUp).Row
+        Rows("4:" & myTempLastRowCopy).Copy
+        Workbooks(myMasterFile).Sheets(myOpoSheet).Rows(myTempLastRow + 1).Insert
+        Sheets("Address Book").Select
+        myLastCol = Cells(1, Columns.Count).End(xlToLeft).Column
+        'Header Check
+        For myX = 1 To myLastCol
+            If Cells(1, myX).Value <> Workbooks(myMasterFile).Sheets("Address Book").Cells(1, myX).Value Then
+                With CreateObject("Outlook.Application").CreateItem(0)
+                    .To = "sk.loon@plexus.com"
+                    .Cc = "Sing-Yee.Ho@plexus.com"
+                    .Subject = "CoronaVirus Different format detected!"
+                    .HTMLBody = Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value
+                    .Send
+                End With
+                GoTo myEnd
+            End If
+        Next myX
+        myTempLastRowCopy = Range("A" & Rows.Count).End(xlUp).Row
+        Rows("1:" & myTempLastRowCopy).Copy
+        'Workbooks(myMacroFile).Sheets("TempSheet").Rows(myAddBookLastRow + 1).Insert
+        Workbooks(myMasterFile).Sheets("Address Book").Rows(myAddBookLastRow + 1).Insert
+        Application.CutCopyMode = False
+        ActiveWorkbook.Close False
+        'myA = myA + 1
+        myB = myB + 2
+    Next myA
+    Workbooks("Temp.xlsx").Activate
+    Sheets("Address Book").Select
+    'myTotalAdd = Workbooks(myMacroFile).Sheets("TempSheet").Range("A" & Rows.Count).End(xlUp).Row
+    'Workbooks(myMacroFile).Sheets("TempSheet").Range("A2:W" & myTotalAdd).Value = Range("A1:W" & myTotalAdd).Value
+    'Workbooks(myMacroFile).Sheets("TempSheet").Range("A2:AK" & myTotalAdd).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalAdd = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A1:AK" & myTotalAdd).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalAdd = Range("A" & Rows.Count).End(xlUp).Row
+    'Range("A1:W" & Range("A" & Rows.Count).End(xlUp).Row).ClearContents
+    'Range("A1:W" & myTotalAdd).Value = Workbooks(myMacroFile).Sheets("TempSheet").Range("A2:W" & myTotalAdd - 1).Value
+    Workbooks(myMasterFile).Sheets(myOpoSheet).Select
+
+    Exit Sub
+myEnd:
+    Application.Quit
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+
