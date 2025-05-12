@@ -1,0 +1,664 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myAttachement() As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub MpsMrp()
+    Dim myBody As String
+    Dim myStr As Long
+    Dim myPivotTotal As Long
+    Dim myPicCnt As Long
+    Dim myLastCell As String
+    Dim myCode(8) As String
+    Dim myCheck(8) As Integer
+    Dim myStatement(8) As String
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySharePath = Range("B4").Value
+    myPrefix = Range("B6").Value
+    Dim myOpoFile As String
+    'myYesterdayFile = Format(Date - 1, "YYYYMMDD")
+    myTodayDate = Format(Date, "MMDDYYYY")
+    'Month Year
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+
+    myMacroCheck = Dir(myMacroPath & "\" & Year(Date) & "\", vbDirectory)
+        If myMacroCheck = "" Then
+            MkDir myMacroPath & "\" & Year(Date) & "\"
+        End If
+    
+    
+    myMpsMrpFile = Dir(mySharePath & "830 MPS MRP Parameter Setup For Make Part." & Format(Date - 1, "YYYYMMDD") & "*.xlsx")
+    If myMpsMrpFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Cc = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "830 MPS MRP Parameter Setup For Make Part" & Format(Date - 1, "YYYYMMDD") & "*.xlsx file not found!"
+        '    .HTMLBody = "830 MPS MRP Parameter Setup For Make Part" & Format(Date - 1, "YYYYMMDD") & "*.xlsx file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830 MPS MRP Parameter Setup For Make Part" & Format(Date - 1, "YYYYMMDD") & "*.xlsx file not found!</html>", _
+                        myAttachement(), _
+                        0, 0)
+                        
+        GoTo myEnd
+        'Application.Quit
+    End If
+        Workbooks.Open Filename:=myMacroPath & "\Make Part Planning Setting Parameter Validation.xlsx"
+        Sheets("Make Part Planning Setting Para").Select
+        myTotalTemp = Range("A" & Rows.Count).End(xlUp).Row
+        Rows("3:" & myTotalTemp + 2).ClearContents
+        
+        Workbooks.Open Filename:=mySharePath & "830 MPS MRP Parameter Setup For Make Part." & Format(Date - 1, "YYYYMMDD") & "*.xlsx", UpdateLinks:=False, ReadOnly:=True
+        myMpsMrpFilename = ActiveWorkbook.Name
+        'myMpsMrpSheetname = ActiveSheet.Name
+        If ActiveSheet.AutoFilterMode = True Then
+           Rows("2:2").AutoFilter
+        End If
+        myTotalTemp = Range("A" & Rows.Count).End(xlUp).Row
+        Range("A3:Z" & myTotalTemp).Copy
+        Workbooks("Make Part Planning Setting Parameter Validation.xlsx").Activate
+        Range("A3").PasteSpecial xlPasteAll
+        Application.DisplayAlerts = False
+        Application.EnableEvents = False
+        Workbooks(myMpsMrpFilename).Close False
+        Application.DisplayAlerts = True
+        Application.EnableEvents = True
+        Sheets.Add
+        ActiveSheet.Name = "temp"
+        Sheets("Summary").Select
+        myCnt3 = 21
+        For myA = 8 To 1 Step -1
+            ActiveSheet.PivotTables("PivotTable" & myA).ChangePivotCache ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myMacroPath & "\[Make Part Planning Setting Parameter Validation.xlsx]Make Part Planning Setting Para!R2C1:R" & myTotalTemp & "C26")
+            ActiveSheet.PivotTables("PivotTable" & myA).PivotCache.Refresh
+            If myA = 8 Then
+                myCheck(myA) = Application.WorksheetFunction.CountIf(Sheets("Make Part Planning Setting Para").Range(Sheets("Make Part Planning Setting Para").Cells(3, 25 - myCnt2), Sheets("Make Part Planning Setting Para").Cells(myTotalTemp, 25 - myCnt2)), "")
+                myCnt2 = myCnt2 + 2
+            ElseIf myA = 6 Then
+                myCheck(myA) = Application.WorksheetFunction.CountIf(Sheets("Make Part Planning Setting Para").Range(Sheets("Make Part Planning Setting Para").Cells(3, 25 - myCnt2), Sheets("Make Part Planning Setting Para").Cells(myTotalTemp, 25 - myCnt2)), "")
+                myCnt2 = myCnt2 + 1
+            Else
+                myCheck(myA) = Application.WorksheetFunction.CountIf(Sheets("Make Part Planning Setting Para").Range(Sheets("Make Part Planning Setting Para").Cells(3, 25 - myCnt2), Sheets("Make Part Planning Setting Para").Cells(myTotalTemp, 25 - myCnt2)), "No Change")
+            End If
+            
+            If myCheck(myA) = myTotalTemp - 2 Then
+                Range(Cells(5, myA + myCnt3), Cells(Cells(Rows.Count, myA + myCnt3).End(xlUp).Row, myA + myCnt3 + 3)).EntireColumn.Delete
+            Else
+                If myA = 8 Then
+                    Call ErrHndBlank("PivotTable" & myA, "Multiple Qty May Need re-confirm")
+                    Call ErrHndEmpty("PivotTable" & myA, "Multiple Qty May Need re-confirm")
+                    'If Application.WorksheetFunction.CountIf(Sheets("Make Part Planning Setting Para").Columns("Y:Y"), "(blank)") > 0 Then
+                    '    ActiveSheet.PivotTables("PivotTable" & myA).PivotFields("Multiple Qty May Need re-confirm").PivotItems("(blank)").Visible = False
+                    'End If
+                    
+                    'If Application.WorksheetFunction.CountIf(Sheets("Make Part Planning Setting Para").Columns("Y:Y"), "") > 0 Then
+                    '    ActiveSheet.PivotTables("PivotTable" & myA).PivotFields("Multiple Qty May Need re-confirm").PivotItems("(blank)").Visible = False
+                    'End If
+                ElseIf myA = 6 Then
+                    Call ErrHndBlank("PivotTable" & myA, "Chg. Req." & myA)
+                    Call ErrHndEmpty("PivotTable" & myA, "Chg. Req." & myA)
+                    'If Application.WorksheetFunction.CountIf(Sheets("Make Part Planning Setting Para").Columns("S:S"), "") > 0 Then
+                    '    ActiveSheet.PivotTables("PivotTable" & myA).PivotFields("Chg. Req." & myA).PivotItems("").Visible = False
+                    'End If
+                    'If Application.WorksheetFunction.CountIf(Sheets("Make Part Planning Setting Para").Columns("S:S"), "(blank)") > 0 Then
+                    '    ActiveSheet.PivotTables("PivotTable" & myA).PivotFields("Chg. Req." & myA).PivotItems("(blank)").Visible = False
+                    'End If
+                ElseIf myA = 1 Then
+                    ActiveSheet.PivotTables("PivotTable" & myA).PivotFields("Chg. Req.").PivotItems("No Change").Visible = False
+                Else
+                    ActiveSheet.PivotTables("PivotTable" & myA).PivotFields("Chg. Req." & myA).PivotItems("No Change").Visible = False
+                End If
+                Range(Cells(5, myA + myCnt3), Cells(Cells(Rows.Count, myA + myCnt3).End(xlUp).Row, myA + myCnt3 + 2)).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+                Call CopyTemp(myA)
+            End If
+            myCnt2 = myCnt2 + 2
+            myCnt3 = myCnt3 - 3
+        Next myA
+        Application.DisplayAlerts = False
+        Sheets("temp").Delete
+        Application.DisplayAlerts = True
+        
+
+'        'Check Folder Availbility
+'        'Year
+'        myYear = Year(Date)
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\"
+'        End If
+'        'Weekly Report
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\"
+'        End If
+'        'Planning Setting Parameter
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Planning Setting Parameter\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Planning Setting Parameter\"
+'        End If
+'
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Planning Setting Parameter\" & myMonthYear & "\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Planning Setting Parameter\" & myMonthYear & "\"
+'        End If
+'        mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Planning Setting Parameter\" & myMonthYear & "\"
+        Application.EnableEvents = False
+        ActiveWorkbook.SaveAs Filename:=mySavePath & "Make Part Planning Setting Parameter Validation " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"   'Password:="888"
+        'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Make Part Planning Setting Parameter Validation " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"   'Password:="888"
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Make Part Planning Setting Parameter Validation " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"   'Password:="888"
+        ActiveWorkbook.Close False
+        Application.EnableEvents = True
+    'With CreateObject("Outlook.Application").CreateItem(0)
+    '    '.To = "sk.loon@plexus.com"
+    '    .Bcc = "sk.loon@plexus.com"
+    '    .To = "PLXS-MFGIslandViewPurchasingDAs@plexus.com"
+    '    .Cc = "isl_purch_mtm@plexus.com; We.Ooi@plexus.com; Julie.Chew@plexus.com; Sing-Yee.Ho@plexus.com"
+    '    .Subject = "MPS / MRP Parameter Setup Integrity report"
+    '    For myU = 1 To 8
+    '        If myCheck(myU) = myTotalTemp - 2 Then
+    '            myStatement(myU) = "- NONE"
+    '        Else
+    '            myStatement(myU) = "<br><img src=cid:MPS" & myU & ".jpg></img><br>"
+    '            .Attachments.Add myMacroPath & "\MPS" & myU & ".jpg"
+    '        End If
+    '    Next myU
+    '    .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>Hi DAs," & _
+    '              "<html><br><br>Please refer to the Planning Setting Parameter Validation report in share drive: <br/>" & _
+    '              "<html><a href=""" & mySavePath & "Make Part Planning Setting Parameter Validation " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx"">" & mySavePath & "Make Part Planning Setting Parameter Validation " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx</a>" & _
+    '              "<html><br><br>Kindly help to validate & update the correct setting in JDE <font color=red>immediately</font>.<br/>" & _
+    '              "<html><br><b><u>Parameter To Validate</u></b><br/>" & _
+    '              "<html><br>1.  Planning Code Chg. Req. " & myStatement(1) & _
+    '              "<html><br>2.  Planning Rule Chg. Req. " & myStatement(2) & _
+    '              "<html><br>3.  Order Policy Code Chg. Req. " & myStatement(3) & _
+    '              "<html><br>4.  Value Order Policy Chg. Req. " & myStatement(4) & _
+    '              "<html><br>5.  Message Display Chg. Req. " & myStatement(5) & _
+    '              "<html><br>6.  Freeze Fence Chg. Req. " & myStatement(6) & _
+    '              "<html><br>7.  Maximum Chg. Req. " & myStatement(7) & _
+    '              "<html><br>8.  Multiple Qty May Need re-confirm " & myStatement(8) & _
+    '              "<html><br><br>Source from RR workbook: PLXS MPS/MRP Parameter Setup For Make Part<br/>" & _
+    '              "<html><br><br>Thanks.<br/>" & _
+    '              "<br>This is an auto generated email. No reply required</html>"
+    '    .Attachments.Add myMacroPath & "\" & Year(Date) & "\Make Part Planning Setting Parameter Validation " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx"
+    '    '.Attachments.Add myMacroPath & "\830_Open PO Report." & myFileSaveDate
+    '    .Display
+    '    .Send
+    'End With
+    ReDim myAttachement(7)
+    For myU = 1 To 8
+        If myCheck(myU) = myTotalTemp - 2 Then
+            'Ver1.5: Add next line
+            'myStatement(myU) = "- NONE"
+            myStatement(myU) = "- NONE<br>"
+        Else
+            myStatement(myU) = "<br><img src=cid:Image" & myU & "><br>"
+            '.Attachments.Add myMacroPath & "\MPS" & myU & ".jpg"
+            myAttachement(myU - 1) = myMacroPath & "\MPS" & myU & ".jpg"
+        End If
+    Next myU
+    myBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>Hi DAs," & _
+                  "<html><br><br>Please refer to the Planning Setting Parameter Validation report in share drive: <br/>" & _
+                  "<html><a href=""" & mySavePath & "Make Part Planning Setting Parameter Validation " & Format(Date - 1, "MMDDYYYY") & myPrefix & ".xlsx"">" & mySavePath & "Make Part Planning Setting Parameter Validation " & Format(Date - 1, "MMDDYYYY") & myPrefix & ".xlsx</a>" & _
+                  "<html><br><br>Kindly help to validate & update the correct setting in JDE <font color=red>immediately</font>.<br/>" & _
+                  "<html><br><b><u>Parameter To Validate</u></b><br/>" & _
+                  "<html><br>1.  Planning Code Chg. Req. " & myStatement(1) & _
+                  "<html><br>2.  Planning Rule Chg. Req. " & myStatement(2) & _
+                  "<html><br>3.  Order Policy Code Chg. Req. " & myStatement(3) & _
+                  "<html><br>4.  Value Order Policy Chg. Req. " & myStatement(4) & _
+                  "<html><br>5.  Message Display Chg. Req. " & myStatement(5) & _
+                  "<html><br>6.  Freeze Fence Chg. Req. " & myStatement(6) & _
+                  "<html><br>7.  Maximum Chg. Req. " & myStatement(7) & _
+                  "<html><br>8.  Multiple Qty May Need re-confirm " & myStatement(8) & _
+                  "<html><br><br>Source from RR workbook: PLXS MPS/MRP Parameter Setup For Make Part<br/>" & _
+                  "<html><br><br>Thanks.<br/>" & _
+                  "<br>This is an auto generated email. No reply required</html>"
+    Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "PLXS-MFGIslandViewPurchasingDAs@plexus.com", _
+                        "isl_purch_mtm@plexus.com; We.Ooi@plexus.com; Julie.Chew@plexus.com; Sing-Yee.Ho@plexus.com", _
+                        "sk.loon@plexus.com", _
+                        "MPS / MRP Parameter Setup Integrity report", _
+                        myBody, _
+                        myAttachement(), _
+                        8, 8)
+    'Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "", _
+                        "", _
+                        "sk.loon@plexus.com", _
+                        "MPS / MRP Parameter Setup Integrity report", _
+                        myBody, _
+                        myAttachement(), _
+                        8, 8)
+    '"<img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>"
+'    Next myRetry
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+    
+    'myEndTime = Time
+    'MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub ErrHndBlank(myPivotTable As String, myPivotField As String)
+    On Error Resume Next
+    ActiveSheet.PivotTables(myPivotTable).PivotFields(myPivotField).PivotItems("(blank)").Visible = False
+End Sub
+Sub ErrHndEmpty(myPivotTable As String, myPivotField As String)
+    On Error Resume Next
+    ActiveSheet.PivotTables(myPivotTable).PivotFields(myPivotField).PivotItems("").Visible = False
+End Sub
+Sub CopyTemp(myCnt)
+    
+    Sheets("temp").Select
+    ActiveSheet.Range("A1").PasteSpecial
+    myObject = Selection.Name
+    Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+    Selection.ShapeRange.PictureFormat.Brightness = 0.5:
+    Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+    Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+    Selection.ShapeRange.Fill.Visible = msoFalse:
+    Selection.ShapeRange.Line.Visible = msoFalse:
+    Selection.ShapeRange.Rotation = 0#:
+    Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+    Selection.ShapeRange.PictureFormat.CropRight = 0#:
+    Selection.ShapeRange.PictureFormat.CropTop = 0#:
+    Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+    Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+    Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+    Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Set oDia = ActiveSheet.ChartObjects.Add(0, 0, ActiveSheet.Shapes(1).Width, ActiveSheet.Shapes(1).Height)
+    Set oChartArea = oDia.Chart
+    oDia.Activate
+    oChartArea.ChartArea.Select
+    oChartArea.Paste
+    oChartArea.Export (ActiveWorkbook.Path & "\MPS" & myCnt & ".jpg")
+    Selection.Delete
+    oDia.Delete
+    ActiveSheet.Shapes(myObject).Delete
+    Sheets("Summary").Select
+End Sub
+Sub CopyRetry(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV").Range("I" & myStr1 & ":L" & myPivotTotal1 - 1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ElseIf mySequence1 = "Last" Then
+        Sheets("PV").Range("I" & myPivotTotal1 & ":L" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Else
+        Sheets("PV").Range("A4:" & mySequence1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub CopyRetry1(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV Aged>2 Weeks").Range("A" & myStr1 & ":C" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub PasteRetry(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        ElseIf mySequence2 = "Last" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        Else
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub PasteRetry1(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub SendMails()
+    'Declare Send Mail Property
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    'Set OutMail = OutApp.CreateItem(0)
+    
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    
+    'generateHTMLEmail (1)
+    'mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+    mySubject = "Test" 'Replace(mySubject, Chr(10), " ")
+    'myAttachPath = Range("G1").Value & "\"
+    
+    'Ver18: Change to HTML mail
+    'myBody = Range("F12").Value + vbCr + Range("F47").Value
+    
+    
+    For X = 2 To myTotalSend
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                Set OutMail = OutApp.CreateItem(0)
+                myTo = ""
+                myCc = ""
+                
+                'If Range("G2").Value <> "" Then
+                '    myTo = Range("G2").Value & ";"
+                'End If
+                'If Range("G3").Value Then
+                '    myCC = Range("G3").Value & ";"
+                'End If
+                
+                
+                
+                'imgEmbedComm = "<html><body><img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+                             & "<br><br><br></body></html>"
+                 imgEmbedComm = "<br><B>Embedded Image:</B><br>" _
+& "<img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+& "<br>Best Regards, <br>Sumit</font></span>"
+                htmlBodyCont = imgEmbedComm
+    
+                
+                With OutMail
+                .To = myTo
+                .Cc = myCc
+                .Subject = mySubject '& " (" & Cells(X, 1).Value & ")"
+                '.Body = myBody
+
+                .HTMLBody = htmlBodyCont & "1"
+                
+
+                    
+                    If Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send" Then
+                        .Send
+                        Cells(X, 4).Value = "Sent"
+                    Else
+                        .Display
+                        Range("i1").Value = ActiveWorkbook.Path & "\1.jpg"
+                        Cells(X, 4).Value = "Displayed"
+                    End If
+                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+    MsgBox "Done!!!"
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub OpoSelect()
+    myOpoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Open PO Report (FOB) file")
+    If myOpoFile = False Then
+    Else
+        Range("B4").Value = myOpoFile
+    End If
+End Sub
+Sub SeaShipmentSelect()
+    mySeaFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Sea Shipment Part file")
+    If mySeaFile = False Then
+    Else
+        Range("B6").Value = mySeaFile
+    End If
+End Sub
+Sub PriceBookSelect()
+    myPriceBookFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Price Book file")
+    If myPriceBookFile = False Then
+    Else
+        Range("B8").Value = myPriceBookFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
