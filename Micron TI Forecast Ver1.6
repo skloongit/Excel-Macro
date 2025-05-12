@@ -1,0 +1,750 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myAttachement() As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub TiForecast()
+    ReDim myAttachement(0)
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myTodayFile = Format(Date, "MMDDYYYY")
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    myWorkingFile = Dir(myMacroPath & "\SIG TI Forecast working file.xlsx")
+    If myWorkingFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Error: Micron TI Forecast Automation"
+        '    .HTMLBody = "<html><br>SIG TI Forecast working file.xlsx file not found.<br/>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ThisWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>SIG TI Forecast working file.xlsx file not found.</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    Else
+        myWorkingFile = myMacroPath & "\SIG TI Forecast working file.xlsx"
+    End If
+    
+    '830_Item Branch
+    For myA = 1 To 4
+        'Ver1.4:
+        'myIbFile = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\830_Item Branch." & Format(Date - myA, "YYYYMMDD") & "*")
+        myIbFile = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\830_Item Branch." & Format(Date - myA, "YYYYMMDD") & "*")
+        If myIbFile <> "" Then Exit For
+    Next myA
+    If myIbFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Error: Micron TI Forecast Automation"
+        '    .HTMLBody = "<html><br><br>Item Branch File not found!.<br/>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ThisWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Item Branch File not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    Else
+        'Ver1.4:
+        'myIbFile = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\" & myIbFile
+        myIbFile = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\" & myIbFile
+    End If
+    
+    'KBL MPF148 TI
+    For myA = 1 To 3
+        'Ver1.4:
+        'myKblFile = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\KBL MPF148 TI." & Format(Date - myA, "YYYYMMDD") & "*")
+        myKblFile = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\KBL MPF148 TI." & Format(Date - myA, "YYYYMMDD") & "*")
+        If myKblFile <> "" Then Exit For
+    Next myA
+    If myKblFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Error: Micron TI Forecast Automation"
+        '    .HTMLBody = "<html><br><br>KBL MPF148 TI File not found!.<br/>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ThisWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>KBL MPF148 TI File not found!.</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    Else
+        'Ver1.4:
+        'myKblFile = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\" & myKblFile
+        myKblFile = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\" & myKblFile
+    End If
+    
+    '830_Receipt Report_Micron_Monthly Bucket_TI
+    For myA = 1 To 3
+        'myReceiptFile = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\830_Receipt Report_Micron_Monthly Bucket_TI." & Format(Date - myA, "YYYYMMDD") & "*")
+        myReceiptFile = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\830_Receipt Report_Micron_Monthly Bucket_TI." & Format(Date - myA, "YYYYMMDD") & "*")
+        If myReceiptFile <> "" Then Exit For
+    Next myA
+    If myReceiptFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Error: Micron TI Forecast Automation"
+        '    .HTMLBody = "<html><br><br>Receipt Report File not found!.<br/>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ThisWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>>Receipt Report File not found!.</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    Else
+        'Ver1.4:
+        'myReceiptFile = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\" & myReceiptFile
+        myReceiptFile = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\" & myReceiptFile
+    End If
+        
+    Workbooks.Open myWorkingFile, ReadOnly:=True
+    myWorkingFilename = ActiveWorkbook.Name
+    Sheets("Active Demand Summary").Select
+    
+    Workbooks.Open myKblFile, ReadOnly:=True
+    myKblFilename = ActiveWorkbook.Name
+    'Sheets("Active Demand Summary").Select
+    myTotalKbl = Range("A" & Rows.Count).End(xlUp).Row
+        'Ver1.2: Add Past column to the first Month column
+        For myA = 4 To myTotalKbl
+            If Range("U" & myA).Value = "Active Demand" Then
+                Range("W" & myA).Value = Range("W" & myA).Value + Range("V" & myA).Value
+            End If
+        Next myA
+    
+    Range("A1:AJ" & myTotalKbl).Copy
+    Workbooks(myWorkingFilename).Activate
+    Range("C1").PasteSpecial xlPasteAll
+    Rows(myTotalKbl + 1 & ":" & Rows.Count).ClearContents
+    Range("A4:A" & myTotalKbl).Value = "=C4&W4"
+    Range("B4:B" & myTotalKbl).Value = "=VLOOKUP(C4,'SIG_TI Forecast'!M:M,1,0)"
+    Workbooks(myKblFilename).Close False
+    
+    Sheets("Receipts").Select
+    Workbooks.Open myReceiptFile, ReadOnly:=True
+    myReceiptFilename = ActiveWorkbook.Name
+    Cells.Copy
+    Workbooks(myWorkingFilename).Activate
+    Range("A1").PasteSpecial xlPasteAll
+    Application.DisplayAlerts = False
+    Workbooks(myReceiptFilename).Close False
+    Application.DisplayAlerts = True
+    
+    Sheets("Price").Select
+    Workbooks.Open myIbFile, ReadOnly:=True
+    myIbFilename = ActiveWorkbook.Name
+    Rows("1:1").Delete
+    myTotalIb = Range("A" & Rows.Count).End(xlUp).Row
+    Call CutInsertColumn("Part", "A")
+    Call CutInsertColumn("Quoted", "B")
+    Range("C1:C" & myTotalIb).Value = "=IF(RIGHT(TRIM(A1),3)=""148"",ROW(A1),""Delete"")"
+    Range("C1:C" & myTotalIb).Value = Range("C1:C" & myTotalIb).Value
+    Range("A1:C" & myTotalIb).RemoveDuplicates Columns:=3, Header:=xlNo
+    Columns("A:B").Copy
+    Workbooks(myWorkingFilename).Activate
+    Range("A1").PasteSpecial xlPasteAll
+    Application.DisplayAlerts = False
+    Workbooks(myIbFilename).Close False
+    Application.DisplayAlerts = True
+    
+    'Check any NA
+    Sheets("Active Demand Summary").Select
+    myError = Application.WorksheetFunction.CountIf(Columns("B:B"), "#N/A")
+    If myError > 0 Then
+        Range("B3:C" & myTotalKbl).Copy
+        Sheets.Add
+        Range("A1").PasteSpecial xlPasteValues
+        ActiveSheet.Name = "Temp"
+        myTotalTemp = Range("A" & Rows.Count).End(xlUp).Row
+        Range("C1").Value = "Delete"
+        Range("C2:C" & myTotalTemp).Value = "=IF(IFERROR(A2,""NA"")=""NA"",ROW(A2),""Delete"")"
+        Range("C2:C" & myTotalTemp).Value = Range("C2:C" & myTotalTemp).Value
+        Range("A1:C" & myTotalTemp).RemoveDuplicates Columns:=3, Header:=xlNo
+        Range("A1:C" & Range("B" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=2, Header:=xlNo
+        myTotalNewPart = Range("B" & Rows.Count).End(xlUp).Row
+    End If
+    
+    Sheets("SIG_TI Forecast").Select
+    For myA = 2 To myTotalNewPart
+        myTotalForecast = Range("L" & Rows.Count).End(xlUp).Row
+        Rows(myTotalForecast - 2 & ":" & myTotalForecast).Copy
+        Rows(myTotalForecast + 1).Insert
+        Range("M" & myTotalForecast + 1 & ":M" & myTotalForecast + 3).Value = Sheets("Temp").Range("B" & myA).Value
+    Next myA
+    
+    'Check any NA
+    myError = Application.WorksheetFunction.CountIf(Columns("G:G"), "#N/A")
+    If myError > 0 Then
+        myTotalForecast = Range("L" & Rows.Count).End(xlUp).Row
+        For myA = myTotalForecast To 3 Step -1
+            If IsError(Range("G" & myA).Value) Then
+                Rows(myA & ":" & myA).Delete
+            End If
+        Next myA
+    End If
+    
+    myTotalForecast = Range("L" & Rows.Count).End(xlUp).Row
+    myMonth = Month(Range("U2").Value) Mod 3
+    
+    If myMonth = 1 Then
+        
+    ElseIf myMonth = 2 Then
+        Columns("U:U").Insert
+    Else
+        Columns("U:V").Insert
+    End If
+    Range("H3:H" & myTotalForecast).Value = "=IF(T:T=""Balance"",IF(OR(U3<0,V3<0,W3<0),""N"",""P""),"""")"
+    Range("H3:H" & myTotalForecast).Value = Range("H3:H" & myTotalForecast).Value
+    Range("I3:I" & myTotalForecast).Value = "=IF(T:T=""Balance"",IF(OR(X3<0,Y3<0,Z3<0),""N"",""P""),"""")"
+    Range("I3:I" & myTotalForecast).Value = Range("I3:I" & myTotalForecast).Value
+    Range("J3:J" & myTotalForecast).Value = "=IF(T:T=""Balance"",IF(OR(AA3<0,AB3<0,AC3<0),""N"",""P""),"""")"
+    Range("J3:J" & myTotalForecast).Value = Range("J3:J" & myTotalForecast).Value
+    Range("K3:K" & myTotalForecast).Value = "=IF(T:T=""Balance"",IF(OR(AD3<0,AE3<0,AF3<0),""N"",""P""),"""")"
+    Range("K3:K" & myTotalForecast).Value = Range("K3:K" & myTotalForecast).Value
+    
+    If myMonth = 1 Then
+        
+    ElseIf myMonth = 2 Then
+        Columns("U:U").Delete
+    Else
+        Columns("U:V").Delete
+    End If
+    
+    Sheets("Part Count").Select
+    Range("B7").Value = "=COUNTIF('SIG_TI Forecast'!H:H,""P"")"
+    Range("B7").Value = Range("B7").Value
+    Range("C7").Value = "=COUNTIF('SIG_TI Forecast'!I:I,""P"")"
+    Range("C7").Value = Range("C7").Value
+    Range("D7").Value = "=COUNTIF('SIG_TI Forecast'!J:J,""P"")"
+    Range("D7").Value = Range("D7").Value
+    Range("E7").Value = "=COUNTIF('SIG_TI Forecast'!K:K,""P"")"
+    Range("E7").Value = Range("E7").Value
+    
+    Range("B4").Value = Sheets("SIG_TI Forecast").Range("U2").Value
+    
+    myMonth = Month(Range("B4").Value) Mod 3
+    If myMonth = 1 Then
+        Range("B5").Value = "=TEXT(B4,""Mmmm"")&"" - ""&TEXT(EDATE(B4,2),""Mmmm"")"
+        Range("C4:E4").Value = "=EDATE(B4,3)"
+    ElseIf myMonth = 2 Then
+        Range("B5").Value = "=TEXT(B4,""Mmmm"")&"" - ""&TEXT(EDATE(B4,1),""Mmmm"")"
+        Range("C4").Value = "=EDATE(B4,2)"
+        Range("D4:E4").Value = "=EDATE(C4,3)"
+    Else
+        Range("B5").Value = "=TEXT(B4,""Mmmm"")"
+        Range("C4").Value = "=EDATE(B4,1)"
+        Range("D4:E4").Value = "=EDATE(C4,3)"
+    End If
+    Range("B5").Value = Range("B5").Value
+    Range("C5:E5").Value = "=TEXT(C4,""Mmmm"")&"" - ""&TEXT(EDATE(C4,2),""Mmmm"")"
+    Range("C5:E5").Value = Range("C5:E5").Value
+    Range("B6:E6").Value = "=""FY'""&RIGHT(YEAR(B4),2)&"" CQ""&ROUNDUP(MONTH(B4)/3,0)&"" - Forecast"""
+    Range("B6:E6").Value = Range("B6:E6").Value
+    Range("B4:E4").ClearContents
+    
+    Sheets("SIG_TI Forecast").Select
+    Cells.Copy
+    Range("A1").PasteSpecial xlPasteValues
+    Application.CutCopyMode = False
+    Rows("1:1").Delete
+    Columns("A:K").Delete
+    
+    Application.DisplayAlerts = False
+    Sheets("Active Demand Summary").Delete
+    Sheets("Receipts").Delete
+    Sheets("Price").Delete
+    If myError > 0 Then
+        'Ver1.1: Add error handler
+        'Sheets("Temp").Delete
+        ErrorHandler1
+    End If
+    Application.DisplayAlerts = True
+    
+    myCheck = Dir(myMacroPath & "\Report\", vbDirectory)
+    If myCheck = "" Then
+        MkDir (myMacroPath & "\Report")
+    End If
+    
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Report\SGI TI Forecast " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    ActiveWorkbook.Close False
+
+    
+    'With CreateObject("Outlook.Application").CreateItem(0)
+    '    '.To = "sk.loon@plexus.com"
+    '    .Bcc = "sk.loon@plexus.com"
+    '    .To = "Sing-Yee.Ho@plexus.com; Tyng-Yi.Tan@plexus.com; Mooi-Yong.Ngu@plexus.com; Buan-Khoon.Yeap@plexus.com"
+    '    .Cc = ""
+    '    .Subject = "TI Forecast S&D Monthly Report - " & Format(Date, "D Mmm Yyyy")
+    '    .HTMLBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p><b>Hi Sir/Madam,</b>" & _
+    '              "<br><br>Kindly find the attach for updated TI Supply Demand & Historical Receipt Data as per latest info. Please do not hesitate to contact Plexus team if any question. Thank you.<br/>" & _
+    '              "<br></p></BODY></html>"
+    '    .Attachments.Add myMacroPath & "\Report\SGI TI Forecast " & Format(Date, "MMDDYYYY") & ".xlsx"
+    '    '.Display
+    '    .Send
+    'End With
+    myAttachement(0) = myMacroPath & "\Report\SGI TI Forecast " & Format(Date, "MMDDYYYY") & ".xlsx"
+    Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "Sing-Yee.Ho@plexus.com; man-ting.chan@plexus.com; ruby.cheong@plexus.com; Buan-Khoon.Yeap@plexus.com", _
+            "", _
+            "sk.loon@plexus.com", _
+            "TI Forecast S&D Monthly Report - " & Format(Date, "D Mmm Yyyy"), _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p><b>Hi Sir/Madam,</b><br><br>Kindly find the attach for updated TI Supply Demand & Historical Receipt Data as per latest info. Please do not hesitate to contact Plexus team if any question. Thank you.<br/><br></p></BODY></html>", _
+            myAttachement(), _
+            1, 0)
+        GoTo myEnd
+
+myEnd:
+    
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Function RangetoHTML(rng As Range)
+
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        .Cells(1).PasteSpecial Paste:=8
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        .DrawingObjects.Delete
+        On Error GoTo 0
+    End With
+
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    RangetoHTML = ts.ReadAll
+    ts.Close
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+
+    'Close TempWB
+    Application.EnableEvents = False
+    TempWB.Close savechanges:=False
+    Application.EnableEvents = True
+
+    'Delete the htm file we used in this function
+    Kill TempFile
+
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+Sub CopyRetry(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV").Range("I" & myStr1 & ":L" & myPivotTotal1 - 1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ElseIf mySequence1 = "Last" Then
+        Sheets("PV").Range("I" & myPivotTotal1 & ":L" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Else
+        Sheets("PV").Range("A4:" & mySequence1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub CopyRetry1(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV Aged>2 Weeks").Range("A" & myStr1 & ":C" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub PasteRetry(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        ElseIf mySequence2 = "Last" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        Else
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub PasteRetry1(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub SendMails()
+    'Declare Send Mail Property
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    'Set OutMail = OutApp.CreateItem(0)
+    
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    
+    'generateHTMLEmail (1)
+    'mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+    mySubject = "Test" 'Replace(mySubject, Chr(10), " ")
+    'myAttachPath = Range("G1").Value & "\"
+    
+    'Ver18: Change to HTML mail
+    'myBody = Range("F12").Value + vbCr + Range("F47").Value
+    
+    
+    For X = 2 To myTotalSend
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                Set OutMail = OutApp.CreateItem(0)
+                myTo = ""
+                myCc = ""
+                
+                'If Range("G2").Value <> "" Then
+                '    myTo = Range("G2").Value & ";"
+                'End If
+                'If Range("G3").Value Then
+                '    myCC = Range("G3").Value & ";"
+                'End If
+                
+                
+                
+                'imgEmbedComm = "<html><body><img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+                             & "<br><br><br></body></html>"
+                 imgEmbedComm = "<br><B>Embedded Image:</B><br>" _
+& "<img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+& "<br>Best Regards, <br>Sumit</font></span>"
+                htmlBodyCont = imgEmbedComm
+    
+                
+                With OutMail
+                .To = myTo
+                .Cc = myCc
+                .Subject = mySubject '& " (" & Cells(X, 1).Value & ")"
+                '.Body = myBody
+
+                .HTMLBody = htmlBodyCont & "1"
+                
+
+                    
+                    If Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send" Then
+                        .Send
+                        Cells(X, 4).Value = "Sent"
+                    Else
+                        .Display
+                        Range("i1").Value = ActiveWorkbook.Path & "\1.jpg"
+                        Cells(X, 4).Value = "Displayed"
+                    End If
+                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+    MsgBox "Done!!!"
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, after:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        'MsgBox myHeader & " column not found! The Macro will stop here!"
+        'End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, after:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub OpoSelect()
+    myOpoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Open PO Report (FOB) file")
+    If myOpoFile = False Then
+    Else
+        Range("B4").Value = myOpoFile
+    End If
+End Sub
+Sub SeaShipmentSelect()
+    mySeaFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Sea Shipment Part file")
+    If mySeaFile = False Then
+    Else
+        Range("B6").Value = mySeaFile
+    End If
+End Sub
+Sub PriceBookSelect()
+    myPriceBookFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Price Book file")
+    If myPriceBookFile = False Then
+    Else
+        Range("B8").Value = myPriceBookFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+    Sheets("Temp").Delete
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+'Function RangetoHTML(rng As Range)
+'
+'    Dim fso As Object
+'    Dim ts As Object
+'    Dim TempFile As String
+'    Dim TempWB As Workbook
+'
+'    On Error GoTo myQuit
+'    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+'
+'    'Copy the range and create a new workbook to past the data in
+'    rng.Copy
+'    Set TempWB = Workbooks.Add(1)
+'    With TempWB.Sheets(1)
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial Paste:=8
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteValues, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).Select
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        Application.CutCopyMode = False
+'        On Error Resume Next
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Visible = True
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Delete
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        On Error GoTo 0
+'    End With
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Publish the sheet to a htm file
+'    With TempWB.PublishObjects.Add( _
+'         SourceType:=xlSourceRange, _
+'         Filename:=TempFile, _
+'         Sheet:=TempWB.Sheets(1).Name, _
+'         Source:=TempWB.Sheets(1).UsedRange.Address, _
+'         HtmlType:=xlHtmlStatic)
+'        .Publish (True)
+'    End With
+'
+'    'Read all data from the htm file into RangetoHTML
+'    Set fso = CreateObject("Scripting.FileSystemObject")
+'    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = ts.ReadAll
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    ts.Close
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Close TempWB
+'    TempWB.Close savechanges:=False
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Delete the htm file we used in this function
+'    Kill TempFile
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    Set ts = Nothing
+'    Set fso = Nothing
+'    Set TempWB = Nothing
+'myQuit:
+'End Function
