@@ -1,0 +1,136 @@
+Sub WeeklyCapacityUpdate()
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myStrTime = Time
+    Range("E22:K" & Rows.Count).ClearContents
+    
+    myUphFile = Range("B3").Value
+    myOpenOrderFile = Range("B5").Value
+    
+    myTotalStkType = Range("B" & Rows.Count).End(xlUp).Row
+    For myA = 22 To myTotalStkType
+        myOverallStkType = myOverallStkType & "RC[7]=""" & Range("B" & myA).Value & ""","
+    Next myA
+    myOverallStkType = "=IF(OR(" & Left(myOverallStkType, Len(myOverallStkType) - 1) & "),ROW(RC[-1]),""Delete"")"
+    
+    myTotalMpf = Range("C" & Rows.Count).End(xlUp).Row
+    For myA = 22 To myTotalMpf
+        myOverallMpf = myOverallMpf & "RC[1]=""" & Range("C" & myA).Value & ""","
+    Next myA
+    myOverallMpf = "=IF(OR(" & Left(myOverallMpf, Len(myOverallMpf) - 1) & "),ROW(RC[-1]),""Delete"")"
+    
+
+    Workbooks.Open myUphFile, , True
+    PcbaSheetSelect
+    myUphFilename = ActiveWorkbook.Name
+        
+    Workbooks.Open myOpenOrderFile, , True
+    ErrHnd1
+    myShortageFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    myTotalOpenOrder = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A2").Value = "Delete"
+    Range("A3:A" & myTotalOpenOrder).Value = myOverallMpf
+    Range("A3:A" & myTotalOpenOrder).Value = Range("A3:A" & myTotalOpenOrder).Value
+    ActiveSheet.Range("$A$2:$AF$" & myTotalOpenOrder).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalOpenOrder = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A3:A" & myTotalOpenOrder).Value = myOverallStkType
+    Range("A3:A" & myTotalOpenOrder).Value = Range("A3:A" & myTotalOpenOrder).Value
+    ActiveSheet.Range("$A$2:$AF$" & myTotalOpenOrder).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalOpenOrder = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A2").Value = "YYYYWW"
+    Range("A3:A" & myTotalOpenOrder).Value = "=YEAR(T3)&TEXT(IF(WEEKNUM(T3)=53,52,WEEKNUM(T3)),""00"")"
+    Range("A3:A" & myTotalOpenOrder).Value = Range("A3:A" & myTotalOpenOrder).Value
+    Range("C3:C" & myTotalOpenOrder).Copy
+    
+    Workbooks(myMacroFile).Activate
+    Range("E22").PasteSpecial xlPasteValues
+    ActiveSheet.Range("$E$21:$E$" & Range("E" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalPart = Range("E" & Rows.Count).End(xlUp).Row
+    Range("F22:F" & myTotalPart).Value = "=IFERROR(VLOOKUP(E22,[" & myUphFilename & "]PCBA!$A:$A,1,0),""NA"")"
+    Range("F22:F" & myTotalPart).Value = Range("F22:F" & myTotalPart).Value
+    Range("G22:G" & myTotalPart).Value = "=LEFT(E22,LEN(E22)-4)"
+    Application.Calculation = xlManual
+    For myA = 22 To myTotalPart
+        Range("H" & myA).Value = InStrRev(Range("G" & myA).Value, "-")
+    Next myA
+    Application.Calculation = xlAutomatic
+    
+    Range("I22:I" & myTotalPart).Value = "=LEFT(G22,H22-1)"
+    Range("J22:J" & myTotalPart).Value = "=IFERROR(IF(F22=""NA"",VLOOKUP(I22&""*"",[" & myUphFilename & "]PCBA!$A:$A,1,0),F22),""ZZZZ[""&E22&""]"")"
+    Range("J22:J" & myTotalPart).Value = Range("J22:J" & myTotalPart).Value
+    ActiveSheet.Range("$J$21:$J$" & myTotalPart).RemoveDuplicates Columns:=1, Header:=xlNo
+    ActiveWorkbook.Worksheets("Update").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Update").Sort.SortFields.Add Key:=Range("J22:J" & myTotalPart), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Update").Sort.SetRange Range("J22:J" & myTotalPart)
+    ActiveWorkbook.Worksheets("Update").Sort.Header = xlNo
+    ActiveWorkbook.Worksheets("Update").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Update").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Update").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Update").Sort.Apply
+    Range("J22:J" & myTotalPart).Replace What:="ZZZZ", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False
+    Range("J22:J" & Range("J" & Rows.Count).End(xlUp).Row).Copy
+    Sheets("MoSch").Select
+    Range("A27").PasteSpecial xlPasteValues
+    myYear = Year(Date)
+    Application.Calculation = xlManual
+    For myA = 2 To 100
+        Cells(24, myA).Value = myYear
+        If Cells(25, myA).Value = "Customer" Then
+            Exit For
+        Else
+            If Cells(25, myA).Value = "52" Then
+                myYear = myYear + 1
+            End If
+        End If
+    Next myA
+    Application.Calculation = xlAutomatic
+    
+    myTotalAll = Range("A" & Rows.Count).End(xlUp).Row
+    Range("B27:AA" & myTotalAll).Value = "=SUMIFS('[" & myShortageFilename & "]Temp'!$Y:$Y,'[" & myShortageFilename & "]Temp'!$A:$A,B$24&TEXT(B$25,""00""),'[" & myShortageFilename & "]Temp'!$C:$C,$A27)"
+    Range("B27:AA" & myTotalAll).Value = Range("B27:AA" & myTotalAll).Value
+    
+    Range("B24:AB24").ClearContents
+    Sheets("Update").Range("E21:M" & Rows.Count).ClearContents
+    Workbooks(myShortageFilename).Close False
+    Workbooks(myUphFilename).Close False
+    myEndTime = Time
+    MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub PcbaSheetSelect()
+    On Error GoTo Err1
+    Sheets("PCBA").Select
+    Exit Sub
+Err1:
+    MsgBox "PCBA Sheet not found! The Macro will stop here..."
+    End
+End Sub
+Sub ErrHnd1()
+    On Error GoTo Err1
+    Sheets("Customer Purchase Order  and CF").Select
+    Exit Sub
+Err1:
+    MsgBox "Customer Purchase Order  and CF Sheet not found! The Macro will stop here..."
+    End
+End Sub
+Sub Macro2()
+'
+' Macro2 Macro
+'
+
+'
+    Range("F110").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IFERROR(VLOOKUP(RC[1]&""*"",[IslandView_UPH_Masterlistrev1.xlsx]PCBA!C1,1,0),""NA"")"
+    Range("F111").Select
+End Sub
+Sub FileSelect()
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).Value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).Value = mySelect
+        End If
+End Sub
