@@ -1,0 +1,793 @@
+Dim myCutInsertCounter As Integer
+Sub DailyOpenPoReceipt()
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+
+    Dim myOpoFile As String
+    myYesterdayFile = Format(Date - 1, "YYYYMMDD")
+    'myLastMonday = Format(Date - (Weekday(Date, vbSunday) - 1), "YYYYMMDD")
+    myLastMonday = Format(Date - (Weekday(Date, vbMonday)), "YYYYMMDD")
+    myOpoFile = Dir("\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Open PO Report." & myYesterdayFile & "*")
+'        'Ver1.3: Get file from Purchasing II
+'        If myOpoFile = "" Then
+'            myOpoFile = Dir("\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Open PO Report." & myYesterdayFile & "*")
+'        End If
+'        If myOpoFile = "" Then
+'            myOpoFile = Dir("\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Open PO Report." & Format(Date, "YYYYMMDD") & "*")
+'        End If
+    If myOpoFile = "" Then
+        With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "Sing-Yee.Ho@plexus.com;sk.loon@plexus.com"
+            .Subject = "830_Open PO Report.830_Open PO Report not found!"
+            .HTMLBody = "\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Open PO Report.830_Open PO Report" & myYesterdayFile
+            .Send
+        End With
+        GoTo myEnd
+        'Application.Quit
+    End If
+    If Right(myOpoFile, 3) = "tmp" Then
+        myOpoFile = Dir()
+        If myOpoFile = "" Then
+            With CreateObject("Outlook.Application").CreateItem(0)
+                .To = "Sing-Yee.Ho@plexus.com;sk.loon@plexus.com"
+                .Subject = "830_Open PO Report.830_Open PO Report not found!"
+                .HTMLBody = "\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Open PO Report.830_Open PO Report" & myYesterdayFile
+                .Send
+            End With
+            GoTo myEnd
+        End If
+        'Application.Quit
+    End If
+
+    myReceiptFile = Dir("\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Receipt Report_All (Daily)." & myYesterdayFile & "*")
+'        'Ver1.3: Get file from Purchasing II
+'        If myReceiptFile = "" Then
+'            myReceiptFile = Dir("\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Receipt Report_All (Daily)." & myYesterdayFile & "*")
+'        End If
+'        If myReceiptFile = "" Then
+'            myReceiptFile = Dir("\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Receipt Report_All (Daily)." & Format(Date, "YYYYMMDD") & "*")
+'        End If
+    If myReceiptFile = "" Then
+         With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "Sing-Yee.Ho@plexus.com;sk.loon@plexus.com"
+            .Subject = "830_Receipt Report_All (Daily) not found!"
+            .HTMLBody = "\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Receipt Report_All (Daily)." & myYesterdayFile
+            .Send
+        End With
+        GoTo myEnd
+        'Application.Quit
+    End If
+        
+    mySuperAFile = Dir("\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Super A." & myLastMonday & "*")
+    If mySuperAFile = "" Then
+        myLocalSuperA = "Yes"
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        Set myFolder = fso.GetFolder("\\ap\penadata\Site\Islandview\purchasing_II\Others\Super A\")
+        'mySuperAFile = Dir("\\ap\penadata\Site\Islandview\purchasing_II\Others\Super A\PLXS Super A*")
+        myTotalFiles = myFolder.Files.Count
+        For Each myFile In myFolder.Files
+            If Left(myFile.Name, 12) = "PLXS Super A" Then
+                myFileLastModified = myFile.DateLastModified
+                If myFileLastModified > myCompareFileLastModified Then
+                    myCompareFileLastModified = myFile.DateLastModified
+                    myFileName = myFile.Name
+                End If
+            End If
+        Next myFile
+        If myFileName <> "" Then
+            Call fso.CopyFile(myFolder & "\" & myFileName, myMacroPath & "\SuperA.xlsx", True)
+            mySuperAFile = "SuperA.xlsx"
+        End If
+
+    End If
+    If mySuperAFile = "" Then
+         With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "Sing-Yee.Ho@plexus.com; sk.loon@plexus.com"
+            .Subject = "830_Super A not found!"
+            .HTMLBody = "\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Super A." & myLastMonday
+            .Send
+        End With
+        GoTo myEnd
+        'Application.Quit
+    End If
+
+    myBucketFile = Dir("\\ap\PenaData\Applications\Report_Kinaxis\Material\830_16 Buckets Report_Monthly (Buy)." & myLastMonday & "*")
+    If myBucketFile = "" Then
+         With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "Sing-Yee.Ho@plexus.com"
+            .Subject = "830_16 Buckets Report_Monthly (Buy) not found!"
+            .HTMLBody = "\\ap\PenaData\Applications\Report_Kinaxis\Material\830_16 Buckets Report_Monthly (Buy)." & myLastMonday
+            .Send
+        End With
+        GoTo myEnd
+        'Application.Quit
+    End If
+    Workbooks.Open Filename:="\\ap\PenaData\Applications\Report_Kinaxis\Material\830_16 Buckets Report_Monthly (Buy)." & myLastMonday & "*", UpdateLinks:=False, ReadOnly:=True
+    myBucketFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+        If myLocalSuperA = "Yes" Then
+            Workbooks.Open myMacroPath & "\SuperA.xlsx", UpdateLinks:=False, ReadOnly:=True
+        Else
+            Workbooks.Open Filename:="\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Super A." & myLastMonday & "*", UpdateLinks:=False, ReadOnly:=True
+        End If
+        
+        'Ver1.7: Select Sheet start with Super As
+        For Each mySheet In Worksheets
+            If Left(mySheet.Name, 8) = "Super As" Then
+                mySheet.Select
+                Exit For
+            End If
+            
+        Next
+        If Left(mySheet.Name, 8) <> "Super As" Then
+             With CreateObject("Outlook.Application").CreateItem(0)
+                .To = "Sing-Yee.Ho@plexus.com"
+                .Subject = "Daily  Open PO & Receipt Traacker Error"
+                .HTMLBody = "Sheet begin with Super As not found in Super A file"
+                .Send
+            End With
+            ActiveWorkbook.Close False
+            Workbooks(myBucketFilename).Close False
+            GoTo myEnd
+        End If
+    
+        mySuperAFilename = ActiveWorkbook.Name
+        ActiveSheet.Name = "Temp"
+            
+            myReceiptFile = Dir("\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Receipt Report_All (Daily)." & myYesterdayFile & "*")
+            'Ver1.3: Get file from Purchasing II
+            If myReceiptFile = "" Then
+'                myReceiptFile = Dir("\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Receipt Report_All (Daily)." & myYesterdayFile & "*")
+'                If myReceiptFile = "" Then
+'                    Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Receipt Report_All (Daily)." & Format(Date, "YYYYMMDD") & "*", UpdateLinks:=False, ReadOnly:=True
+'                Else
+'                    Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Receipt Report_All (Daily)." & myYesterdayFile & "*", UpdateLinks:=False, ReadOnly:=True
+'                End If
+                With CreateObject("Outlook.Application").CreateItem(0)
+                    .To = "Sing-Yee.Ho@plexus.com"
+                    .Subject = "830_Receipt Report_All (Daily) not found!"
+                    .HTMLBody = "\\ap\PenaData\Applications\Report_Kinaxis\Material\830_16 Buckets Report_Monthly (Buy)." & myLastMonday
+                    .Send
+                End With
+                GoTo myEnd
+            Else
+                Workbooks.Open Filename:="\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Receipt Report_All (Daily)." & myYesterdayFile & "*", UpdateLinks:=False, ReadOnly:=True
+            End If
+            'Workbooks.Open Filename:="\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Receipt Report_All (Daily)." & myYesterdayFile & "*", UpdateLinks:=False, ReadOnly:=True
+                
+                'Ver1.5: Delete Requested Ship Date
+                Columns("O:O").Delete
+            myReceiptFilename = ActiveWorkbook.Name
+            ActiveSheet.Name = "Temp"
+            If ActiveSheet.AutoFilterMode = True Then
+               Rows("1:1").AutoFilter
+            End If
+            myTotalReceipt = Range("B" & Rows.Count).End(xlUp).Row
+            If myTotalReceipt > 1 Then
+                Range("AG1").Value = "ABC Code"
+                Range("AG2:AG" & myTotalReceipt).Value = "=IF(IFERROR(VLOOKUP(V2,'[" & mySuperAFilename & "]Temp'!$E:$E,1,0),""NO"")=""NO"",IFERROR(VLOOKUP(V2,'[" & myBucketFilename & "]Temp'!$E:$S,15,0),""""),""Super A"")"
+                Range("AG2:AG" & myTotalReceipt).Value = Range("AG2:AG" & myTotalReceipt).Value
+                Range("AH1").Value = "ABC Code"
+                Range("AH2:AH" & myTotalReceipt).Value = "=RIGHT(V2,3)"
+                Range("AH2:AH" & myTotalReceipt).Copy
+                Range("AH2").PasteSpecial xlPasteValues
+                Range("AI1").Value = "Total"
+                Range("AI2:AI" & myTotalReceipt).Value = "=Z2*AA2"
+                Range("AI2:AI" & myTotalReceipt).Value = Range("AI2:AI" & myTotalReceipt).Value
+                Range("AH2:AH" & myTotalReceipt).Copy
+                Sheets.Add
+                Range("A3").PasteSpecial xlPasteValues
+                Range("A2").Value = "=""875"""
+                Range("A2:A" & myTotalReceipt + 1).RemoveDuplicates Columns:=1, Header:=xlNo
+                Range("A2").ClearContents
+                myTotalPivot = Range("A" & Rows.Count).End(xlUp).Row
+                    'Prevent blank data
+                    If myTotalPivot = 1 Then
+                        myTotalPivot = 3
+                    End If
+                ActiveSheet.Name = "Pivot"
+                ActiveWorkbook.Worksheets("Pivot").Sort.SortFields.Clear
+                ActiveWorkbook.Worksheets("Pivot").Sort.SortFields.Add Key:=Range("A2"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+                ActiveWorkbook.Worksheets("Pivot").Sort.SetRange Range("A2:A" & myTotalPivot)
+                ActiveWorkbook.Worksheets("Pivot").Sort.Header = xlYes
+                ActiveWorkbook.Worksheets("Pivot").Sort.MatchCase = False
+                ActiveWorkbook.Worksheets("Pivot").Sort.Orientation = xlTopToBottom
+                ActiveWorkbook.Worksheets("Pivot").Sort.SortMethod = xlPinYin
+                ActiveWorkbook.Worksheets("Pivot").Sort.Apply
+                Range("A2").Value = "MPF"
+                Range("B2").Value = "Super A"
+                Range("C2").Value = "A"
+                Range("D2").Value = "B"
+                Range("E2").Value = "C"
+                Range("F2").Value = ""
+                Range("G2").Value = "Total"
+                Range("H2").Value = "Super A"
+                Range("I2").Value = "A"
+                Range("J2").Value = "B"
+                Range("K2").Value = "C"
+                Range("L2").Value = ""
+                Range("M2").Value = "Total"
+                Range("B3:F" & myTotalPivot).Value = "=COUNTIFS(Temp!$AH:$AH,$A3,Temp!$AG:$AG,IF(B$2="""","""",B$2))"
+                Range("B3:F" & myTotalPivot).Value = Range("B3:F" & myTotalPivot).Value
+                Range("G3:G" & myTotalPivot).Value = "=SUM(B3:F3)"
+                Range("G3:G" & myTotalPivot).Value = Range("G3:G" & myTotalPivot).Value
+                Range("H3:L" & myTotalPivot).Value = "=SUMIFS(Temp!$AI:$AI,Temp!$AH:$AH,$A3,Temp!$AG:$AG,IF(B$2="""","""",B$2))"
+                Range("H3:L" & myTotalPivot).Value = Range("H3:L" & myTotalPivot).Value
+                Range("M3:M" & myTotalPivot).Value = "=SUM(H3:L3)"
+                Range("M3:M" & myTotalPivot).Value = Range("M3:M" & myTotalPivot).Value
+                Range("A" & myTotalPivot + 1).Value = "Grand Total"
+                'Range("B" & myTotalPivot + 1 & ":M" & myTotalPivot + 1).Value = "=Sum(A3:A" & myTotalPivot & ")"
+                Range("B" & myTotalPivot + 1 & ":M" & myTotalPivot + 1).Value = "=Sum(B3:B" & myTotalPivot & ")"
+                Range("B1").Value = "Count of Part #"
+                Range("H1").Value = "Sum of Total $"
+                Range("B1:G1").Merge
+                Range("H1:M1").Merge
+                
+                Columns("A:A").HorizontalAlignment = xlLeft
+                Range("B1:M1").HorizontalAlignment = xlCenter
+                Range("H3:M" & myTotalPivot + 1).Style = "Currency"
+                Range("H3:M" & myTotalPivot + 1).NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+                Range("B1:G1").Interior.ThemeColor = xlThemeColorAccent4
+                Range("B1:G1").Interior.TintAndShade = -0.249977111117893
+                Range("B2:G2").Interior.ThemeColor = xlThemeColorAccent4
+                Range("B2:G2").Interior.TintAndShade = 0.599993896298105
+                Range("H2:M2").Interior.ThemeColor = xlThemeColorAccent6
+                Range("H2:M2").Interior.TintAndShade = 0.599993896298105
+                Range("H1:M1").Interior.ThemeColor = xlThemeColorAccent6
+                Range("H1:M1").Interior.TintAndShade = -0.249977111117893
+                Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeLeft).LineStyle = xlContinuous
+                Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeRight).LineStyle = xlContinuous
+                Range("A1:M" & myTotalPivot + 1).Borders(xlInsideVertical).LineStyle = xlContinuous
+                Range("A1:M" & myTotalPivot + 1).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+                Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeTop).LineStyle = xlContinuous
+                Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeBottom).LineStyle = xlContinuous
+                Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeTop).Weight = xlMedium
+                Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeBottom).Weight = xlMedium
+                Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeRight).Weight = xlMedium
+                Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeLeft).Weight = xlMedium
+                Range("B1:B" & myTotalPivot + 1).Borders(xlEdgeLeft).Weight = xlMedium
+                Range("H1:H" & myTotalPivot + 1).Borders(xlEdgeLeft).Weight = xlMedium
+                Range("A1:M2").Font.Bold = True
+                Columns("A:M").EntireColumn.AutoFit
+'                Columns("A:M").WrapText = False
+'                Columns("A:M").ShrinkToFit = True
+'                Columns("A:M").WrapText = True
+                Columns("B:G").ColumnWidth = 7.17
+                Columns("B:G").HorizontalAlignment = xlCenter
+                ActiveWindow.DisplayGridlines = False
+                
+                For myY = 8 To 13
+                    If Cells(1, myY).EntireColumn.ColumnWidth < 6 Then
+                        Cells(1, myY).EntireColumn.ColumnWidth = 6
+                    End If
+                Next myY
+                
+    '            For myA = 52 To 1 Step -1
+    '                If Cells(myTotalPivot + 1, myA).Value = "" Then Exit For
+    '                If Cells(myTotalPivot + 1, myA).Value = 0 Then
+    '                    Cells(myTotalPivot + 1, myA).EntireColumn.Delete
+    '                End If
+    '            Next myA
+            
+                'myLastCol = Range("AAA2").End(xlToLeft).Column
+                'Range("A1:M" & myTotalPivot + 1).Select
+                Range("A1:M" & myTotalPivot + 1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+                Sheets.Add
+                
+                Range("A1").PasteSpecial
+                For Each oShape In ActiveSheet.Shapes
+                    strImageName = ActiveSheet.Cells(oShape.TopLeftCell.Row, 1).Value
+                    oShape.Select
+                    'Picture format initialization
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.PictureFormat.Brightness = 0.5:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.Fill.Visible = msoFalse:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.Line.Visible = msoFalse:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.Rotation = 0#:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.PictureFormat.CropRight = 0#:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.PictureFormat.CropTop = 0#:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    '/Picture format initialization
+                    Application.Selection.CopyPicture
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Set oDia = ActiveSheet.ChartObjects.Add(0, 0, oShape.Width, oShape.Height)
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    Set oChartArea = oDia.Chart
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    oDia.Activate
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                    
+                    With oChartArea
+                        .ChartArea.Select
+                        Application.Wait (Now + TimeValue("00:00:01"))
+                        .Paste
+                        Application.Wait (Now + TimeValue("00:00:01"))
+                        .Export (myMacroPath & "\Receipt.jpg")
+                    End With
+                    oDia.Delete 'oChartArea.Delete
+                Next
+                Application.DisplayAlerts = False
+                ActiveSheet.Delete
+                Application.DisplayAlerts = True
+            Else
+                myNothing = "Yes"
+            End If
+            Sheets("Temp").Name = "Raw"
+            myFileSaveDate = Format(Date - 1, "MMDDYYYY") & Format(Time, "HHMMSS") & ".xlsx"
+            Application.EnableEvents = False
+            'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\830_Receipt Report_All (Daily)." & myFileSaveDate, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+            ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\830_Receipt Report_All (Daily)." & myFileSaveDate, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+            Application.Wait (Now + TimeValue("00:00:05"))
+            'ActiveWorkbook.Close False
+            Workbooks("830_Receipt Report_All (Daily)." & myFileSaveDate).Close False
+            Application.EnableEvents = True
+        
+        myOpoFile = Dir("\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Open PO Report." & myYesterdayFile & "*")
+            'Ver1.3: Get file from Purchasing II
+            If myOpoFile = "" Then
+                myReceiptFile = Dir("\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Open PO Report." & myYesterdayFile & "*")
+                If myReceiptFile = "" Then
+                    Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Open PO Report." & Format(Date, "YYYYMMDD") & "*", UpdateLinks:=False, ReadOnly:=True
+                Else
+                    Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\purchasing_II\Others\RR_Reports\830_Open PO Report." & myYesterdayFile & "*", UpdateLinks:=False, ReadOnly:=True
+                End If
+            Else
+                'Ver1.4: Wrong file
+                'Workbooks.Open Filename:="\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Receipt Report_All (Daily)." & myYesterdayFile & "*", UpdateLinks:=False, ReadOnly:=True
+                Workbooks.Open Filename:="\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Open PO Report." & myYesterdayFile & "*", UpdateLinks:=False, ReadOnly:=True
+            End If
+        
+        ''Workbooks.Open Filename:="\\ap\PenaData\Applications\Report_Kinaxis\Material\830_Open PO Report." & myYesterdayFile & "*", UpdateLinks:=False, ReadOnly:=True
+        'Workbooks.Open Filename:="\\ap\PenaData\Applications\Report_Kinaxis\Material\" & myOpoFile, UpdateLinks:=False, ReadOnly:=True
+            
+        myOpoFilename = ActiveWorkbook.Name
+        ActiveSheet.Name = "Temp"
+        If ActiveSheet.AutoFilterMode = True Then
+           Rows("1:1").AutoFilter
+        End If
+            'Ver1.6: New Format
+            Columns("Y:Y").Delete 'Transit Mode
+            Columns("AG:AG").Delete 'Requested Ship Date
+                'Ver1.7: New Format
+                Columns("H:H").Delete 'Transit Mode
+            
+        myTotalReceipt = Range("A" & Rows.Count).End(xlUp).Row
+        Range("AI1").Value = Date
+        Range("AI2:AI" & myTotalReceipt).Value = "=IF(AG2>=$AI$1,""Delete"",IF(C2=""875"",""Delete"",Row(AG2)))"
+        Range("AI2:AI" & myTotalReceipt).Value = Range("AI2:AI" & myTotalReceipt).Value
+        Range("AI1").Value = "Delete"
+        Range("A1:AI" & myTotalReceipt + 1).RemoveDuplicates Columns:=35, Header:=xlNo
+        Range("AI1").Value = "ABC Code"
+        myTotalReceipt = Range("A" & Rows.Count).End(xlUp).Row
+        Range("AI2:AI" & myTotalReceipt).Value = "=IF(IFERROR(VLOOKUP(E2,'[" & mySuperAFilename & "]Temp'!$E:$E,1,0),""NO"")=""NO"",IFERROR(VLOOKUP(E2,'[" & myBucketFilename & "]Temp'!$E:$S,15,0),""""),""Super A"")"
+        Range("AI2:AI" & myTotalReceipt).Value = Range("AI2:AI" & myTotalReceipt).Value
+        
+        Range("C2:C" & myTotalReceipt).Copy
+        Sheets.Add
+        Range("A3").PasteSpecial xlPasteValues
+        Range("A3:A" & myTotalReceipt + 1).RemoveDuplicates Columns:=1, Header:=xlNo
+        myTotalPivot = Range("A" & Rows.Count).End(xlUp).Row
+        ActiveSheet.Name = "Pivot"
+        Sheets("Temp").Name = "Raw"
+        ActiveWorkbook.Worksheets("Pivot").Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("Pivot").Sort.SortFields.Add Key:=Range("A2"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("Pivot").Sort.SetRange Range("A2:A" & myTotalPivot)
+        ActiveWorkbook.Worksheets("Pivot").Sort.Header = xlYes
+        ActiveWorkbook.Worksheets("Pivot").Sort.MatchCase = False
+        ActiveWorkbook.Worksheets("Pivot").Sort.Orientation = xlTopToBottom
+        ActiveWorkbook.Worksheets("Pivot").Sort.SortMethod = xlPinYin
+        ActiveWorkbook.Worksheets("Pivot").Sort.Apply
+        Range("A2").Value = "MPF"
+        Range("B2").Value = "Super A"
+        Range("C2").Value = "A"
+        Range("D2").Value = "B"
+        Range("E2").Value = "C"
+        Range("F2").Value = ""
+        Range("G2").Value = "Total"
+        Range("H2").Value = "Super A"
+        Range("I2").Value = "A"
+        Range("J2").Value = "B"
+        Range("K2").Value = "C"
+        Range("L2").Value = ""
+        Range("M2").Value = "Total"
+        
+        Range("A1").Value = Date - 1
+        Range("B3:F" & myTotalPivot).Value = "=COUNTIFS(Raw!$AF:$AF,""<>"",Raw!$AG:$AG,$A$1,Raw!$C:$C,$A3,Raw!$AI:$AI,IF(B$2="""","""",B$2))"
+        'Range("B3:F" & myTotalPivot).Value = Range("B3:F" & myTotalPivot).Value
+        Range("G3:G" & myTotalPivot).Value = "=SUM(B3:F3)"
+        'Range("G3:G" & myTotalPivot).Value = Range("G3:G" & myTotalPivot).Value
+        Range("H3:L" & myTotalPivot).Value = "=SUMIFS(Raw!$U:$U,Raw!$AF:$AF,""<>"",Raw!$C:$C,$A3,Raw!$AI:$AI,IF(B$2="""","""",B$2),Raw!$AG:$AG,$A$1)"
+        'Range("H3:L" & myTotalPivot).Value = Range("H3:L" & myTotalPivot).Value
+        Range("M3:M" & myTotalPivot).Value = "=SUM(H3:L3)"
+        'Range("M3:M" & myTotalPivot).Value = Range("M3:M" & myTotalPivot).Value
+        Range("A" & myTotalPivot + 1).Value = "Grand Total"
+        Range("B" & myTotalPivot + 1 & ":M" & myTotalPivot + 1).Value = "=Sum(B3:B" & myTotalPivot & ")"
+        Range("B1").Value = "Count of Part #"
+        Range("H1").Value = "Sum of Total $"
+        Range("B1:G1").Merge
+        Range("H1:M1").Merge
+        Columns("A:A").HorizontalAlignment = xlLeft
+        Range("B1:M1").HorizontalAlignment = xlCenter
+        Range("H3:M" & myTotalPivot + 1).Style = "Currency"
+        Range("H3:M" & myTotalPivot + 1).NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        Range("B1:G1").Interior.ThemeColor = xlThemeColorAccent4
+        Range("B1:G1").Interior.TintAndShade = -0.249977111117893
+        Range("B2:G2").Interior.ThemeColor = xlThemeColorAccent4
+        Range("B2:G2").Interior.TintAndShade = 0.599993896298105
+        Range("H2:M2").Interior.ThemeColor = xlThemeColorAccent6
+        Range("H2:M2").Interior.TintAndShade = 0.599993896298105
+        Range("H1:M1").Interior.ThemeColor = xlThemeColorAccent6
+        Range("H1:M1").Interior.TintAndShade = -0.249977111117893
+        Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeRight).LineStyle = xlContinuous
+        Range("A1:M" & myTotalPivot + 1).Borders(xlInsideVertical).LineStyle = xlContinuous
+        Range("A1:M" & myTotalPivot + 1).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeTop).LineStyle = xlContinuous
+        Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeBottom).LineStyle = xlContinuous
+        Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeTop).Weight = xlMedium
+        Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeBottom).Weight = xlMedium
+        Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeRight).Weight = xlMedium
+        Range("A1:M" & myTotalPivot + 1).Borders(xlEdgeLeft).Weight = xlMedium
+        Range("H1:H" & myTotalPivot + 1).Borders(xlEdgeLeft).Weight = xlMedium
+        Range("B1:B" & myTotalPivot + 1).Borders(xlEdgeLeft).Weight = xlMedium
+        Range("B1:M2").Font.Bold = True
+        Columns("A:M").EntireColumn.AutoFit
+'        Columns("A:M").WrapText = False
+'        Columns("A:M").ShrinkToFit = True
+'        Columns("A:M").WrapText = True
+        'Range("H3:M" & myTotalPivot + 1).Style = "Currency"
+        Columns("B:G").ColumnWidth = 7.17
+        Columns("B:G").HorizontalAlignment = xlCenter
+        For myY = 8 To 13
+            If Cells(1, myY).EntireColumn.ColumnWidth < 6 Then
+                Cells(1, myY).EntireColumn.ColumnWidth = 6
+            End If
+        Next myY
+        
+        ActiveWindow.DisplayGridlines = False
+        'Range("A3").AddComment
+        'Range("A3").Comment.Visible = False
+        'Range("A3").Comment.Text Text:="tESt"
+        
+        Columns("A:N").Insert
+        Range("O1:AA" & myTotalPivot + 1).Copy
+        Range("A1").PasteSpecial xlPasteAll
+        Range("B3:F" & myTotalPivot).Value = "=COUNTIFS(Raw!$AF:$AF,""<>"",Raw!$AG:$AG,""<""&$A$1,Raw!$C:$C,$A3,Raw!$AI:$AI,IF(B$2="""","""",B$2))"
+        Range("B3:F" & myTotalPivot).Value = Range("B3:F" & myTotalPivot).Value
+        Range("H3:L" & myTotalPivot).Value = "=SUMIFS(Raw!$U:$U,Raw!$AF:$AF,""<>"",Raw!$C:$C,$A3,Raw!$AI:$AI,IF(B$2="""","""",B$2),Raw!$AG:$AG,""<""&$A$1)"
+        Range("H3:L" & myTotalPivot).Value = Range("H3:L" & myTotalPivot).Value
+        Columns("A:M").EntireColumn.AutoFit
+'        Columns("A:M").WrapText = False
+'        Columns("A:M").ShrinkToFit = True
+'        Columns("A:M").WrapText = True
+        Columns("B:G").ColumnWidth = 7.17
+        Columns("B:G").HorizontalAlignment = xlCenter
+            For myY = 8 To 13
+                If Cells(1, myY).EntireColumn.ColumnWidth < 6 Then
+                    Cells(1, myY).EntireColumn.ColumnWidth = 6
+                End If
+            Next myY
+        Rows("1:1").Insert
+        
+        Range("A1").Value = "=""Open PO before ""& Text(A2,""M/D/YYYY"")"
+        Range("O1").Value = "=""Open PO as of ""& Text(O2,""M/D/YYYY"")"
+        
+        Range("A2:M" & myTotalPivot + 2).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+            Sheets.Add
+            Range("A1").PasteSpecial
+            Sheets("Pivot").Range("O2:AA" & myTotalPivot + 2).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+            Range("O1").PasteSpecial
+            myPicCnt = 1
+            For Each oShape In ActiveSheet.Shapes
+                strImageName = ActiveSheet.Cells(oShape.TopLeftCell.Row, 1).Value
+                oShape.Select
+                'Picture format initialization
+                Selection.ShapeRange.PictureFormat.Contrast = 0.5: Selection.ShapeRange.PictureFormat.Brightness = 0.5: Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic: Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse: Selection.ShapeRange.Fill.Visible = msoFalse: Selection.ShapeRange.Line.Visible = msoFalse: Selection.ShapeRange.Rotation = 0#: Selection.ShapeRange.PictureFormat.CropLeft = 0#: Selection.ShapeRange.PictureFormat.CropRight = 0#: Selection.ShapeRange.PictureFormat.CropTop = 0#: Selection.ShapeRange.PictureFormat.CropBottom = 0#: Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft: Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+                '/Picture format initialization
+                Application.Selection.CopyPicture
+                Set oDia = ActiveSheet.ChartObjects.Add(0, 0, oShape.Width, oShape.Height)
+                Set oChartArea = oDia.Chart
+                oDia.Activate
+                oChartArea.ChartArea.Select
+                oChartArea.Paste
+                oChartArea.Export (myMacroPath & "\OpenPO" & myPicCnt & ".jpg")
+                myPicCnt = myPicCnt + 1
+            Next
+            Application.DisplayAlerts = False
+            ActiveSheet.Delete
+            Application.DisplayAlerts = True
+            Application.EnableEvents = False
+            'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\830_Open PO Report." & myFileSaveDate, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+            ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\830_Open PO Report." & myFileSaveDate, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+            Application.Wait (Now + TimeValue("00:00:05"))
+            'ActiveWorkbook.Close False
+            Workbooks("830_Open PO Report." & myFileSaveDate).Close False
+            
+            
+    Workbooks(myBucketFilename).Close False
+    Workbooks(mySuperAFilename).Close False
+            
+            Application.EnableEvents = True
+            
+    If myNothing = "" Then
+        myPicture1 = myMacroPath & "\Receipt.jpg"
+    End If
+    myPicture2 = myMacroPath & "\OpenPO1.jpg"
+    myPicture3 = myMacroPath & "\OpenPO2.jpg"
+    
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .BCC = "sk.loon@plexus.com"
+        '.To = "sk.loon@plexus.com"
+        '.To = "Purchasing_IslandView_Buyers@plexus.com"
+        '.CC = "isl_purch_mtm@plexus.com; Sonia.Chor@plexus.com"
+        .To = "Sing-Yee.Ho@plexus.com; Sonia.Chor@plexus.com"
+        .Subject = "Daily Open PO & Receipt Tracker"
+        If myNothing = "" Then
+            .Attachments.Add myPicture1
+        End If
+        .Attachments.Add myPicture2
+        .Attachments.Add myPicture3
+        If myNothing = "" Then
+            .HTMLBody = "<html><p>Hi All Buyers," & _
+                      "<html><br>Below is the summary for Daily Open PO & Receipt." & _
+                      "<html><br><br>Receipt:<br/>" & _
+                      "<img src=cid:" & Replace("Receipt.jpg", " ", "%20") & ">" & _
+                      "<html><br><br>Open PO before " & Date - 1 & "(Past Due):<br/>" & _
+                      "<img src=cid:" & Replace("OpenPO1.jpg", " ", "%20") & ">" & _
+                      "<html><br><br>Open PO as of " & Date - 1 & ":<br/>" & _
+                      "<img src=cid:" & Replace("OpenPO2.jpg", " ", "%20") & ">" & _
+                      "<p>Best Regards," & _
+                      "<br>" & UCase(Environ("USERNAME")) & "</p></html>"
+        Else
+            .HTMLBody = "<html><p>Hi All Buyers," & _
+                      "<html><br>Below is the summary for Daily Open PO & Receipt." & _
+                      "<html><br><br>Receipt:<br/>" & _
+                      "<html>No data..." & _
+                      "<html><br><br>Open PO before " & Date - 1 & "(Past Due):<br/>" & _
+                      "<img src=cid:" & Replace("OpenPO1.jpg", " ", "%20") & ">" & _
+                      "<html><br><br>Open PO as of " & Date - 1 & ":<br/>" & _
+                      "<img src=cid:" & Replace("OpenPO2.jpg", " ", "%20") & ">" & _
+                      "<p>Best Regards," & _
+                      "<br>" & UCase(Environ("USERNAME")) & "</p></html>"
+
+        End If
+        .Attachments.Add myMacroPath & "\" & Year(Date) & "\830_Receipt Report_All (Daily)." & myFileSaveDate
+        .Attachments.Add myMacroPath & "\" & Year(Date) & "\830_Open PO Report." & myFileSaveDate
+        '.Display
+        .Send
+        Application.Wait (Now + TimeValue("00:00:10"))
+    End With
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+    
+    'myEndTime = Time
+    'MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub SendMails()
+    'Declare Send Mail Property
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    'Set OutMail = OutApp.CreateItem(0)
+    
+    
+    'Calculate number of the same vendor
+    myFileName = ActiveWorkbook.Name
+    
+    'generateHTMLEmail (1)
+    'mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+    mySubject = "Test" 'Replace(mySubject, Chr(10), " ")
+    'myAttachPath = Range("G1").Value & "\"
+    
+    'Ver18: Change to HTML mail
+    'myBody = Range("F12").Value + vbCr + Range("F47").Value
+    
+    
+    For X = 2 To myTotalSend
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                Set OutMail = OutApp.CreateItem(0)
+                myTo = ""
+                myCc = ""
+                
+                'If Range("G2").Value <> "" Then
+                '    myTo = Range("G2").Value & ";"
+                'End If
+                'If Range("G3").Value Then
+                '    myCC = Range("G3").Value & ";"
+                'End If
+                
+                
+                
+                'imgEmbedComm = "<html><body><img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+                             & "<br><br><br></body></html>"
+                 imgEmbedComm = "<br><B>Embedded Image:</B><br>" _
+& "<img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+& "<br>Best Regards, <br>Sumit</font></span>"
+                htmlBodyCont = imgEmbedComm
+    
+                
+                With OutMail
+                .To = myTo
+                .CC = myCc
+                .Subject = mySubject '& " (" & Cells(X, 1).Value & ")"
+                '.Body = myBody
+
+                .HTMLBody = htmlBodyCont & "1"
+                
+
+                    
+                    If Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send" Then
+                        .Send
+                        Cells(X, 4).Value = "Sent"
+                    Else
+                        .Display
+                        Range("i1").Value = ActiveWorkbook.Path & "\1.jpg"
+                        Cells(X, 4).Value = "Displayed"
+                    End If
+                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+    MsgBox "Done!!!"
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub OpoSelect()
+    myOpoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Open PO Report (FOB) file")
+    If myOpoFile = False Then
+    Else
+        Range("B4").Value = myOpoFile
+    End If
+End Sub
+Sub SeaShipmentSelect()
+    mySeaFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Sea Shipment Part file")
+    If mySeaFile = False Then
+    Else
+        Range("B6").Value = mySeaFile
+    End If
+End Sub
+Sub PriceBookSelect()
+    myPriceBookFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Price Book file")
+    If myPriceBookFile = False Then
+    Else
+        Range("B8").Value = myPriceBookFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+
