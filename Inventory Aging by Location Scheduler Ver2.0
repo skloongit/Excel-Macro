@@ -1,0 +1,799 @@
+Public Declare Function EmptyClipboard Lib "user32" () As Long
+Public Declare Function SetCursorPos Lib "user32" (ByVal X As Long, ByVal Y As Long) As Long
+Public Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, ByVal dwExtraInfo As Long)
+Public Const MOUSEEVENTF_LEFTDOWN = &H2
+Public Const MOUSEEVENTF_LEFTUP = &H4
+Public Const MOUSEEVENTF_RIGHTDOWN As Long = &H8
+Public Const MOUSEEVENTF_RIGHTUP As Long = &H10
+Declare Function GetCursorPos Lib "user32" (lpPoint As POINTAPI) As Long
+Private Declare Function SendMessage Lib "user32" Alias "SendMessageA" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
+
+' Create custom variable that holds two integers
+Type POINTAPI
+    Xcoord As Long
+    Ycoord As Long
+    X As Long
+    Y As Long
+End Type
+Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hWnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Private Declare Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As Long
+Private Declare Function PostMessage Lib "user32" Alias "PostMessageA" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Const WM_CLOSE = &H10
+Public Declare Function SetForegroundWindow Lib "user32" (ByVal hWnd As Long) As Long
+Private Declare Function ShowWindow Lib "user32" (ByVal hWnd As Long, ByVal nCmdSHow As Long) As Long
+
+Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As RECT) As Long
+Private Type RECT
+    Left As Long
+    Top As Long
+    Right As Long
+    Bottom As Long
+End Type
+
+Dim pos As RECT
+Private Declare Function Wow64EnableWow64FsRedirection Lib "kernel32.dll" (ByVal Enable As Boolean) As Boolean
+
+Dim myAttachement(0) As String
+
+
+Sub InvByLocScheduler()
+    'Close existing Excel if any
+    ExcelWnd = FindWindow(vbNullString, "Microsoft Excel")
+    Do Until ExcelWnd = 0
+        SetForegroundWindow ExcelWnd 'Set to foreground
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.SendKeys ("{TAB}")
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.SendKeys (" ")
+        ExcelWnd = FindWindow(vbNullString, "Microsoft Excel")
+    Loop
+    
+    Dim llCoord As POINTAPI
+    Dim lngRet As Long
+    Dim Pid As Long
+    Dim Winwedgedl As Long
+    myCenterX = 738
+    myCenterX = 738
+    'myCenterY = 85
+    myCenterY = 99
+    myLeftOperandX = 400
+    myComparisonX = 680
+    myRightOperandX = 860
+    'myY = 200 '1.225, 2.250, 3.275
+    myY = 214 '1.225, 2.250, 3.275
+    myAddRowX = 232
+    myCheckBox = 215
+    'Add Row need to plus another 32 instead of 25
+    'Title bar center coordinate 738, 85
+    'Application.Wait (Now + TimeValue("00:00:05"))
+    'SetCursorPos myRightOperandX, myY + (25 * 1)
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    'mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    'mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("Literal")
+    'Application.Wait (Now + TimeValue("00:00:05"))
+    'SetCursorPos 738, 85
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    'mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    'mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    'Application.Wait (Now + TimeValue("00:00:05"))
+    'GetCursorPos llCoord
+    'MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+    'Application.Wait (Now + TimeValue("00:00:05"))
+
+    If Sheets("Status").Range("A1").Value = Date Then
+        Application.DisplayAlerts = False
+        Application.Quit
+        End
+    End If
+    
+    'Close all JDE
+    CreateObject("shell.application").minimizeall
+    Call CloseAllWnd
+
+    'Ver2.0: Get JDE shortcut link
+    Dim BufObj As MSForms.DataObject
+    Dim objSFolders As Object
+    Set BufObj = New MSForms.DataObject
+    Set objSFolders = CreateObject("WScript.Shell").SpecialFolders
+    Range("A1").Value = "='\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\Macro_Backup\Info\[Book1.xlsm]Macro'!$B$4"
+    myPass = Replace(Replace(Replace(Replace(Range("A1").Value, "^", "{^}"), "%", "{%}"), "+", "{+}"), "~", "{~}")
+    Range("A1").ClearContents
+    
+    
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    Set fso = CreateObject("Scripting.FileSystemObject")
+myRetry:
+    myResult = JdeLogin(CStr(myPass))
+    If myResult = "Fail" Then GoTo myEnd
+    
+    'Ver1.6: Add in Hillside
+    'For myZ = 1 To 2
+        'Inventory Aging Report By Location - CSV***************************************************************************
+        Application.Wait (Now + TimeValue("00:00:05"))
+        SetCursorPos 84, 585 'Inventory Aging Report By Location - CSV
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:02"))
+        'Data Selection
+        Application.Wait (Now + TimeValue("00:00:15"))
+        'SetCursorPos 241, 223 'Data Selection
+        SetCursorPos 245, 237 'Data Selection
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:02"))
+        'SetCursorPos 263, 164 'Submit
+        SetCursorPos 263, 178 'Submit
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:05"))
+    
+        'Business Unit (F4102)(MCU)[BC]*********************************************************************************************************
+        'Title bar center coordinate 738, 85
+        Application.Wait (Now + TimeValue("00:00:02"))
+        Application.Wait (Now + TimeValue("00:00:02"))
+        SetCursorPos myRightOperandX, myY + (25 * 1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:01"))
+            'Ver1.8:using sendkeys
+            'Application.SendKeys ("Literal")
+            Application.SendKeys ("L") 'Literal
+            Application.Wait (Now + TimeValue("00:00:01"))
+            SetCursorPos 863, 220 'Header
+            Application.Wait (Now + TimeValue("00:00:01"))
+        Application.Wait (Now + TimeValue("00:00:02"))
+        SetCursorPos myCenterX, myCenterY
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:05"))
+        'SetCursorPos 427, 189 'List of Values
+        SetCursorPos 427, 203 'List of Values
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:03"))
+            'Ver1.6: Add in Hillside
+            'Call ListOfValues("830")
+            Call ListOfValues("830")
+            Call ListOfValues("390")
+
+        Call Tick
+    
+    'Delete remaining value
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos myCheckBox, myY + (25 * 2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos myCheckBox, myY + (25 * 3)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos myCheckBox, myY + (25 * 4)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'SetCursorPos 272, 166 'Delete
+    SetCursorPos 272, 180 'Delete
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+    
+    'Order Type (F4311)(DCTO)[BC]*********************************************************************************************************
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos myLeftOperandX, myY + (25 * 2)
+
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.SendKeys ("Location") 'Location (F4111)(LOCN)[BC]
+    'Application.SendKeys ("Location (F4111)(LOCN)[BC]")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos myCenterX, myCenterY
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+'    GetCursorPos llCoord
+'' Display the cursor position coordinates
+'MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+    
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    SetCursorPos 372, 605 ' Location (F4111)(LOCN)[BC]
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    SetCursorPos myComparisonX, myY + (25 * 2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    
+    SetCursorPos myComparisonX, myY + (25 * 2) + 15
+    Application.Wait (Now + TimeValue("00:00:01")) 'Select is equal to
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    
+    
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos myRightOperandX, myY + (25 * 2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.SendKeys ("Literal")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos myCenterX, myCenterY
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:05"))
+    'SetCursorPos 427, 189 'List of Values
+    SetCursorPos 427, 203 'List of Values
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+    Call ListOfValues("LSS2")
+        'Ver1.6: Add in more location for Hillside
+        Call ListOfValues("SAOFFSTE")
+        Call ListOfValues("SAOFFSTECS")
+        Call ListOfValues("ONSTESUP")
+        Call ListOfValues("ONSTESUPCS")
+        Call ListOfValues("QUALCAB")
+        Call ListOfValues("RJHOLD")
+        Call ListOfValues("RIRJHOLD")
+        Call ListOfValues("CSRJHOLD")
+        Call ListOfValues("HMPRJHOLD")
+        
+        'Ver1.7: Add in more location for Hillside
+        Call ListOfValues("CDWH")
+        Call ListOfValues("CDWHEXT")
+        Call ListOfValues("HMPCDWH")
+        Call ListOfValues("LSCDWH")
+        Call ListOfValues("NCMCDWH")
+        
+    Call Tick
+        
+    'Status Code - Last (F4311)(LTTR)[BC]*********************************************************************************************************
+    'Date - Created (Julian)(F4111)(CRDJ)[BC]*********************************************************************************************************
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos myLeftOperandX, myY + (25 * 3)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.SendKeys ("Date")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos myCenterX, myCenterY
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    SetCursorPos myComparisonX, myY + (25 * 3)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos myComparisonX, 340 'is greater than or equal to
+        'SetCursorPos myComparisonX, 375 'is greater than or equal to
+        Application.SendKeys ("iiiii")
+        Application.Wait (Now + TimeValue("00:00:01"))
+        SetCursorPos 863, 220 'Header
+        
+            
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos myRightOperandX, myY + (25 * 3)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.SendKeys ("Literal")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos myCenterX, myCenterY
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:05"))
+    'SetCursorPos 427, 189 'List of Values
+    'mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    'mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    'Application.Wait (Now + TimeValue("00:00:03"))
+        'Ver1.6: No more List of value, left Single Value
+        'Call ListOfValues("01/01/2011")
+        Call SingleValue("01/01/2011")
+    Call Tick
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'Ver1.6: Left 1 tick only
+    'Call Tick
+    'Application.Wait (Now + TimeValue("00:00:02"))
+        'Ver1.2: Clear Location
+        'GetCursorPosDemo
+        'SetCursorPos 383, 213 'Location
+        SetCursorPos 383, 227 'Location
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:05"))
+        For myLoop = 5 To 0 Step -1
+            'SetCursorPos 607, 241 + (36 * myLoop) 'Clear Location
+            SetCursorPos 607, 250 + (36 * myLoop) 'Clear Location
+            Application.Wait (Now + TimeValue("00:00:01"))
+            mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+            mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+            Application.Wait (Now + TimeValue("00:00:02"))
+            'mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+            'mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+            Application.SendKeys (" ")
+            Application.Wait (Now + TimeValue("00:00:02"))
+        Next myLoop
+    
+    'Ver1.3: Set Y for Demand
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos 323, 213 'Location
+    SetCursorPos 323, 227 'Demand
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:05"))
+    'SetCursorPos 505, 241  'Clear Demand
+    'SetCursorPos 505, 255  'Clear Demand
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    'mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    'mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    'Application.Wait (Now + TimeValue("00:00:02"))
+    'mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    'mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    'Application.Wait (Now + TimeValue("00:00:02"))
+    Application.SendKeys ("Y") 'Y
+    Application.Wait (Now + TimeValue("00:00:02"))
+
+    
+    Call Tick
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Call Tick
+    Application.Wait (Now + TimeValue("00:00:05"))
+
+                Sheets("Status").Range("A1").Value = Date
+                'Workbooks(myMacrofile).Save
+                
+                'With CreateObject("Outlook.Application").CreateItem(0)
+                '    '.To = "Sing-Yee.Ho@plexus.com"
+                '    .Bcc = "sk.loon@plexus.com"
+                '    .Subject = "Inventory Aging by Location has been schedule successfully"
+                '    .HTMLBody = "<html><p>Inventory Aging by Location has been schedule successfully"
+                '    '.Display
+                '    .Send
+                'End With
+                Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        "Inventory Aging by Location has been schedule successfully", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Inventory Aging by Location has been schedule successfully</html>", _
+                        myAttachement(), _
+                        0)
+                
+                Application.EnableEvents = False
+                Workbooks(myMacrofile).Save
+                Application.EnableEvents = True
+    'Next myZ
+                
+
+myEnd:
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SendMessage hwndParent, WM_CLOSE, 0, 0 'Close JDE
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    'Ver1.3: Close all JDE
+    Call CloseAllWnd
+
+    Application.DisplayAlerts = False
+    Application.Quit
+End Sub
+Function JdeLogin(myPass As String)
+    Dim objSFolders As Object
+    Dim BufObj As MSForms.DataObject
+    Set BufObj = New MSForms.DataObject
+    Set objSFolders = CreateObject("WScript.Shell").SpecialFolders
+myRetry:
+    strFile = objSFolders("StartMenu") & "\Programs\JDEdwards 9 APAC - PD"
+    strAction = "OPEN"  ' action might be OPEN, NEW or other, depending on what you need to do
+    lngErr = ShellExecute(0, strAction, strFile, "", "", 0)
+    Application.Wait (Now + TimeValue("00:00:30"))
+    
+    'Set Username and Password
+    For myCounter = 1 To 31
+        Application.Wait (Now + TimeValue("00:00:15"))
+        'Can't update Microsoft Edge - \\Remote
+        hWnd = FindWindow(vbNullString, "Can't update Microsoft Edge - \\Remote")
+        Application.Wait (Now + TimeValue("00:00:01"))
+        SendMessage hWnd, WM_CLOSE, 0, 0 'Close WMS
+        Application.Wait (Now + TimeValue("00:00:01"))
+        
+        Winwedgehdl = GetJdeWnd 'Get Microsoft Edge Windows Title
+        ShowWindow Winwedgehdl, 3 '1 is restore, 2 is minimize, 3 is maximize
+        SetForegroundWindow Winwedgehdl 'Set to foreground
+        Application.Wait (Now + TimeValue("00:00:15"))
+        If Winwedgehdl = 0 Then
+            If myCounter > 30 Then
+                If myRetryCnt = 2 Then
+                    'Call SendEmail("WO Aging Report Scheduler Error!", "Unable find JD Edwards \\Remote!", "sk.loon@plexus.com", "")
+                    Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable find JD Edwards \\Remote!</html>", _
+                        myAttachement(), _
+                        0)
+                    
+                    JdeLogin = "Fail"
+                    GoTo myExitSub
+                Else
+                    myRetryCnt = myRetryCnt + 1
+                    GoTo myRetry
+                End If
+            End If
+        Else
+            Application.Wait (Now + TimeValue("00:00:05"))
+            Exit For
+        End If
+    Next myCounter
+    
+    'Can't update Microsoft Edge - \\Remote
+    hWnd = FindWindow(vbNullString, "Can't update Microsoft Edge - \\Remote")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SendMessage hWnd, WM_CLOSE, 0, 0 'Close WMS
+    Application.Wait (Now + TimeValue("00:00:04"))
+
+    ShowWindow Winwedgehdl, 3 '1 is restore, 2 is minimize, 3 is maximize
+    Application.Wait (Now + TimeValue("00:00:04"))
+    SetCursorPos 950, 535 'Select Password Textbox
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+    Application.SendKeys (myPass)
+    Application.Wait (Now + TimeValue("00:00:03"))
+    SetCursorPos 950, 502 'Select Login Textbox
+    Application.Wait (Now + TimeValue("00:00:03"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Application.SendKeys ("sk.loon")
+    Application.Wait (Now + TimeValue("00:00:03"))
+    
+    SetCursorPos 1060, 590 'Click Sign In
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:10"))
+    
+    'Verify URL
+    For myA = 1 To 30
+        Application.Wait (Now + TimeValue("00:00:05"))
+        'BufObj.SetText ""
+        'BufObj.PutInClipboard
+        EmptyClipboard
+        SetCursorPos 1060, 50 'Move to address bar
+        Application.Wait (Now + TimeValue("00:00:02"))
+        mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:02"))
+        SetCursorPos 1100, 175 'Move to address bar
+        Application.Wait (Now + TimeValue("00:00:03"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:02"))
+        BufObj.GetFromClipboard
+        GetClipboardText = BufObj.GetText
+        'If InStr(1, GetClipboardText, "https://jdepd03.plexus.com/jde/E1Menu.maf?jdeowpBackButtonProtect=PROTECTED", vbBinaryCompare) > 0 Then
+        If GetClipboardText = "https://jdepd03.plexus.com/jde/E1Menu.maf?jdeowpBackButtonProtect=PROTECTED" Then
+            myLogin = "Success"
+            Exit For
+        End If
+    Next myA
+    
+    If myLogin <> "Success" Then
+        'Add in retry
+        myRetryLogin = myRetryLogin + 1
+        If myRetryLogin < 4 Then
+            SendMessage hwndParent, WM_CLOSE, 0, 0 'Close JDE
+            GoTo myRetry
+        End If
+    
+        'Call SendEmail("WO Aging Report Scheduler Error!", "Unable login...", "sk.loon@plexus.com", "")
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable login...</html>", _
+                        myAttachement(), _
+                        0)
+        
+        JdeLogin = "Fail"
+        GoTo myExitSub
+    End If
+    
+    For myCounter = 1 To 30
+        Application.Wait (Now + TimeValue("00:00:05"))
+        hwndParent = GetJdeWnd 'Get Microsoft Edge Windows Title
+        If hwndParent <> 0 Then
+            Exit For
+        End If
+    Next myCounter
+    If myCounter > 30 Then
+        myRetryLogin = myRetryLogin + 1
+        If myRetryLogin = 3 Then
+            'Call SendEmail("WO Aging Report Scheduler Error!", "Unable login...", "sk.loon@plexus.com", "")
+            Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable login...</html>", _
+                        myAttachement(), _
+                        0)
+                        
+            JdeLogin = "Fail"
+            GoTo myExitSub
+        Else
+            GoTo myRetry
+        End If
+    End If
+myExitSub:
+End Function
+Sub SendEmail(mySubject As String, myBody As String, myTo As String, myCc As String)
+     With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Cc = myCc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        .Send
+    End With
+End Sub
+Sub DataSelection()
+    Application.Wait (Now + TimeValue("00:00:10"))
+    SetCursorPos 241, 223 'Data Selection
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:05"))
+    SetCursorPos 263, 164 'Submit
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Sub ListOfValues(myValues)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.SendKeys (myValues)
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos 271, 166 '+
+    SetCursorPos 271, 180 '+
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+End Sub
+Sub SingleValue(myValues)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.SendKeys (myValues)
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos 212, 166 'Tick
+    SetCursorPos 212, 180 'Tick
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+End Sub
+Sub Tick()
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'SetCursorPos 212, 166 'Tick
+    SetCursorPos 212, 180 'Tick
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+End Sub
+Sub ReadAllData()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("^a")
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    SendKeys "^{C}"
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Private Sub MoveSingle(myX, myY)
+    SetCursorPos myX, myY 'x and y position
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub MoveSingleClick(myX, myY)
+  SetCursorPos myX, myY 'x and y position
+  Application.Wait (Now + TimeValue("00:00:01"))
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub SingleClick()
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub DoubleClick()
+  'Double click as a quick series of two clicks
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub RightClick()
+  'Right click
+  SetCursorPos 200, 200 'x and y position
+  mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+Sub TypeInCurrentWindow()
+DoEvents
+Application.EnableEvents = False
+Sleep 5000
+
+SendKeys "a"
+SendKeys "^a", True 'Select All
+Sleep 400 'Wait 0.4 seconds (400 milliseconds)
+SendKeys "^c", True 'Copy
+Sleep 400 'Wait 0.4 seconds
+'SendKeys "abcd", True 'Type abcd
+'Sleep 400 'Wait 0.4 seconds
+Application.EnableEvents = True
+End Sub
+Sub GetCursorPosDemo()
+Dim llCoord As POINTAPI
+' Get the cursor positions
+GetCursorPos llCoord
+' Display the cursor position coordinates
+MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim strbody As String
+    Dim i As Integer
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .Attachments.Add myAttachment(myA - 1)
+        Next myA
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
