@@ -1,0 +1,1219 @@
+Sub FileSelect()
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).Value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).Value = mySelect
+        End If
+End Sub
+Sub FileSelectGated()
+    myGetFile = Application.GetOpenFilename(, , "Please select Gated part file:")
+        If myGetFile = False Then
+            End
+        Else
+            Range("F23").Value = myGetFile
+        End If
+End Sub
+Sub FileSelect1()
+    myMacroFile = ActiveWorkbook.Name
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).Value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).Value = mySelect
+        End If
+    Range("A22:F" & Rows.Count).ClearContents
+    Workbooks.Open Range("B13").Value, , True
+    myPoFile = ActiveWorkbook.Name
+    myTotalPo = Range("C" & Rows.Count).End(xlUp).Row
+    myEmptyCheck = Application.WorksheetFunction.CountIfs(Range("N3:N" & myTotalPo), ">" & Workbooks(myMacroFile).Sheets("Macro").Range("B3"), Range("L3:L" & myTotalPo), "*MICRON TECHNOLOGY INC-SYS INTEGRATIONGRP*", Range("R3:R" & myTotalPo), "<>")
+    If myEmptyCheck > 0 Then
+        If ActiveSheet.AutoFilterMode = True Then
+            Rows("2:2").AutoFilter
+            Rows("2:2").AutoFilter
+        Else
+            Rows("2:2").AutoFilter
+        End If
+        Range("B3:B" & myTotalPo).Value = "=Row(A3)"
+        Range("B3:B" & myTotalPo).Value = Range("B3:B" & myTotalPo).Value
+        ActiveSheet.Range("$A$2:$AG$" & myTotalPo).AutoFilter Field:=12, Criteria1:="=*MICRON TECHNOLOGY INC-SYS INTEGRATIONGRP*", Operator:=xlAnd
+        ActiveSheet.Range("$A$2:$AG$" & myTotalPo).AutoFilter Field:=18, Criteria1:="<>", Operator:=xlAnd
+        ActiveSheet.Range("$A$2:$AG$" & myTotalPo).AutoFilter Field:=14, Criteria1:=">" & Workbooks(myMacroFile).Sheets("Macro").Range("B3"), Operator:=xlAnd
+        Range("B3:C" & myTotalPo).Copy
+        Workbooks(myMacroFile).Sheets("Macro").Range("B22").PasteSpecial xlPasteValues
+        Range("H3:H" & myTotalPo).Copy
+        Workbooks(myMacroFile).Sheets("Macro").Range("D22").PasteSpecial xlPasteValues
+        Range("R3:R" & myTotalPo).Copy
+        Workbooks(myMacroFile).Sheets("Macro").Range("E22").PasteSpecial xlPasteValues
+        Application.CutCopyMode = False
+    End If
+    Workbooks(myPoFile).Close False
+    
+    
+End Sub
+Sub PartIdentifier()
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myStrTime = Time
+    
+End Sub
+Sub Ctb()
+    Set fso = New Scripting.FileSystemObject
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    Sheets("New Part").Cells.Clear
+    myStrTime = Time
+    
+    For myC = 22 To Range("B21").End(xlDown).Row
+        myPushoutCriteria = myPushoutCriteria & "BM4=""" & Range("B" & myC).Value & ""","
+    Next myC
+    myPushoutCriteria = "=IF(OR(" & Left(myPushoutCriteria, Len(myPushoutCriteria) - 1) & "),VLOOKUP(BM4,'[" & myMacroFile & "]Macro'!$B:$C,2,0),CI4)"
+    myGated = Range("B17").Value
+    myBomFile = Range("B13").Value
+    myShortageFile = Range("B15").Value
+    myOrderNeedGate = Range("B3").Value
+    
+    'Ver1.8: New Request
+    myYellowGated = Range("B19").Value
+    
+    Workbooks.Open myShortageFile ', , True
+        'Ver2.0: new column added
+        Columns("G:G").Insert
+        Range("G3").Value = "Ship Set"
+        Columns("O:P").Delete
+        Columns("AA:AA").Delete
+        Columns("AZ:BA").Delete
+        Columns("BL:BM").Delete
+        'Ver1.7: 7 new column added that need to be delete
+        Range("K:K,L:L,M:M,O:O,X:X,BB:BB,BH:BH").Delete
+    myShortageFilename = ActiveWorkbook.Name
+    myShortageSheetname = ActiveSheet.Name
+    Workbooks(myMacroFile).Sheets("Macro").Range("F23").Value = myShortageFilename
+    Cells.Font.ColorIndex = xlAutomatic
+    myTotalShortage = Range("E" & Rows.Count).End(xlUp).Row
+    
+    ''Bring from bottom
+    'Range("BM3").Value = "Delete"
+    'Range("BM4:BM" & myTotalShortage).Value = "=IF(U4="""",""Delete"",Row(U4))"
+    'Range("BM4:BM" & myTotalShortage).Value = Range("BM4:BM" & myTotalShortage).Value
+    'ActiveSheet.Range("$A$3:$BM$" & myTotalShortage).RemoveDuplicates Columns:=65, Header:=xlNo
+    'Columns("BM:BM").ClearContents
+    'myTotalShortage = Range("E" & Rows.Count).End(xlUp).Row
+    Range("BM3").Value = myOrderNeedGate
+    Range("BM4:BM" & myTotalShortage).Value = "=IF(AW4<$BM$3,$BM$3,AW4)"
+    Range("BM4:BM" & myTotalShortage).Value = Range("BM4:BM" & myTotalShortage).Value
+    Range("AW4:AW" & myTotalShortage).Value = Range("BM4:BM" & myTotalShortage).Value
+    Columns("BM:BM").ClearContents
+    
+    Sheets.Add after:=ActiveSheet
+    With ActiveSheet.ListObjects.Add(SourceType:=0, Source:=Array( _
+        "OLEDB;Provider=Microsoft.ACE.OLEDB.12.0;Password="""";User ID=Admin;Data Source=" & myBomFile, _
+        ";Mode=Share Deny Write;Extended Properties=""HDR=YES;"";Jet OLEDB:System database="""";Jet OLEDB:Registry Path=", _
+        """"";Jet OLEDB:Database Password="""";Jet OLEDB:Engine Type=37;Jet OLEDB:Database Locking Mode=0;Jet OLEDB:Global Partial Bulk Ops=2", _
+        ";Jet OLEDB:Global Bulk Transactions=1;Jet OLEDB:New Database Password="""";Jet OLEDB:Create System Database=False;Jet OLEDB:Encrypt ", _
+        "Database=False;Jet OLEDB:Don't Copy Locale on Compact=False;Jet OLEDB:Compact Without Replica Repair=False;Jet OLEDB:SFP=False", _
+        ";Jet OLEDB:Support Complex Data=False;Jet OLEDB:Bypass UserInfo Validation=False;Jet OLEDB:Limited DB Caching=False;Jet OLEDB:By" _
+        , "pass ChoiceField Validation=False"), Destination:=Range("$A$1")).QueryTable
+        .CommandType = xlCmdTable
+        .CommandText = Array("BOM$")
+        .RowNumbers = False
+        .FillAdjacentFormulas = False
+        .PreserveFormatting = True
+        .RefreshOnFileOpen = False
+        .BackgroundQuery = True
+        .RefreshStyle = xlInsertDeleteCells
+        .SavePassword = False
+        .SaveData = True
+        .AdjustColumnWidth = True
+        .RefreshPeriod = 0
+        .PreserveColumnInfo = True
+        .SourceDataFile = myBomFile
+        .ListObject.DisplayName = "Table_BOM"
+        .Refresh BackgroundQuery:=False
+        .Delete
+    End With
+    ActiveSheet.Name = "BOM"
+    Sheets(myShortageSheetname).Select
+    Columns("A:Y").Insert
+    'Check for new Part
+    Range("Y4:Y" & myTotalShortage).Value = "=IF(AT4="""","""",IF(AD4&AT4=AD3&AT3,Y3,VLOOKUP(AD4&AT4,BOM!A:A,1,0)))"
+    Range("Y4:Y" & myTotalShortage).Value = Range("Y4:Y" & myTotalShortage).Value
+    If Application.WorksheetFunction.CountIf(Range("Y4:Y" & myTotalShortage), "#N/A") > 0 Then
+        'Ver1.5: Ver 1.5: Re-apply fitler
+        If ActiveSheet.AutoFilterMode = True Then
+            Rows("3:3").AutoFilter
+            Range("$Y$3:$CN$" & myTotalShortage).AutoFilter
+        Else
+            Range("$Y$3:$CN$" & myTotalShortage).AutoFilter
+        End If
+        
+        ActiveSheet.Range("$Y$3:$CN$" & myTotalShortage).AutoFilter Field:=1, Criteria1:="#N/A"
+        'ActiveSheet.Range("$Y$3:$CN$" & myTotalShortage).AutoFilter Field:=25, Criteria1:="#N/A"
+        
+        Range("AD3:AD" & myTotalShortage).Copy Workbooks(myMacroFile).Sheets("New Part").Range("A1")
+        Range("AT3:AT" & myTotalShortage).Copy Workbooks(myMacroFile).Sheets("New Part").Range("B1")
+        Workbooks(myShortageFilename).Close False
+        Sheets("New Part").Select
+        ActiveSheet.Range("$A$1:$B$" & Range("A" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=Array(1, 2), Header:=xlYes
+        MsgBox "New part found. Please update the BOM file and re-run the Macro"
+        End
+    Else
+        Range("Y4:Y" & myTotalShortage).ClearContents
+    End If
+    
+    Range("Z4:Z" & myTotalShortage).Value = "=Row(Y1)"
+    Range("Z4:Z" & myTotalShortage).Value = Range("Z4:Z" & myTotalShortage).Value
+    'Range("A4:A" & myTotalShortage).Value = "=IF(BV4<TODAY(),TODAY(),BV4)"
+    'Range("A4:A" & myTotalShortage).Value = Range("A4:A" & myTotalShortage).Value
+    'Range("BV4:BV" & myTotalShortage).Value = Range("A4:A" & myTotalShortage).Value
+    Range("A3").Value = "Group"
+    Workbooks(myMacroFile).Sheets("Calendar").Copy after:=ActiveSheet
+    Sheets.Add Before:=ActiveSheet
+    ActiveSheet.Name = "cum short"
+        'Ver1.4: Change source to prevent memory not enough
+        'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C26:R" & myTotalShortage & "C31", Version:=xlPivotTableVersion15).CreatePivotTable TableDestination:="'cum short'!R1C12", TableName:="PivotTable1", DefaultVersion:=xlPivotTableVersion15
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C30:R" & myTotalShortage & "C31", Version:=xlPivotTableVersion15).CreatePivotTable TableDestination:="'cum short'!R1C12", TableName:="PivotTable1", DefaultVersion:=xlPivotTableVersion15
+    ActiveSheet.PivotTables("PivotTable1").SaveData = False
+    With ActiveSheet.PivotTables("PivotTable1").PivotFields("Number:Line")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Part"), "Count of Part", xlCount
+    Range("D3").Value = "Site"
+    Range("D4:D" & myTotalShortage).Value = "='" & myShortageSheetname & "'!Z4"
+    Range("E3").Value = "Part"
+    Range("E4:E" & myTotalShortage).Value = "='" & myShortageSheetname & "'!BJ4"
+    Range("F3").Value = "Need Qty"
+    Range("F4:F" & myTotalShortage).Value = "='" & myShortageSheetname & "'!BS4"
+    Range("G3").Value = "Need Date"
+    Range("G4:G" & myTotalShortage).Value = "='" & myShortageSheetname & "'!BV4"
+    Range("H3").Value = "ETA"
+    Range("H4:H" & myTotalShortage).Value = "='" & myShortageSheetname & "'!BT4"
+    Range("D4:H" & myTotalShortage).Value = Range("D4:H" & myTotalShortage).Value
+    Columns("G:H").NumberFormat = "m/d/yyyy"
+    'Set ETA to past if Assy Part = empty
+    Range("I4:I" & myTotalShortage).Value = "='" & myShortageSheetname & "'!AT4"
+    Range("I4:I" & myTotalShortage).Value = Range("I4:I" & myTotalShortage).Value
+    Range("J4:J" & myTotalShortage).Value = "=IF(I4=0,"""",E4)"
+    Range("J4:J" & myTotalShortage).Value = Range("J4:J" & myTotalShortage).Value
+    'Range("I4:I" & myTotalShortage).Value = Range("H4:H" & myTotalShortage).Value
+    Range("E4:E" & myTotalShortage).Value = Range("J4:J" & myTotalShortage).Value
+    Range("J4:J" & myTotalShortage).Value = "=IF(I4=0,"""",F4)"
+    Range("J4:J" & myTotalShortage).Value = Range("J4:J" & myTotalShortage).Value
+    Range("F4:F" & myTotalShortage).Value = Range("J4:J" & myTotalShortage).Value
+    
+    ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Add Key:=Range("H4:H" & myTotalShortage), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Add Key:=Range("E4:E" & myTotalShortage), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Add Key:=Range("G4:G" & myTotalShortage), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Add Key:=Range("D4:D" & myTotalShortage), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    With ActiveWorkbook.Worksheets("cum short").Sort
+        .SetRange Range("D4:J" & myTotalShortage)
+        .Header = xlGuess
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+    Set mySearchValue = Columns("H:H").Find(What:="Past", after:=Range("H1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+
+    Else
+        mySearchValueRow = Columns("H:H").Find(What:="Past", after:=Range("H1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+        
+        ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Add Key:=Range("E4:E" & mySearchValueRow - 1), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Add Key:=Range("G4:G" & mySearchValueRow - 1), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Add Key:=Range("D4:D" & mySearchValueRow - 1), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        With ActiveWorkbook.Worksheets("cum short").Sort
+            .SetRange Range("D4:J" & mySearchValueRow - 1)
+            .Header = xlGuess
+            .MatchCase = False
+            .Orientation = xlTopToBottom
+            .SortMethod = xlPinYin
+            .Apply
+        End With
+    End If
+    
+    Range("I3").Value = "Need Qty"
+    Range("I4:I" & myTotalShortage).Value = "=IF(H4=""Past"",""0"",IF(E4=E3,+I3+F4,F4))"
+    Range("J4:J" & myTotalShortage).Value = "=IF(E4=E3,J3+F4,+F4)"
+    Set mySearchValue = Columns("H:H").Find(What:="Past", after:=Range("H1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    
+    If mySearchValue Is Nothing Then
+
+    Else
+        Range("J" & mySearchValueRow & ":J" & myTotalShortage).Value = 0
+    End If
+    
+    
+    Range("A3:A" & myTotalShortage).Value = Range("D3:D" & myTotalShortage).Value
+    Range("B3:B" & myTotalShortage).Value = Range("J3:J" & myTotalShortage).Value
+    ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("cum short").Sort.SortFields.Add Key:=Range("A4:A" & myTotalShortage), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    With ActiveWorkbook.Worksheets("cum short").Sort
+        .SetRange Range("A3:B" & myTotalShortage)
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    Range("A1:B3").Delete xlUp
+    
+    Sheets(myShortageSheetname).Select
+    Columns("AF:AF").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("AF3").Value = "Countif"
+    Range("AF4:AF" & myTotalShortage).Value = "=VLOOKUP(AE4,'cum short'!L:M,2,0)"
+    Range("AF4:AF" & myTotalShortage).Value = Range("AF4:AF" & myTotalShortage).Value
+    Range("CI3").Value = "ETA"
+    Range("CI4:CI" & myTotalShortage).Value = "=IF(BU4=""Past"",""Onhand"",IF(BW4="""",TODAY(),IF(CC4=""M"",+BW4,IF(CC4=""S"",+BW4,IF(CD4=""JITM"",+BW4,+BU4)))))"
+    Range("CI4:CI" & myTotalShortage).Value = Range("CI4:CI" & myTotalShortage).Value
+    Columns("CI:CI").NumberFormat = "m/d/yyyy"
+    Range("CJ3").Value = "RYG"
+    Range("CJ4:CJ" & myTotalShortage).Value = "=IF(CI4=""onhand"",""G"",IF(CI4=""mfg"",""Y"",IF(CI4=""M"",""Y"",IF(CI4-2<=BW4,""Y"",""R""))))"
+    Range("CK3").Value = "Gap"
+    Range("CK4:CK" & myTotalShortage).Value = "=IF(CI4=""Onhand"",0,BW4-CI4)"
+    'Range("CL3").Value = "Remarks"
+    Cells(3, 90).Value = "Remarks"
+    Sheets.Add after:=ActiveSheet
+    ActiveSheet.Name = "DA_Lot#"
+    Range("E1:E" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("AE1:AE" & myTotalShortage).Value
+    ActiveSheet.Range("$E$1:$E$" & myTotalShortage).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTempDaTotal = Range("E" & Rows.Count).End(xlUp).Row
+    Range("F3").Value = 1
+    Range("F4:F" & myTempDaTotal).Value = "=F3+1"
+    
+    Sheets(myShortageSheetname).Select
+    Columns("CI:CK").HorizontalAlignment = xlCenter
+    Range("CI3:CL3").Font.Bold = True
+    Range("CI3:CL3").Interior.Pattern = xlSolid
+    Range("CI3:CL3").Interior.PatternColorIndex = xlAutomatic
+    Range("CI3:CL3").Interior.Color = 65535
+    Columns("CJ:CJ").FormatConditions.Add Type:=xlTextString, String:="R", TextOperator:=xlContains
+    Columns("CJ:CJ").FormatConditions(Columns("CJ:CJ").FormatConditions.Count).SetFirstPriority
+    Columns("CJ:CJ").FormatConditions(1).Font.ColorIndex = xlAutomatic
+    Columns("CJ:CJ").FormatConditions(1).Interior.PatternColorIndex = xlAutomatic
+    Columns("CJ:CJ").FormatConditions(1).Interior.Color = 255
+    Columns("CJ:CJ").FormatConditions(1).StopIfTrue = False
+    Columns("CJ:CJ").FormatConditions.Add Type:=xlTextString, String:="Y", TextOperator:=xlContains
+    Columns("CJ:CJ").FormatConditions(Columns("CJ:CJ").FormatConditions.Count).SetFirstPriority
+    Columns("CJ:CJ").FormatConditions(1).Interior.PatternColorIndex = xlAutomatic
+    Columns("CJ:CJ").FormatConditions(1).Interior.Color = 65535
+    Columns("CJ:CJ").FormatConditions(1).StopIfTrue = False
+    Columns("CJ:CJ").FormatConditions.Add Type:=xlTextString, String:="G", TextOperator:=xlContains
+    Columns("CJ:CJ").FormatConditions(Columns("CJ:CJ").FormatConditions.Count).SetFirstPriority
+    Columns("CJ:CJ").FormatConditions(1).Interior.PatternColorIndex = xlAutomatic
+    Columns("CJ:CJ").FormatConditions(1).Interior.Color = 5296274
+
+    'Sheets(myShortageSheetname).Select
+    'Range("Y3").Value = "final ctb"
+    Range("Y3").Value = "Lot"
+    Range("Y4:Y" & myTotalShortage).Value = "=VLOOKUP(AE4,'DA_Lot#'!E:F,2,0)"
+        'Ver1.4: Paste special value to prevent hand during remove duplicate
+        Range("Y4:Y" & myTotalShortage).Value = Range("Y4:Y" & myTotalShortage).Value
+    'Range("A4:A" & myTotalShortage).Value = Range("Z4:Z" & myTotalShortage).Value
+    Range("A4:A" & myTotalShortage).Value = Range("AC4:AC" & myTotalShortage).Value
+    Range("T3").Value = "CTB(y/n)"
+    Range("T4:T" & myTotalShortage).Value = "=IF(Y4=Y3,""No"",""Yes"")"
+    Range("T4:T" & myTotalShortage).Value = Range("T4:T" & myTotalShortage).Value
+    Range("U3").Value = "CombineKey1=Pull Bom structure"
+    Range("U4:U" & myTotalShortage).Value = "=AD4&AU4"
+    Range("U4:U" & myTotalShortage).Value = Range("U4:U" & myTotalShortage).Value
+    Range("V3").Value = "CombineKey2=Assembly CTB key"
+    Range("V4:V" & myTotalShortage).Value = "=Y4&AU4&AV4&AZ4"
+    Range("V4:V" & myTotalShortage).Value = Range("V4:V" & myTotalShortage).Value
+    Range("W2").Value = Workbooks(myMacroFile).Sheets("Macro").Range("B5").Value
+    Range("W2").NumberFormat = "m/d/yyyy"
+    Range("W3").Value = "Need date Work Week"
+    Range("W4:W" & myTotalShortage).Value = "=IF(BW4>$W$2,TEXT(BW4,""YYYY-MMM""),VLOOKUP(BW4,Calendar!A:J,10,0))"
+    Range("W4:W" & myTotalShortage).Value = Range("W4:W" & myTotalShortage).Value
+    Range("X3").Value = "Cum short"
+    'Range("X4:X" & myTotalShortage).Value = "=VLOOKUP($Z4,'cum short'!$D:$I,6,0)"
+    Range("X4:X" & myTotalShortage).Value = Sheets("cum short").Range("B1:B" & myTotalShortage).Value
+    Range("S3").Value = "CTB($)"
+    Range("S4:S" & myTotalShortage).Value = "=AK4*CM4"
+    'Range("S4:S" & myTotalShortage).Value = Range("S4:S" & myTotalShortage).Value
+    
+    myNeedEmptyDate = Application.WorksheetFunction.CountIf(Range("BW4:BW" & myTotalShortage), "")
+    If myNeedEmptyDate > 0 Then
+        Range("B4:B" & myTotalShortage).Value = "=IF(BW4="""",Today(),BW4)"
+        Range("B4:B" & myTotalShortage).Value = Range("B4:B" & myTotalShortage).Value
+        Range("BW4:BW" & myTotalShortage).Value = Range("B4:B" & myTotalShortage).Value
+        Range("B4:B" & myTotalShortage).ClearContents
+    End If
+
+    Columns("BW:BW").Font.Bold = False
+    Range("BU3").Value = "ETA"
+    Range("B3").Value = "CTB7"
+    Range("C3").Value = "CTB6"
+    Range("D3").Value = "CTB5"
+    Range("E3").Value = "CTB4"
+    Range("F3").Value = "CTB3"
+    Range("G3").Value = "CTB2"
+    Range("H3").Value = "CTB1"
+    Range("I3").Value = "CTB7"
+    Range("J3").Value = "CTB6"
+    Range("K3").Value = "CTB5"
+    Range("L3").Value = "CTB4"
+    Range("M3").Value = "CTB3"
+    Range("N3").Value = "CTB2"
+    Range("O3").Value = "CTB1"
+    Range("P3").Value = "CTB"
+    Range("Q3").Value = "CTB"
+    Range("R3").Value = "CTB Wk"
+    Range("I2:T3").Interior.Pattern = xlSolid
+    Range("I2:T3").Interior.PatternColorIndex = xlAutomatic
+    Range("I2:T3").Interior.ThemeColor = xlThemeColorAccent1
+    Range("I2:T3").Interior.TintAndShade = 0.399975585192419
+    Range("I2:T3").Interior.PatternTintAndShade = 0
+    Range("I2:T3").Font.Bold = True
+    Range("O2").Value = "Assembly"
+    Range("P2").Value = "Final"
+    Range("Q2").Value = "By Level"
+    Range("BJ3").Value = "sa"
+    Range("AT3").Value = "sa"
+    Range("BR3").Value = "Qty Per"
+    Range("BS3").Value = "Supply Qty"
+    Range("BT3").Value = "Need Qty"
+    Range("AM3").Value = "CRD/RSD"
+    
+'    Sheets.Add Before:=ActiveSheet
+'    ActiveSheet.Name = "Pivot_CTB"
+'    myCol = 1
+'    Range("C1").Value = Date
+'    Range("B2").Value = 0
+'    For myA = 1 To 7
+'        If myA = 1 Then
+'            myCtb = "CombineKey2=Assembly CTB key"
+'        ElseIf myA = 7 Then
+'            'myCtb = "final ctb"
+'            myCtb = "lot"
+'        Else
+'            myCtb = "CTB" & myA
+'        End If
+'        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C1:R" & myTotalShortage & "C90").CreatePivotTable TableDestination:="Pivot_CTB!R3C" & myCol, TableName:="PivotTable" & myA
+'        ActiveSheet.PivotTables("PivotTable" & myA).PivotFields(myCtb).Orientation = xlRowField
+'        ActiveSheet.PivotTables("PivotTable" & myA).PivotFields(myCtb).Position = 1
+'        ActiveSheet.PivotTables("PivotTable" & myA).SaveData = False
+'        ActiveSheet.PivotTables("PivotTable" & myA).AddDataField ActiveSheet.PivotTables("PivotTable" & myA).PivotFields("ETA2"), "Max of ETA2", xlMax
+'        Range(Cells(1, myCol + 1), Cells(1, myCol + 2)).EntireColumn.NumberFormat = "m/d/yyyy"
+'        Cells(3, myCol + 2).Value = "CTB" & myA
+'        Cells(3, myCol + 2).Interior.Color = 5296274
+'        Range(Cells(4, myCol + 2), Cells(Cells(Rows.Count, myCol).End(xlUp).Row, myCol + 2)).Value = "=IF(RC[-1]=R2C2,R1C3,IF(WEEKDAY(RC[-1]+2)=7,RC[-1]+4,IF(WEEKDAY(RC[-1]+2)=1,RC[-1]+3,RC[-1]+2)))"
+'        Range(Cells(4, myCol + 3), Cells(Cells(Rows.Count, myCol).End(xlUp).Row, myCol + 3)).Value = "=WEEKDAY(RC[-1],2)"
+'        myCol = myCol + 4
+'    Next myA
+
+    
+    'Gap
+    Sheets.Add after:=ActiveSheet
+    ActiveSheet.Name = "Gap"
+    'ActiveWorkbook.Worksheets("Pivot_CTB").PivotTables("PivotTable1").PivotCache.CreatePivotTable TableDestination:="Gap!R3C1", TableName:="PivotTable1"
+        'Ver1.4: Reduce Pivot source to prevent Memory overload
+        'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C1:R" & myTotalShortage & "C90").CreatePivotTable TableDestination:="Gap!R3C1", TableName:="PivotTable1"
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C23:R" & myTotalShortage & "C88").CreatePivotTable TableDestination:="Gap!R3C1", TableName:="PivotTable1"
+    ActiveSheet.PivotTables("PivotTable1").SaveData = False
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Planner3").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Planner3").Position = 1
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Part2").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Part2").Position = 2
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Description2").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Description2").Position = 3
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Cum short"), "Max of Cum short", xlMax
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("RYG").Orientation = xlPageField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("RYG").Position = 1
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Need date Work Week").Orientation = xlColumnField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Need date Work Week").Position = 1
+    ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+    ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+    Columns("A:N").EntireColumn.AutoFit
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("RYG").CurrentPage = "(All)"
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("RYG").PivotItems("G").Visible = False
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("RYG").PivotItems("Y").Visible = False
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("RYG").EnableMultiplePageItems = True
+    
+    For Each pvtFld In ActiveSheet.PivotTables
+        pvtFld.PivotFields("Planner3").Subtotals(1) = True
+        pvtFld.PivotFields("Planner3").Subtotals(1) = False
+    Next pvtFld
+    For Each pvtFld In ActiveSheet.PivotTables
+        pvtFld.PivotFields("Part2").Subtotals(1) = True
+        pvtFld.PivotFields("Part2").Subtotals(1) = False
+    Next pvtFld
+    For Each pvtFld In ActiveSheet.PivotTables
+        pvtFld.PivotFields("Description2").Subtotals(1) = True
+        pvtFld.PivotFields("Description2").Subtotals(1) = False
+    Next pvtFld
+    
+'    Range(Cells(4, 1), Cells(4, Cells(4, Columns.Count).End(xlToLeft).Column)).Copy
+'    Range("Q4").PasteSpecial xlPasteValues
+'    myTempPivotTotal = Range("B" & Rows.Count).End(xlUp).Row
+'    Range("Q5:Q" & myTempPivotTotal).Value = "=IF(A5="""",+Q4,+A5)"
+'    For myB = 18 To 100
+'        Range(Cells(5, myB), Cells(myTempPivotTotal, myB)).Value = "=RC[-16]"
+'        If Cells(4, myB + 1).Value = "" Then Exit For
+'    Next myB
+    Sheets(myShortageSheetname).Select
+    
+    Range("CS3").Value = "Delete"
+    Range("CS4:CS" & myTotalShortage).Value = "=IF(AU4="""",""Delete"",Row(AU4))"
+    Range("CS4:CS" & myTotalShortage).Value = Range("CS4:CS" & myTotalShortage).Value
+    ActiveSheet.Range("$A$3:$CS$" & myTotalShortage).RemoveDuplicates Columns:=97, Header:=xlNo
+    myTotalShortage = Range("AD" & Rows.Count).End(xlUp).Row
+    Range("CS4:CS" & myTotalShortage).Value = myPushoutCriteria
+    Range("CS4:CS" & myTotalShortage).Value = Range("CS4:CS" & myTotalShortage).Value
+    Range("CI4:CI" & myTotalShortage).Value = Range("CS4:CS" & myTotalShortage).Value
+    Range("AT3").Value = "BOM Index"
+    Range("AT4:AT" & myTotalShortage).Value = "=MATCH(U4,BOM!A:A,0)"
+    'Range("B4:H" & myTotalShortage).Value = "=IF(INDEX(BOM!F:F,$AT4)=0,"""",(INDEX(BOM!F:F,$AT4)))"
+    Range("B4:H" & myTotalShortage).Value = "=IF(INDEX(BOM!F:F,$AT4)=0,"""",(INDEX(BOM!F:F,$AT4)&$Y4))"
+    
+    
+    'Bring from Top
+    Application.ScreenUpdating = False
+    Sheets.Add Before:=ActiveSheet
+    ActiveSheet.Name = "Pivot_CTB"
+    myCol = 1
+    Range("C1").Value = Date
+    Range("B2").Value = 0
+    For myA = 1 To 7
+        If myA = 1 Then
+            myCtb = "CombineKey2=Assembly CTB key"
+            'Ver1.4: Reduce Pivot source to prevent Memory overload
+            'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C1:R" & myTotalShortage & "C90").CreatePivotTable TableDestination:="Pivot_CTB!R3C" & myCol, TableName:="PivotTable" & myA
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C22:R" & myTotalShortage & "C87").CreatePivotTable TableDestination:="Pivot_CTB!R3C" & myCol, TableName:="PivotTable" & myA
+        ElseIf myA = 7 Then
+            'myCtb = "final ctb"
+            myCtb = "lot"
+            'Ver1.4: Reduce Pivot source to prevent Memory overload
+            'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C1:R" & myTotalShortage & "C90").CreatePivotTable TableDestination:="Pivot_CTB!R3C" & myCol, TableName:="PivotTable" & myA
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C25:R" & myTotalShortage & "C87").CreatePivotTable TableDestination:="Pivot_CTB!R3C" & myCol, TableName:="PivotTable" & myA
+        Else
+            myCtb = "CTB" & myA
+            'Ver1.4: Reduce Pivot source to prevent Memory overload
+            'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C1:R" & myTotalShortage & "C90").CreatePivotTable TableDestination:="Pivot_CTB!R3C" & myCol, TableName:="PivotTable" & myA
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C2:R" & myTotalShortage & "C87").CreatePivotTable TableDestination:="Pivot_CTB!R3C" & myCol, TableName:="PivotTable" & myA
+        End If
+        'Ver1.4: Reduce Pivot source to prevent Memory overload
+        'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C1:R" & myTotalShortage & "C90").CreatePivotTable TableDestination:="Pivot_CTB!R3C" & myCol, TableName:="PivotTable" & myA
+        
+        ActiveSheet.PivotTables("PivotTable" & myA).PivotFields(myCtb).Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable" & myA).PivotFields(myCtb).Position = 1
+        ActiveSheet.PivotTables("PivotTable" & myA).SaveData = False
+        ActiveSheet.PivotTables("PivotTable" & myA).AddDataField ActiveSheet.PivotTables("PivotTable" & myA).PivotFields("ETA2"), "Max of ETA2", xlMax
+        Range(Cells(1, myCol + 1), Cells(1, myCol + 2)).EntireColumn.NumberFormat = "m/d/yyyy"
+        Cells(3, myCol + 2).Value = "CTB" & myA
+        Cells(3, myCol + 2).Interior.Color = 5296274
+        Range(Cells(4, myCol + 2), Cells(Cells(Rows.Count, myCol).End(xlUp).Row, myCol + 2)).Value = "=IF(RC[-1]=R2C2,R1C3,IF(WEEKDAY(RC[-1]+2)=7,RC[-1]+4,IF(WEEKDAY(RC[-1]+2)=1,RC[-1]+3,RC[-1]+2)))"
+        Range(Cells(4, myCol + 3), Cells(Cells(Rows.Count, myCol).End(xlUp).Row, myCol + 3)).Value = "=WEEKDAY(RC[-1],2)"
+        myCol = myCol + 4
+    Next myA
+    Application.ScreenUpdating = True
+'    Sheets("Pivot_CTB").Select
+'    myCol = 1
+'    For myA = 1 To 7
+'        ActiveSheet.PivotTables("PivotTable" & myA).PivotCache.Refresh
+'        Range(Cells(4, myCol + 2), Cells(Cells(Rows.Count, myCol).End(xlUp).Row, myCol + 2)).Value = "=IF(RC[-1]=R2C2,R1C3,IF(WEEKDAY(RC[-1]+2)=7,RC[-1]+4,IF(WEEKDAY(RC[-1]+2)=1,RC[-1]+3,RC[-1]+2)))"
+'        Range(Cells(4, myCol + 3), Cells(Cells(Rows.Count, myCol).End(xlUp).Row, myCol + 3)).Value = "=WEEKDAY(RC[-1],2)"
+'        myCol = myCol + 4
+'    Next myA
+
+    Sheets(myShortageSheetname).Select
+    Range("O4:O" & myTotalShortage).Value = "=VLOOKUP(V4,Pivot_CTB!A:C,3,0)"
+    
+    'Ver1.6: Clear AutoFilter Range
+    Rows("3:3").AutoFilter
+    Rows("3:3").AutoFilter
+    
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=7, Criteria1:="<>"
+    Range("N4:N" & myTotalShortage).Value = "=VLOOKUP(G4,Pivot_CTB!E:G,3,0)"
+    ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=7
+        ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=6, Criteria1:="<>"
+        Range("M4:M" & myTotalShortage).Value = "=VLOOKUP(F4,Pivot_CTB!I:K,3,0)"
+        ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=6
+            ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=5, Criteria1:="<>"
+            Range("L4:L" & myTotalShortage).Value = "=VLOOKUP(E4,Pivot_CTB!M:O,3,0)"
+            ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=5
+                ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=4, Criteria1:="<>"
+                Range("K4:K" & myTotalShortage).Value = "=VLOOKUP(D4,Pivot_CTB!Q:S,3,0)"
+                ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=4
+                    ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=3, Criteria1:="<>"
+                    Range("J4:J" & myTotalShortage).Value = "=VLOOKUP(C4,Pivot_CTB!U:W,3,0)"
+                    ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=3
+                        ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=2, Criteria1:="<>"
+                        Range("I4:I" & myTotalShortage).Value = "=VLOOKUP(Y4,Pivot_CTB!Y:AA,3,0)"
+                        ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=2
+                            ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=8, Criteria1:="<>#N/A"
+                            'Range("P4:P" & myTotalShortage).Value = "=IF(H4=""A"",O4,IF(H4=""C"",VLOOKUP(Y4,Pivot_CTB!Y:AA,3,0),OFFSET(I4:O4,0,7-H4,1,1)))"
+                            Range("P4:P" & myTotalShortage).Value = "=IF(LEFT(H4,1)=""A"",O4,IF(LEFT(H4,1)=""C"",VLOOKUP(Y4,Pivot_CTB!Y:AA,3,0),OFFSET(I4:O4,0,7-LEFT(H4,1),1,1)))"
+                            ActiveSheet.Range("$A$3:$CN$" & myTotalShortage).AutoFilter Field:=8
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    Columns("I:P").NumberFormat = "m/d/yyyy"
+    Range("A3").Select
+    'Range(Selection, Selection.End(xlToRight)).Select
+    'Range(Selection, Selection.End(xlDown)).Select
+    Sheets.Add Before:=ActiveSheet
+    ActiveSheet.Name = "Summary"
+        'Ver1.4: Reduce Pivot source to prevent Memory overload
+        Range("A1").Copy
+        Application.CutCopyMode = False
+        'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C1:R" & myTotalShortage & "C90").CreatePivotTable TableDestination:="Summary!R3C1", TableName:="PivotTable1"
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C16:R" & myTotalShortage & "C39").CreatePivotTable TableDestination:="Summary!R3C1", TableName:="PivotTable1"
+
+    ActiveSheet.PivotTables("PivotTable1").SaveData = False
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Part").Orientation = xlRowField
+    'ActiveSheet.PivotTables("PivotTable1").PivotFields("Part").Position = 1
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Number:Line").Orientation = xlRowField
+    'ActiveSheet.PivotTables("PivotTable1").PivotFields("Number:Line").Position = 2
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Qty").Orientation = xlRowField
+    'ActiveSheet.PivotTables("PivotTable1").PivotFields("Qty").Position = 3
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("CRD/RSD").Orientation = xlRowField
+    'ActiveSheet.PivotTables("PivotTable1").PivotFields("CRD/RSD").Position = 4
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("CTB"), "Max of CTB", xlMax
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("Group2").Orientation = xlPageField
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("Group2").Position = 1
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Group").Orientation = xlPageField
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Group").Position = 1
+    'ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+    ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+    ActiveSheet.PivotTables(1).PivotFields("Part").Subtotals(1) = True
+    ActiveSheet.PivotTables(1).PivotFields("Part").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("Number:Line").Subtotals(1) = True
+    ActiveSheet.PivotTables(1).PivotFields("Number:Line").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("Qty").Subtotals(1) = True
+    ActiveSheet.PivotTables(1).PivotFields("Qty").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("CRD/RSD").Subtotals(1) = True
+    ActiveSheet.PivotTables(1).PivotFields("CRD/RSD").Subtotals(1) = False
+    Columns("D:E").NumberFormat = "m/d/yyyy"
+    
+    Sheets.Add Before:=ActiveSheet
+    ActiveSheet.Name = "CTB by lot"
+        'Ver1.4: Reduce Pivot source to prevent Memory overload
+        Range("A1").Copy
+        Application.CutCopyMode = False
+        'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C1:R" & myTotalShortage & "C90").CreatePivotTable TableDestination:="'CTB by lot'!R3C1", TableName:="PivotTable1"
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myShortageSheetname & "!R3C16:R" & myTotalShortage & "C52").CreatePivotTable TableDestination:="'CTB by lot'!R3C1", TableName:="PivotTable1"
+    
+    ActiveSheet.PivotTables("PivotTable1").SaveData = False
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Number:Line").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Part").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Qty").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("CRD/RSD").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Assy Part").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Order Id").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Qty2").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Status2").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Type3").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("CTB").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+    ActiveSheet.PivotTables(1).PivotFields("Number:Line").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("Part").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("Qty").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("CRD/RSD").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("Assy Part").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("Order Id").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("Qty2").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("Status2").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("Type3").Subtotals(1) = False
+    ActiveSheet.PivotTables(1).PivotFields("CTB").Subtotals(1) = False
+        'Ver1.1: Add Group to Pivot Table
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Group").Orientation = xlPageField
+        ActiveSheet.PivotTables("PivotTable1").PivotFields ("Group")
+    'Sheets.Add after:=ActiveSheet
+    'ActiveSheet.Name = "Output"
+    'Sheets(myShortageSheetname).Copy Before:=Sheets(myShortageSheetname)
+    Sheets.Add after:=ActiveSheet
+    ActiveSheet.Name = "Output"
+    Application.ScreenUpdating = False
+    Range("A3:A" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("AD3:AD" & myTotalShortage).Value 'Part
+    Range("B3:B" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("AE3:AE" & myTotalShortage).Value 'Number:Line
+    Range("C3:C" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("AK3:AK" & myTotalShortage).Value 'Open Qty
+    Range("D3:D" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("AM3:AM" & myTotalShortage).Value 'CRD/RSD
+    Range("E3:E" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("P3:P" & myTotalShortage).Value 'Final CTB
+    Range("F3:F" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("AU3:AU" & myTotalShortage).Value 'Assy Part
+    Range("G3:G" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("BK3:BK" & myTotalShortage).Value 'Part
+    Range("H3:H" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("BO3:BO" & myTotalShortage).Value 'MID
+    Range("I3:I" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("CI3:CI" & myTotalShortage).Value 'ETA
+    Range("J3:J" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("CJ3:CJ" & myTotalShortage).Value 'RYG
+        'Ver1.1: Add Group
+        Range("O3:O" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("A3:A" & myTotalShortage).Value 'Group
+    
+    'Range("K3:K" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("AU3:AU" & myTotalShortage).Value
+    'Range("L3:L" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("AU3:AU" & myTotalShortage).Value
+    'Range("M3:M" & myTotalShortage).Value = Sheets(myShortageSheetname).Range("AU3:AU" & myTotalShortage).Value
+    Application.ScreenUpdating = True
+    
+    
+    Range("M3:M" & myTotalShortage).Value = "=IFERROR(IF(J3=""R"",Row(J3),""""),"""")"
+    Range("M3:M" & myTotalShortage).Value = Range("M3:M" & myTotalShortage).Value
+        'Ver1.1: Add Group
+        'Range("A3:M" & myTotalShortage).RemoveDuplicates Columns:=13, Header:=xlNo
+        Range("A3:O" & myTotalShortage).RemoveDuplicates Columns:=13, Header:=xlNo
+    myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    
+    'Ver1.1: Remove this as per Shwu Hooi request on Oct 16, 2019
+    ''Remove 3rd part that contain LOC where the first part is 592-10562-P-148
+    'Range("M3:M" & myOutputTotal).Value = "=IF(A3=""592-10562-P-148"",IF(Countif(G3,""*LOC*"")>0,"""",Row(J3)),Row(J3))"
+    'Range("M3:M" & myOutputTotal).Value = Range("M3:M" & myOutputTotal).Value
+    'Range("A3:M" & myOutputTotal).RemoveDuplicates Columns:=13, Header:=xlNo
+    'myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    
+    ActiveWorkbook.Worksheets("Output").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Output").Sort.SortFields.Add Key:=Range("A3:A" & myOutputTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        'Ver1.1: Add sort criteria
+        ActiveWorkbook.Worksheets("Output").Sort.SortFields.Add Key:=Range("B3:B" & myOutputTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Output").Sort.SortFields.Add Key:=Range("I3:I" & myOutputTotal), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+        'Ver1.1: Add Group
+        'ActiveWorkbook.Worksheets("Output").Sort.SetRange Range("A3:M" & myOutputTotal)
+        ActiveWorkbook.Worksheets("Output").Sort.SetRange Range("A3:O" & myOutputTotal)
+    ActiveWorkbook.Worksheets("Output").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Output").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Output").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Output").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Output").Sort.Apply
+        'Ver1.1: Add Group
+        'Range("A3:M" & myOutputTotal).RemoveDuplicates Columns:=Array(1, 2, 7), Header:=xlNo
+        Range("A3:O" & myOutputTotal).RemoveDuplicates Columns:=Array(1, 2, 7), Header:=xlNo
+    myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("M3:M" & myOutputTotal).Value = "=IF(A3&B3=A2&B2,M2+1,1)"
+    Range("M3:M" & myOutputTotal).Value = Range("M3:M" & myOutputTotal).Value
+    Range("N4:N" & myOutputTotal).Value = "=IF(M4>" & myGated & ","""",ROW(M4))"
+    Range("N4:N" & myOutputTotal).Value = Range("N4:N" & myOutputTotal).Value
+        'Ver1.1: Add Group
+        'Range("A3:N" & myOutputTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+        Range("A3:O" & myOutputTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+    myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Columns("K:L").ColumnWidth = 50
+    Range("K4:K" & myOutputTotal).Value = "=G4&"" (""&H4&"") ETA ""&TEXT(I4,""M/D/YY"")&"" - ""&F4"
+    Range("K4:K" & myOutputTotal).Value = Range("K4:K" & myOutputTotal).Value
+    Range("L4:L" & myOutputTotal).Value = Range("K4:K" & myOutputTotal).Value
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    For myY = myOutputTotal To 4 Step -1
+        If Range("M" & myY).Value > 1 Then
+            Range("L" & myY - Range("M" & myY).Value + 1).Value = Join(Application.WorksheetFunction.Transpose(Range("K" & myY - Range("M" & myY).Value + 1 & ":K" & myY).Value), Chr$(10))
+            myY = myY - Range("M" & myY).Value + 1
+        End If
+    Next myY
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    Range("N4:N" & myOutputTotal).Value = "=IF(M4>1,"""",ROW(M4))"
+    Range("N4:N" & myOutputTotal).Value = Range("N4:N" & myOutputTotal).Value
+        'Ver1.1: Add Group
+        'Range("A3:N" & myOutputTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+        Range("A3:O" & myOutputTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+    myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Rows("1:2").Delete
+    Range("D1").Value = "Request Ship Date"
+    Range("E1").Value = "Material Clean Date"
+    Range("L1").Value = "Last " & myGated & " gated"
+    Range("G1").Value = "Buy Part"
+    Columns("A:L").AutoFit
+    Columns("F:F").Hidden = True
+    Columns("H:K").Hidden = True
+    Columns("M:N").ClearContents
+    
+    Columns("A:I").VerticalAlignment = xlTop
+        'Ver1.1: Add Group
+        Columns("O:O").VerticalAlignment = xlTop
+        Columns("O:O").Cut
+        Columns("A:A").Insert
+        Columns("A:A").AutoFit
+        'Range("A1:L" & myOutputTotal - 2).Select
+        Range("A1:M" & myOutputTotal - 2).Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    Selection.Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Selection.Borders(xlEdgeTop).LineStyle = xlContinuous
+    Selection.Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Selection.Borders(xlEdgeRight).LineStyle = xlContinuous
+    Selection.Borders(xlInsideVertical).LineStyle = xlContinuous
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    
+    Sheets(myShortageSheetname).Range("BK1:CH1").UnMerge
+    Sheets(myShortageSheetname).Columns("X:X").Cut
+    Sheets(myShortageSheetname).Columns("BU:BU").Insert
+    Sheets(myShortageSheetname).Columns("CS:CS").ClearContents
+        'Ver1.4: Set autofit
+        Columns("M:M").ColumnWidth = 70.5
+        Cells.Select
+        Cells.EntireRow.AutoFit
+        Columns("M:M").EntireColumn.AutoFit
+    Rows("2:2").Select
+    ActiveWindow.FreezePanes = True
+    Range("A2").Select
+    
+    'Ver1.8
+    If myYellowGated > 0 Then
+        Sheets.Add after:=ActiveSheet
+        ActiveSheet.Name = "TempYellow"
+        'myTempYellow = Range("AC" & Rows.Count).End(xlUp).Row
+        Range("B1:B" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("AD1:AD" & myTotalShortage).Value
+        Range("C1:C" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("CJ1:CJ" & myTotalShortage).Value
+        Range("D1:D" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("CI1:CI" & myTotalShortage).Value
+        Range("E1:E" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("BN1:BN" & myTotalShortage).Value
+        Range("F1:F" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("BJ1:BJ" & myTotalShortage).Value
+        Range("A1:A" & myTotalShortage).Value = "=IF(C1=""Y"",Row(C1),""Delete"")"
+        Range("A1:A" & myTotalShortage).Value = Range("A1:A" & myTotalShortage).Value
+        Range("A3:F" & myTotalShortage).RemoveDuplicates Columns:=1, Header:=xlNo
+        myTempYellow = Range("A" & Rows.Count).End(xlUp).Row
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SortFields.Add Key:=Range("B3:B" & myTempYellow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SortFields.Add Key:=Range("D3:D" & myTempYellow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SetRange Range("A3:F" & myTempYellow)
+        ActiveWorkbook.Worksheets("TempYellow").Sort.Header = xlYes
+        ActiveWorkbook.Worksheets("TempYellow").Sort.MatchCase = False
+        ActiveWorkbook.Worksheets("TempYellow").Sort.Orientation = xlTopToBottom
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SortMethod = xlPinYin
+        ActiveWorkbook.Worksheets("TempYellow").Sort.Apply
+        Range("G3").Value = "Count"
+        Range("G4:G" & myTempYellow).Value = "=IF(B4=B3,G3+1,1)"
+        Range("A4:A" & myTempYellow).Value = "=B4&G4"
+        Range("H4:H" & myTempYellow).Value = "=F4&"" (""&E4&"") ETA ""&TEXT(D4,""m/d/yy"")"
+        Range("H4:H" & myTempYellow).Value = Range("H4:H" & myTempYellow).Value
+        Sheets("Output").Select
+        Columns("N:N").Insert
+        Range("N1").Value = "Last (" & myYellowGated & " gated Yellow)"
+        Range("M1").Value = Range("M1").Value & " (Red)"
+        
+        Range("N2:N" & myOutputTotal).Value = "=IFERROR(VLOOKUP(C2&""1"",TempYellow!A:H,8,0),"""")"
+        Range("N2:N" & myOutputTotal).Value = Range("N2:N" & myOutputTotal).Value
+        For myLoopCounterA = 2 To myYellowGated
+            Range("O2:O" & myOutputTotal).Value = "=IF(N2="""","""",IFERROR(VLOOKUP(C2&""" & myLoopCounterA & """,TempYellow!A:H,8,0),""""))"
+            Range("O2:O" & myOutputTotal).Value = Range("O2:O" & myOutputTotal).Value
+            Range("P2:P" & myOutputTotal).Value = "=IF(O2="""",N2,N2&Char(10)&O2)"
+            Range("P2:P" & myOutputTotal).Value = Range("P2:P" & myOutputTotal).Value
+            Range("N2:N" & myOutputTotal).Value = Range("P2:P" & myOutputTotal).Value
+        Next myLoopCounterA
+        Columns("O:P").Delete
+        Columns("N:N").Borders(xlDiagonalDown).LineStyle = xlNone
+        Columns("N:N").Borders(xlDiagonalUp).LineStyle = xlNone
+        Columns("N:N").Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlEdgeTop).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlEdgeBottom).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlEdgeRight).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlInsideVertical).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        Application.DisplayAlerts = False
+        Sheets("TempYellow").Delete
+        Application.DisplayAlerts = True
+        
+    End If
+    Columns("M:N").VerticalAlignment = xlTop
+'        'Ver2.1: New requirement requested by Kean-Lee Tho on 1/28/2022 for Conie to have additional sheet of Gated
+'        Sheets("Output").Copy after:=Sheets("Output")
+'        ActiveSheet.Name = "Gated"
+'        Columns("G:L").Delete
+'        Columns("H:J").Delete
+'        myTempTotal = Range("C" & Rows.Count).End(xlUp).Row
+'        For myA = myTempTotal To 2 Step -1
+'            Range("G" & myA).Select
+'            myAlt = Len(ActiveCell.Value) - Len(Replace(ActiveCell.Value, Chr(10), "", 1))
+'            If myAlt > 0 Then
+'                For myB = 1 To myAlt
+'                    ActiveCell.Offset(1, 0).EntireRow.Insert
+'                    myAltLoc = InStrRev(ActiveCell.Value, Chr(10))
+'                    ActiveCell.Offset(1, 0).Value = Mid(ActiveCell.Value, myAltLoc + 1)
+'                    Range(ActiveCell.Offset(1, -6), ActiveCell.Offset(1, -1)).Value = Range(ActiveCell.Offset(0, -6), ActiveCell.Offset(0, -1)).Value
+'                    Range(ActiveCell.Offset(1, -6), ActiveCell.Offset(1, -1)).Font.Color = &HFFFFFF
+'                    ActiveCell.Value = Mid(ActiveCell.Value, 1, myAltLoc - 1)
+'                Next myB
+'            End If
+'            ActiveCell.Offset(-1, 0).Select
+'        Next myA
+        'Ver2.2: Change to other method due to time consuming
+        Sheets("Output").Copy after:=Sheets("Output")
+        ActiveSheet.Name = "Gated"
+        Application.Calculation = xlCalculationManual
+        Columns("G:L").Delete
+        Columns("H:J").Delete
+        myTempTotal = Range("C" & Rows.Count).End(xlUp).Row
+        Columns("G:G").TextToColumns Destination:=Range("H1"), DataType:=xlDelimited, TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, Semicolon:=False, Comma:=False, Space:=False, Other:=True, OtherChar:=Chr(10), FieldInfo:=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1), Array(6, 1)), TrailingMinusNumbers:=True
+        Range("G2:G" & myTempTotal).Value = "=Row(A2)"
+        Range("G2:G" & myTempTotal).Value = Range("G2:G" & myTempTotal).Value
+        For myA = 2 To myTempTotal
+            myLastCol = Cells(myA, Columns.Count).End(xlToLeft).Column
+            For myB = 9 To myLastCol
+                myNewRow = Range("A" & Rows.Count).End(xlUp).Row + 1
+                Range("A" & myNewRow & ":G" & myNewRow).Value = Range("A" & myA & ":G" & myA).Value
+                Range("H" & myNewRow).Value = Cells(myA, myB).Value
+            Next myB
+        Next myA
+        Columns("I:ZZ").ClearContents
+        Columns("H:H").TextToColumns Destination:=Range("I1"), DataType:=xlDelimited, TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, Semicolon:=False, Comma:=False, Space:=False, Other:=True, OtherChar:=" ", FieldInfo:=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1), Array(6, 1)), TrailingMinusNumbers:=True
+        Range("I1").Value = Range("H1").Value
+        Range("J1").Value = "MFG"
+        Range("M1").Value = "ETA"
+        myTempTotal = Range("C" & Rows.Count).End(xlUp).Row
+        Range("M2:M" & myTempTotal).Value = "=K2&"" ""&text(L2,""M/D/YY"")"
+        Range("M2:M" & myTempTotal).Value = Range("M2:M" & myTempTotal).Value
+        Columns("N:N").ClearContents
+        Range("N1").Value = "Need Date"
+        Columns("K:L").Delete
+        ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("G1"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("B1"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("Gated").Sort.SetRange Range("A2:L" & myTempTotal)
+        ActiveWorkbook.Worksheets("Gated").Sort.Header = xlNo
+        ActiveWorkbook.Worksheets("Gated").Sort.MatchCase = False
+        ActiveWorkbook.Worksheets("Gated").Sort.Orientation = xlTopToBottom
+        ActiveWorkbook.Worksheets("Gated").Sort.SortMethod = xlPinYin
+        ActiveWorkbook.Worksheets("Gated").Sort.Apply
+        Columns("G:H").Delete
+        Range("A1:J" & myTempTotal).Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlEdgeTop).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlEdgeBottom).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlEdgeRight).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlInsideVertical).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        Application.Calculation = xlCalculationAutomatic
+        'VEr2.3: Vlookup Need Date
+        Sheets("Detail Shortage by Parent Order").Select
+        Columns("X:X").Insert
+        Range("X4:X" & Range("AD" & Rows.Count).End(xlUp).Row).Value = "=BK4&AE4"
+        Range("X4:X" & Range("AD" & Rows.Count).End(xlUp).Row).Value = Range("X4:X" & Range("AD" & Rows.Count).End(xlUp).Row).Value
+        Sheets("Gated").Select
+        Range("J2:J" & myTempTotal).Value = "=VLOOKUP(G2&C2,'Detail Shortage by Parent Order'!X:BX,53,0)"
+        Range("J2:J" & myTempTotal).Value = Range("J2:J" & myTempTotal).Value
+        Columns("J:J").NumberFormat = "M/D/Yyyy"
+        Columns("A:J").AutoFit
+        Sheets("Detail Shortage by Parent Order").Columns("X:X").Delete
+        
+    myEndTime = Time
+    MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub RefreshGated()
+    myStrTime = Time
+    
+    'Ver1.9: New Request
+    myYellowGated = Range("B19").Value
+    
+    Set fso = New Scripting.FileSystemObject
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myGated = Range("B17").Value
+    myShortageFilename = fso.GetFileName(Range("F23").Value)
+    'Check whether the file is open or not?
+    ErrHnd4 (myShortageFilename)
+    'Delete Output Sheet
+    ErrHnd3
+    For Each myA In Sheets
+        If Left(myA.Name, 6) = "Detail" Then
+            Sheets(myA.Name).Select
+            myShortageSheetname = myA.Name
+            Exit For
+        End If
+    Next
+    
+    If Left(ActiveSheet.Name, 6) <> "Detail" Then
+        MsgBox "Detail Shortage sheet not found!"
+    End If
+    myOutputTotal = Range("AC" & Rows.Count).End(xlUp).Row
+    Sheets.Add after:=ActiveSheet
+    ActiveSheet.Name = "Output"
+    
+    Sheets("Pivot_CTB").Select
+    myCol = 1
+    For myA = 1 To 7
+        ActiveSheet.PivotTables("PivotTable" & myA).PivotCache.Refresh
+        Range(Cells(4, myCol + 2), Cells(Cells(Rows.Count, myCol).End(xlUp).Row, myCol + 2)).Value = "=IF(RC[-1]=R2C2,R1C3,IF(WEEKDAY(RC[-1]+2)=7,RC[-1]+4,IF(WEEKDAY(RC[-1]+2)=1,RC[-1]+3,RC[-1]+2)))"
+        Range(Cells(4, myCol + 3), Cells(Cells(Rows.Count, myCol).End(xlUp).Row, myCol + 3)).Value = "=WEEKDAY(RC[-1],2)"
+        myCol = myCol + 4
+    Next myA
+    
+    Sheets("CTB by lot").Select
+    ActiveSheet.PivotTables("PivotTable1").PivotCache.Refresh
+    
+    Sheets("Summary").Select
+    ActiveSheet.PivotTables("PivotTable1").PivotCache.Refresh
+    
+    Sheets("Gap").Select
+    ActiveSheet.PivotTables("PivotTable1").PivotCache.Refresh
+    
+    Sheets("Output").Select
+    Range("A3:A" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("AC3:AC" & myOutputTotal).Value 'Part
+    Range("B3:B" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("AD3:AD" & myOutputTotal).Value 'Number:Line
+    Range("C3:C" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("AJ3:AJ" & myOutputTotal).Value 'Open Qty
+    Range("D3:D" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("AL3:AL" & myOutputTotal).Value 'CRD/RSD
+    Range("E3:E" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("P3:P" & myOutputTotal).Value 'Final CTB
+    Range("F3:F" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("AT3:AT" & myOutputTotal).Value 'Assy Part
+    Range("G3:G" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("BJ3:BJ" & myOutputTotal).Value 'Part
+    Range("H3:H" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("BN3:BN" & myOutputTotal).Value 'MID
+    Range("I3:I" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("CI3:CI" & myOutputTotal).Value 'ETA
+    Range("J3:J" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("CJ3:CJ" & myOutputTotal).Value 'RYG
+        'Ver1.1: Add Group
+        Range("O3:O" & myOutputTotal).Value = Sheets(myShortageSheetname).Range("A3:A" & myOutputTotal).Value 'Group
+        
+    Range("M3:M" & myOutputTotal).Value = "=IF(J3=""R"",Row(J3),"""")"
+    Range("M3:M" & myOutputTotal).Value = Range("M3:M" & myOutputTotal).Value
+        'Ver1.1: Add Group
+        'Range("A3:M" & myOutputTotal).RemoveDuplicates Columns:=13, Header:=xlNo
+        Range("A3:O" & myOutputTotal).RemoveDuplicates Columns:=13, Header:=xlNo
+    myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    
+    'Ver1.1: Remove this as per Shwu Hooi request on Oct 16, 2019
+    ''Remove 3rd part that contain LOC where the first part is 592-10562-P-148
+    'Range("M3:M" & myOutputTotal).Value = "=IF(A3=""592-10562-P-148"",IF(Countif(G3,""*LOC*"")>0,"""",Row(J3)),Row(J3))"
+    'Range("M3:M" & myOutputTotal).Value = Range("M3:M" & myOutputTotal).Value
+    'Range("A3:M" & myOutputTotal).RemoveDuplicates Columns:=13, Header:=xlNo
+    'myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    
+    ActiveWorkbook.Worksheets("Output").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Output").Sort.SortFields.Add Key:=Range("A3:A" & myOutputTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        'Ver1.1: Add sort criteria: Number line
+        ActiveWorkbook.Worksheets("Output").Sort.SortFields.Add Key:=Range("B3:B" & myOutputTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Output").Sort.SortFields.Add Key:=Range("I3:I" & myOutputTotal), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+        'Ver1.1: Add Group
+        'ActiveWorkbook.Worksheets("Output").Sort.SetRange Range("A3:M" & myOutputTotal)
+        ActiveWorkbook.Worksheets("Output").Sort.SetRange Range("A3:O" & myOutputTotal)
+    ActiveWorkbook.Worksheets("Output").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Output").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Output").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Output").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Output").Sort.Apply
+    
+        'Ver1.1: Add Group
+        'Range("A3:M" & myOutputTotal).RemoveDuplicates Columns:=Array(1, 2, 7), Header:=xlNo
+        Range("A3:O" & myOutputTotal).RemoveDuplicates Columns:=Array(1, 2, 7), Header:=xlNo
+    myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("M3:M" & myOutputTotal).Value = "=IF(A3&B3=A2&B2,M2+1,1)"
+    Range("M3:M" & myOutputTotal).Value = Range("M3:M" & myOutputTotal).Value
+    Range("N4:N" & myOutputTotal).Value = "=IF(M4>" & myGated & ","""",ROW(M4))"
+    Range("N4:N" & myOutputTotal).Value = Range("N4:N" & myOutputTotal).Value
+        'Ver1.1: Add Group
+        'Range("A3:N" & myOutputTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+        Range("A3:O" & myOutputTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+    myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Columns("K:L").ColumnWidth = 50
+    Range("K4:K" & myOutputTotal).Value = "=G4&"" (""&H4&"") ETA ""&TEXT(I4,""M/D/YY"")&"" - ""&F4"
+    Range("K4:K" & myOutputTotal).Value = Range("K4:K" & myOutputTotal).Value
+    Range("L4:L" & myOutputTotal).Value = Range("K4:K" & myOutputTotal).Value
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    For myY = myOutputTotal To 4 Step -1
+        If Range("M" & myY).Value > 1 Then
+            Range("L" & myY - Range("M" & myY).Value + 1).Value = Join(Application.WorksheetFunction.Transpose(Range("K" & myY - Range("M" & myY).Value + 1 & ":K" & myY).Value), Chr$(10))
+            myY = myY - Range("M" & myY).Value + 1
+        End If
+    Next myY
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    Range("N4:N" & myOutputTotal).Value = "=IF(M4>1,"""",ROW(M4))"
+    Range("N4:N" & myOutputTotal).Value = Range("N4:N" & myOutputTotal).Value
+    'Ver1.2: Change range
+    'Range("A3:N" & myOutputTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+    Range("A3:O" & myOutputTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+    myOutputTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Rows("1:2").Delete
+    Range("D1").Value = "Request Ship Date"
+    Range("E1").Value = "Material Clean Date"
+    Range("L1").Value = "Last " & myGated & " gated"
+    Columns("A:L").AutoFit
+    Columns("F:F").Hidden = True
+    Columns("H:K").Hidden = True
+    Columns("M:N").ClearContents
+    
+    Columns("A:I").VerticalAlignment = xlTop
+        'Ver1.1: Add Group
+        Columns("O:O").VerticalAlignment = xlTop
+        Columns("O:O").Cut
+        Columns("A:A").Insert
+        Columns("A:A").AutoFit
+        'Range("A1:L" & myOutputTotal - 2).Select
+        Range("A1:M" & myOutputTotal - 2).Select
+    
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    Selection.Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Selection.Borders(xlEdgeTop).LineStyle = xlContinuous
+    Selection.Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Selection.Borders(xlEdgeRight).LineStyle = xlContinuous
+    Selection.Borders(xlInsideVertical).LineStyle = xlContinuous
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    
+    Rows("2:2").Select
+    ActiveWindow.FreezePanes = True
+    Range("A2").Select
+    
+    ''Ver1.9: New Request
+    If myYellowGated > 0 Then
+        myTotalShortage = Sheets("Detail Shortage by Parent Order").Range("AC" & Rows.Count).End(xlUp).Row
+        Sheets.Add after:=ActiveSheet
+        ActiveSheet.Name = "TempYellow"
+        'myTempYellow = Range("AC" & Rows.Count).End(xlUp).Row
+        Range("B1:B" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("AD1:AD" & myTotalShortage).Value
+        Range("C1:C" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("CJ1:CJ" & myTotalShortage).Value
+        Range("D1:D" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("CI1:CI" & myTotalShortage).Value
+        Range("E1:E" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("BN1:BN" & myTotalShortage).Value
+        Range("F1:F" & myTotalShortage).Value = Sheets("Detail Shortage by Parent Order").Range("BJ1:BJ" & myTotalShortage).Value
+        Range("A1:A" & myTotalShortage).Value = "=IF(C1=""Y"",Row(C1),""Delete"")"
+        Range("A1:A" & myTotalShortage).Value = Range("A1:A" & myTotalShortage).Value
+        Range("A3:F" & myTotalShortage).RemoveDuplicates Columns:=1, Header:=xlNo
+        myTempYellow = Range("A" & Rows.Count).End(xlUp).Row
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SortFields.Add Key:=Range("B3:B" & myTempYellow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SortFields.Add Key:=Range("D3:D" & myTempYellow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SetRange Range("A3:F" & myTempYellow)
+        ActiveWorkbook.Worksheets("TempYellow").Sort.Header = xlYes
+        ActiveWorkbook.Worksheets("TempYellow").Sort.MatchCase = False
+        ActiveWorkbook.Worksheets("TempYellow").Sort.Orientation = xlTopToBottom
+        ActiveWorkbook.Worksheets("TempYellow").Sort.SortMethod = xlPinYin
+        ActiveWorkbook.Worksheets("TempYellow").Sort.Apply
+        Range("G3").Value = "Count"
+        Range("G4:G" & myTempYellow).Value = "=IF(B4=B3,G3+1,1)"
+        Range("A4:A" & myTempYellow).Value = "=B4&G4"
+        Range("H4:H" & myTempYellow).Value = "=F4&"" (""&E4&"") ETA ""&TEXT(D4,""m/d/yy"")"
+        Range("H4:H" & myTempYellow).Value = Range("H4:H" & myTempYellow).Value
+        Sheets("Output").Select
+        Columns("N:N").Insert
+        Range("N1").Value = "Last (" & myYellowGated & " gated Yellow)"
+        Range("M1").Value = Range("M1").Value & " (Red)"
+        
+        Range("N2:N" & myOutputTotal).Value = "=IFERROR(VLOOKUP(C2&""1"",TempYellow!A:H,8,0),"""")"
+        Range("N2:N" & myOutputTotal).Value = Range("N2:N" & myOutputTotal).Value
+        For myLoopCounterA = 2 To myYellowGated
+            Range("O2:O" & myOutputTotal).Value = "=IF(N2="""","""",IFERROR(VLOOKUP(C2&""" & myLoopCounterA & """,TempYellow!A:H,8,0),""""))"
+            Range("O2:O" & myOutputTotal).Value = Range("O2:O" & myOutputTotal).Value
+            Range("P2:P" & myOutputTotal).Value = "=IF(O2="""",N2,N2&Char(10)&O2)"
+            Range("P2:P" & myOutputTotal).Value = Range("P2:P" & myOutputTotal).Value
+            Range("N2:N" & myOutputTotal).Value = Range("P2:P" & myOutputTotal).Value
+        Next myLoopCounterA
+        Columns("O:P").Delete
+        Columns("N:N").Borders(xlDiagonalDown).LineStyle = xlNone
+        Columns("N:N").Borders(xlDiagonalUp).LineStyle = xlNone
+        Columns("N:N").Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlEdgeTop).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlEdgeBottom).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlEdgeRight).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlInsideVertical).LineStyle = xlContinuous
+        Columns("N:N").Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        Application.DisplayAlerts = False
+        Sheets("TempYellow").Delete
+        Application.DisplayAlerts = True
+        
+    End If
+    Columns("M:N").VerticalAlignment = xlTop
+    
+        'Ver2.2: Change to other method due to time consuming
+        ErrHnd5
+        Sheets("Output").Copy after:=Sheets("Output")
+        ActiveSheet.Name = "Gated"
+        Application.Calculation = xlCalculationManual
+        Columns("G:L").Delete
+        Columns("H:J").Delete
+        myTempTotal = Range("C" & Rows.Count).End(xlUp).Row
+        Columns("G:G").TextToColumns Destination:=Range("H1"), DataType:=xlDelimited, TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, Semicolon:=False, Comma:=False, Space:=False, Other:=True, OtherChar:=Chr(10), FieldInfo:=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1), Array(6, 1)), TrailingMinusNumbers:=True
+        Range("G2:G" & myTempTotal).Value = "=Row(A2)"
+        Range("G2:G" & myTempTotal).Value = Range("G2:G" & myTempTotal).Value
+        For myA = 2 To myTempTotal
+            myLastCol = Cells(myA, Columns.Count).End(xlToLeft).Column
+            For myB = 9 To myLastCol
+                myNewRow = Range("A" & Rows.Count).End(xlUp).Row + 1
+                Range("A" & myNewRow & ":G" & myNewRow).Value = Range("A" & myA & ":G" & myA).Value
+                Range("H" & myNewRow).Value = Cells(myA, myB).Value
+            Next myB
+        Next myA
+        Columns("I:ZZ").ClearContents
+        Columns("H:H").TextToColumns Destination:=Range("I1"), DataType:=xlDelimited, TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, Semicolon:=False, Comma:=False, Space:=False, Other:=True, OtherChar:=" ", FieldInfo:=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1), Array(6, 1)), TrailingMinusNumbers:=True
+        Range("I1").Value = Range("H1").Value
+        Range("J1").Value = "MFG"
+        Range("M1").Value = "ETA"
+        myTempTotal = Range("C" & Rows.Count).End(xlUp).Row
+        Range("M2:M" & myTempTotal).Value = "=K2&"" ""&text(L2,""M/D/YY"")"
+        Range("M2:M" & myTempTotal).Value = Range("M2:M" & myTempTotal).Value
+        Columns("N:N").ClearContents
+        Range("N1").Value = "Need Date"
+        Columns("K:L").Delete
+        ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("G1"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("B1"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("Gated").Sort.SetRange Range("A2:L" & myTempTotal)
+        ActiveWorkbook.Worksheets("Gated").Sort.Header = xlNo
+        ActiveWorkbook.Worksheets("Gated").Sort.MatchCase = False
+        ActiveWorkbook.Worksheets("Gated").Sort.Orientation = xlTopToBottom
+        ActiveWorkbook.Worksheets("Gated").Sort.SortMethod = xlPinYin
+        ActiveWorkbook.Worksheets("Gated").Sort.Apply
+        Columns("G:H").Delete
+        Range("A1:J" & myTempTotal).Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlEdgeTop).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlEdgeBottom).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlEdgeRight).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlInsideVertical).LineStyle = xlContinuous
+        Range("A1:J" & myTempTotal).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        Application.Calculation = xlCalculationAutomatic
+        'VEr2.3: Vlookup Need Date
+        Sheets("Detail Shortage by Parent Order").Select
+        Columns("X:X").Insert
+        Range("X4:X" & Range("AD" & Rows.Count).End(xlUp).Row).Value = "=BK4&AE4"
+        Range("X4:X" & Range("AD" & Rows.Count).End(xlUp).Row).Value = Range("X4:X" & Range("AD" & Rows.Count).End(xlUp).Row).Value
+        Sheets("Gated").Select
+        Range("J2:J" & myTempTotal).Value = "=VLOOKUP(G2&C2,'Detail Shortage by Parent Order'!X:BX,53,0)"
+        Range("J2:J" & myTempTotal).Value = Range("J2:J" & myTempTotal).Value
+        Columns("J:J").NumberFormat = "M/D/Yyyy"
+        Columns("A:J").AutoFit
+        Sheets("Detail Shortage by Parent Order").Columns("X:X").Delete
+    
+    myEndTime = Time
+    MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub ClearAllFilter()
+    On Error Resume Next
+    ActiveSheet.ShowAllData
+End Sub
+
+Sub ErrHnd1()
+    On Error GoTo Err1
+    Sheets("Aging Parts Details (ISL)").Select
+    ActiveSheet.Name = "Aging Parts Details (ISL)2"
+    Exit Sub
+Err1:
+End Sub
+Sub ErrHnd2()
+    On Error GoTo Err2
+    Sheets("PV").Select
+    ActiveSheet.Name = "PV_2"
+    Exit Sub
+Err2:
+End Sub
+Sub ErrHnd3()
+    On Error GoTo Err3
+    Application.DisplayAlerts = False
+    Sheets("Output").Delete
+    Application.DisplayAlerts = True
+    Exit Sub
+Err3:
+End Sub
+Sub ErrHnd5()
+    On Error GoTo Err3
+    Application.DisplayAlerts = False
+    Sheets("Gated").Delete
+    Application.DisplayAlerts = True
+    Exit Sub
+Err3:
+End Sub
+Sub ErrHnd4(myShortageFilename As String)
+    On Error GoTo Err4
+    Workbooks(myShortageFilename).Activate
+    Exit Sub
+Err4:
+    Workbooks.Open Range("F23").Value
+    'Ver2.0: new column added
+    Columns("G:G").Insert
+    Range("G3").Value = "Ship Set"
+    Columns("O:P").Delete
+    Columns("AA:AA").Delete
+    Columns("AZ:BA").Delete
+    Columns("BL:BM").Delete
+    'Ver1.7: 7 new column added that need to be delete
+    Range("K:K,L:L,M:M,O:O,X:X,BB:BB,BH:BH").Delete
+End Sub
+
