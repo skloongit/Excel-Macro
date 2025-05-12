@@ -1,0 +1,344 @@
+Sub SerialNumberAgingReport()
+    Dim myArr(3) As String
+    Dim myA As Integer
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myUnitReviewer = Range("R1").Value
+    my198 = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Serial Number Aging 198 file")
+    If my198 = False Then
+        MsgBox "Macro stop because you did not select a file."
+        Exit Sub
+    End If
+    
+    my260 = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Serial Number Aging 260 file")
+    If my260 = False Then
+        MsgBox "Macro stop because you did not select a file."
+        Exit Sub
+    End If
+    
+    my318 = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Serial Number Aging 318 file")
+    If my318 = False Then
+        MsgBox "Macro stop because you did not select a file."
+        Exit Sub
+    End If
+    
+    myAging = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Aging file")
+    If myAging = False Then
+        MsgBox "Macro stop because you did not select a file."
+        Exit Sub
+    End If
+    
+    myStrTime = Time
+    Workbooks.Open Filename:=myAging
+    myAgingFilename = ActiveWorkbook.Name
+    myHeader = Range("U1").End(xlDown).Row
+    Rows("1:" & myHeader - 1).Delete
+    Columns("L:U").Delete
+    ActiveSheet.Name = "Aging"
+    Columns("B:B").Cut
+    Columns("A:A").Insert
+    Sheets("Aging").Copy
+    myNewFile = ActiveWorkbook.Name
+    Workbooks(myAgingFilename).Close False
+    
+    myArr(1) = my198
+    myArr(2) = my260
+    myArr(3) = my318
+    
+    For myA = 1 To 3
+        Workbooks.Open Filename:=myArr(myA)
+        mySpecificAgingFilename = ActiveWorkbook.Name
+        myHeader = Range("F1").End(xlDown).Row
+        If myHeader > 10 Then
+            MsgBox "Different format detected! The Macro will stop here!"
+            End
+        End If
+        If myA = 1 Then
+            ActiveSheet.Name = "198"
+        ElseIf myA = 2 Then
+            ActiveSheet.Name = "260"
+        Else
+            ActiveSheet.Name = "318"
+        End If
+        
+        Rows("1:" & myHeader - 1).Delete
+        ActiveSheet.Copy Before:=Workbooks(myNewFile).Sheets(Workbooks(myNewFile).Sheets.Count)
+        Workbooks(mySpecificAgingFilename).Close False
+        Workbooks(myNewFile).Activate
+        'Columns("B:B").Copy
+        'Columns("A:A").Insert
+        Range("B:F,L:L,N:P,U:U,W:X").Delete
+        myHeader = Range("A" & Rows.Count).End(xlUp).Row
+        Columns("H:J").Insert
+        Range("H1:J" & myHeader).Value = "=IF($P1="""",K1,N1)"
+        Range("H1:J" & myHeader).Value = Range("H1:J" & myHeader).Value
+        
+        Range("H1:J1").Value = Range("K1:M1").Value
+        Range("M1:M" & myHeader).Value = Range("E1:E" & myHeader).Value
+        Range("E1:E" & myHeader).Value = Range("M1:M" & myHeader).Value
+        Range("K:P").Delete
+        Columns("M:M").Delete
+        Workbooks(myMacroFile).Sheets("Setting").Range("A1:J1").Copy
+        Range("M1").PasteSpecial xlPasteAll
+        Range("V1").Value = Date & "  7:00:00 AM"
+        Range("O2:O" & myHeader).Value = "=$V$1-L2"
+        Range("O2:O" & myHeader).NumberFormat = "0.0"
+        With Range("O2:O" & myHeader).Font
+            .Name = "Calibri"
+            .FontStyle = "Regular"
+            .Size = 11
+            .Strikethrough = False
+            .Superscript = False
+            .Subscript = False
+            .OutlineFont = False
+            .Shadow = False
+            .Underline = xlUnderlineStyleNone
+            .Color = 255
+            .TintAndShade = 0
+            .ThemeFont = xlThemeFontNone
+        End With
+        With Range("O2:O" & myHeader).Interior
+            .Pattern = xlSolid
+            .PatternColorIndex = xlAutomatic
+            .Color = 65535
+            .TintAndShade = 0
+            .PatternTintAndShade = 0
+        End With
+        
+        Columns("G:H").Insert
+        Range("G1").Value = "JDE AGE without N/A"
+        Range("H1").Value = "JDE AGE"
+        Range("G2:G" & myHeader).Value = "=IFERROR(VLOOKUP(E2,Aging!A:B,2,0),Q2)"
+        'Range("G2:G" & myHeader).Value = Range("G2:G" & myHeader).Value
+        Range("G2:H" & myHeader).NumberFormat = "0"
+        Range("H2:H" & myHeader).Value = "=VLOOKUP(E2,Aging!A:B,2,0)"
+        'Range("H2:H" & myHeader).Value = Range("H2:H" & myHeader).Value
+        Range("O2:O" & myHeader).Value = "=VLOOKUP(J2,'[" & myMacroFile & "]Macro'!$T:$U,2,0)"
+        Range("O2:O" & myHeader).Value = Range("O2:O" & myHeader).Value
+        Range("P2:P" & myHeader).Value = "=VLOOKUP(K2,'[" & myMacroFile & "]Macro'!$W:$X,2,0)"
+        Range("P2:P" & myHeader).Value = Range("P2:P" & myHeader).Value
+        
+        Range("R2:R" & myHeader).Value = "=IF(G2>90,""> 90 days"",IF(G2>60,""> 60 days"",IF(G2>30,""> 30 days"",IF(G2>14,""> 14 days"",IF(G2>7,""> 7 days"",""< 7 days"")))))"
+        Range("R2:R" & myHeader).Value = Range("R2:R" & myHeader).Value
+        If myA = 1 Then
+            Range("S2:S" & myHeader).Value = "=VLOOKUP(O2,'[" & myMacroFile & "]Macro'!$A:$B,2,0)"
+            Range("S2:S" & myHeader).Value = Range("S2:S" & myHeader).Value
+        ElseIf myA = 2 Then
+            Range("S2:S" & myHeader).Value = "=VLOOKUP(O2,'[" & myMacroFile & "]Macro'!$D:$E,2,0)"
+            Range("S2:S" & myHeader).Value = Range("S2:S" & myHeader).Value
+        Else
+            Range("S2:S" & myHeader).Value = "=IF(K2=""Review"",myUnitReviewer,IF(O2=""Central"",VLOOKUP(O2,'[" & myMacroFile & "]Macro'!$J:$K,2,0),IF(O2=""HLA"",VLOOKUP(O2,'[" & myMacroFile & "]Macro'!$M:$O,3,0),VLOOKUP(O2,'[" & myMacroFile & "]Macro'!$G:$H,2,0))))"
+            Range("S2:S" & myHeader).Value = Range("S2:S" & myHeader).Value
+        End If
+        Range(Cells(1, 1), Range("A1").End(xlToRight).End(xlDown)).Select
+        Selection.Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Selection.Borders(xlEdgeTop).LineStyle = xlContinuous
+        Selection.Borders(xlEdgeBottom).LineStyle = xlContinuous
+        Selection.Borders(xlEdgeRight).LineStyle = xlContinuous
+        Selection.Borders(xlInsideVertical).LineStyle = xlContinuous
+        Selection.Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        
+        Selection.ColumnWidth = 10
+        Selection.Columns.AutoFit
+        Selection.Rows.AutoFit
+        With Selection.Font
+            .Name = "Calibri"
+            .Size = 10
+        End With
+        Range("A1").Select
+        
+        
+        'Pivot table
+        Columns("A:T").Select
+        Sheets.Add
+        If myA = 1 Then
+            ActiveSheet.Name = "Pivot_198"
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="198!R1C1:R1048576C20", Version:=xlPivotTableVersion15).CreatePivotTable TableDestination:="Pivot_198!R3C1", TableName:="PivotTable3", DefaultVersion:=xlPivotTableVersion15
+        ElseIf myA = 2 Then
+            ActiveSheet.Name = "Pivot_260"
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="260!R1C1:R1048576C20", Version:=xlPivotTableVersion15).CreatePivotTable TableDestination:="Pivot_260!R3C1", TableName:="PivotTable3", DefaultVersion:=xlPivotTableVersion15
+        Else
+            ActiveSheet.Name = "Pivot_318"
+            ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="318!R1C1:R1048576C20", Version:=xlPivotTableVersion15).CreatePivotTable TableDestination:="Pivot_318!R3C1", TableName:="PivotTable3", DefaultVersion:=xlPivotTableVersion15
+        End If
+        
+        
+        Cells(3, 1).Select
+        With ActiveSheet.PivotTables("PivotTable3").PivotFields("Customer Assembly Number")
+            .Orientation = xlColumnField
+            .Position = 1
+        End With
+        ActiveSheet.PivotTables("PivotTable3").AddDataField ActiveSheet.PivotTables("PivotTable3").PivotFields("Customer Serial Number"), _
+            "Count of Customer Serial Number", xlCount
+        With ActiveSheet.PivotTables("PivotTable3").PivotFields("Unit Location")
+            .Orientation = xlRowField
+            .Position = 1
+        End With
+        
+        With ActiveSheet.PivotTables("PivotTable3").PivotFields("Process Type")
+            .Orientation = xlRowField
+            .Position = 2
+        End With
+        Cells.Select
+        Selection.Copy
+        Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
+        
+        Rows("1:3").Delete
+        Columns("A:A").Insert
+        Range("A1").Value = "Unit Loc"
+        Range("B1").Value = "Unit Process"
+        Rows("1:1").Orientation = -90
+        Range("A1:B1").Orientation = 0
+        myTotalPivot = Range("B" & Rows.Count).End(xlUp).Row
+        myB = 2
+        Do Until Range("B" & myB).Value = ""
+            If UCase(Range("A" & myB).Value) = "(BLANK)" Or UCase(Range("B" & myB).Value) = "(BLANK)" Then
+                Rows(myB).Delete
+                If UCase(Range("B" & myB).Value) = "GRAND TOTAL" Then
+                    Range("A" & myB & ":B" & myB).Merge
+                    Exit Do
+                End If
+            ElseIf UCase(Range("B" & myB).Value) = "GRAND TOTAL" Then
+                Range("A" & myB & ":B" & myB).Merge
+                Exit Do
+            End If
+            
+            If Range("B" & myB).IndentLevel = 0 Then
+                myTopUnit = myB
+                For myForC = myB + 1 To myTotalPivot
+                    If Range("B" & myForC).IndentLevel = 0 Then
+                        Rows(myB).Cut
+                        Rows(myForC).Insert
+                        Range("A" & myB & ":A" & myForC - 2).Merge
+                        Range("A" & myB & ":A" & myForC - 2).HorizontalAlignment = xlCenter
+                        Range("A" & myB & ":A" & myForC - 2).VerticalAlignment = xlCenter
+                        Range("A" & myForC - 1 & ":B" & myForC - 1).Merge
+                        Range("A" & myB).Value = Range("A" & myForC - 1).Value
+                        Rows(myForC - 1).SpecialCells(xlCellTypeBlanks).Value = "0"
+                        Range("A" & myForC - 1).Value = Range("A" & myB).Value
+                        Range("A" & myB & ":A" & myForC - 2).Rows.Group
+                        myB = myForC
+                        Exit For
+                    End If
+       
+                Next myForC
+            
+            End If
+        Loop
+        
+        myTotalPivot = Range("A" & Rows.Count).End(xlUp).Row
+        
+        'Delete 0 value row
+        For myForD = myTotalPivot To 1 Step -1
+            'If Range("B" & myForD).Value = 0 Then
+                If Range("B" & myForD).MergeCells = False Then
+                '    myTemp = Range("A" & myForD).Value
+                '    Rows(myForD).Delete
+                '    Range("A" & myForD).Value = myTemp
+                Else
+                    Range("A" & myForD).HorizontalAlignment = xlCenter
+                    If UCase(Range("A" & myForD).Value) = "GRAND TOTAL" Then
+                        Rows(myForD).Interior.Color = 5296274 'GREEN
+                    Else
+                        Rows(myForD).Interior.Color = 65535 'YELLOW
+                    End If
+                End If
+            'End If
+        Next myForD
+        
+        'Delete 0 value column
+        myLoopA = 1
+        Do Until Cells(1, myLoopA).Value = ""
+            If UCase(Cells(1, myLoopA).Value) = "(BLANK)" Then
+                Cells(1, myLoopA).EntireColumn.Delete
+            End If
+            myLoopA = myLoopA + 1
+        Loop
+        
+        Range("A1:B1").Interior.Color = 10192432
+        Range(Range("C1"), Range("C1").End(xlToRight)).Interior.Color = 14470546
+        Cells.Font.Bold = True
+        
+        Range(Cells(1, 1), Range("A1").End(xlToRight).End(xlDown)).Select
+        Selection.Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Selection.Borders(xlEdgeTop).LineStyle = xlContinuous
+        Selection.Borders(xlEdgeBottom).LineStyle = xlContinuous
+        Selection.Borders(xlEdgeRight).LineStyle = xlContinuous
+        Selection.Borders(xlInsideVertical).LineStyle = xlContinuous
+        Selection.Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        Selection.Columns.AutoFit
+        Selection.Rows.AutoFit
+        With Selection.Font
+            .Name = "Calibri"
+            .Size = 10
+        End With
+        Range("A1").Select
+    Next myA
+    myEndTime = Time
+    MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub InfoChecker()
+    Set WSHnet = CreateObject("WScript.Network")
+    UserName = Range("B3").Value
+    UserDomain = WSHnet.UserDomain
+    Set TheUser = GetObject("WinNT://" & UserDomain & "/" & UserName & ",user")
+    Range("B5").Value = TheUser.FullName
+    Range("B11").Value = TheUser.Description
+    FindUserGroupInfo
+End Sub
+Sub FindUserGroupInfo()
+    Dim objRoot, strDomain, objConn, objComm, objRecordset
+    Dim sFilter, sAttribs, sDepth, sBase, sQuery
+    
+    Set objRoot = GetObject("LDAP://RootDSE")
+    strDomain = objRoot.Get("DefaultNamingContext")
+    Set objConn = CreateObject("ADODB.Connection")
+    Set objComm = CreateObject("ADODB.Command")
+    
+    'Set WSHnet = CreateObject("WScript.Network")
+    UserName = Range("B3").Value
+    sFilter = "(&(objectClass=person)(sAMAccountName=" & UserName & "))"
+    
+    'sAttribs = "sn,givenname,sAMAccountName"
+    sAttribs = "sn,givenname,sAMAccountName,mail,EmployeeID,Manager,Division,Department,TelephoneNumber,mobile,ipphone," _
+               & "displayName,description,physicaldeliveryofficename,homephone,pager,mobile,info,title,assistant,comment," _
+               & "company,desktopProfile,division,otherMailbox,userPrincipalName,otherMobile,personalTitle"
+
+    sDepth = "SubTree"
+    sBase = "<LDAP://" & strDomain & ">"
+    sQuery = sBase & ";" & sFilter & ";" & sAttribs & ";" & sDepth
+    
+    objConn.Open "Data Source=Active Directory Provider;Provider=ADsDSOObject"
+    Set objComm.ActiveConnection = objConn
+    objComm.Properties("Page Size") = 10000
+    objComm.CommandText = sQuery
+    Set objRecordset = objComm.Execute
+    
+    If Not objRecordset.EOF Then
+        Range("B7").Value = objRecordset("givenname")
+        Range("B9").Value = objRecordset("sAMAccountName")
+        Range("B10").Value = objRecordset("mail")
+        Range("B6").Value = objRecordset("EmployeeID")
+        myManager = objRecordset("Manager")
+        Range("B13").Value = objRecordset("Division")
+        Range("B8").Value = objRecordset("Department")
+        Range("B14").Value = objRecordset("TelephoneNumber")
+        Range("B15").Value = objRecordset("title")
+        Range("B16").Value = objRecordset("mobile")
+        Range("B17").Value = objRecordset("company")
+        'asdfs = asdf.Value
+        Range("B12").Value = "=MID(""" & myManager & """,FIND(""="",""" & myManager & """,1)+1,FIND("","",""" & myManager & """,1)-FIND(""="",""" & myManager & """,1)-1)"
+        Range("B12").Value = Range("B12").Value
+        'mySurname = objRecordset("sn")
+        'myGivenname = objRecordset("givenname")
+        'myDisplayName = objRecordset("sAMAccountName")
+        'myEmail = objRecordset("mail")
+        'myEmployeeID = objRecordset("EmployeeID")
+        'myManager = objRecordset("Manager")
+        'myDivision = objRecordset("Division")
+        'myDepartment = objRecordset("Department")
+        'myTelephoneNumber = objRecordset("TelephoneNumber")
+        'Range("A12").CopyFromRecordset objRecordset
+    End If
+
+End Sub
