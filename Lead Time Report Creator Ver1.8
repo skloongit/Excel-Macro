@@ -1,0 +1,915 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myMacroPath As String
+Dim myAttachement() As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub LeadTime()
+    ReDim myAttachement(0)
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySharePath = Range("B4").Value
+    
+    'Year
+    myYear = Year(Date)
+    
+    'Ver1.2: Check Folder Availbility
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+    
+    'Ver1.2: Changing path
+    'Harmonic Product Model List
+    'myHarmonicFile = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Harmonic Product Model List.xlsx"
+    myHarmonicFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Materials\" & myYear & "\MISC\Site_Reports\MTM\Dashboard\Harmonic Product Model List.xlsx"
+    If Dir(myHarmonicFile) = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Lead Time Profile Macro: Harmonic Product Model List file not found!"
+        '    .HTMLBody = "Harmonic Product Model List file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Harmonic Product Model List file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    'Ver1.2: Changing path
+    'Micron Product Model List
+    'myMicronFile = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Micron Product Model List.xlsx"
+    myMicronFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Materials\" & myYear & "\MISC\Site_Reports\MTM\Dashboard\Micron Product Model List.xlsx"
+    
+    If Dir(myMicronFile) = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Lead Time Profile Macro: Micron Product Model List file not found!"
+        '    .HTMLBody = "Micron Product Model List file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Micron Product Model List file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+        
+    'Last Week
+    myLastWeek = mySharePath & "830_16 Buckets Report_Monthly (Buy)." & Format(Date - 8, "YYYYMMDD") & "*.xlsx"
+    If Dir(myLastWeek) = "" Then
+        'Ver1.8:
+        myLastWeek = "\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\830_16 Buckets Report_Monthly (Buy)." & Format(Date - 8, "YYYYMMDD") & "*.xlsx"
+        If Dir(myLastWeek) = "" Then
+            'With CreateObject("Outlook.Application").CreateItem(0)
+            '    .To = "sk.loon@plexus.com"
+            '    .CC = "Sing-Yee.Ho@plexus.com"
+            '    .Subject = "Lead Time Profile Macro: Last week 830_16 Buckets Report_Monthly (Buy) file not found!"
+            '    .HTMLBody = "Last week 830_16 Buckets Report_Monthly (Buy) file not found!"
+            '    '.Display
+            '    .Send
+            'End With
+            Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ActiveWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Last week 830_16 Buckets Report_Monthly (Buy) file not found!</html>", _
+                myAttachement(), _
+                0, 0)
+        GoTo myEnd
+        End If
+        
+    End If
+    
+    'This Week
+    myThisWeek = mySharePath & "830_16 Buckets Report_Monthly (Buy)." & Format(Date - 1, "YYYYMMDD") & "*.xlsx"
+    If Dir(myThisWeek) = "" Then 'Yesterday date
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Lead Time Profile Macro: 830_16 Buckets Report_Monthly (Buy) file not found!"
+        '    .HTMLBody = "830_16 Buckets Report_Monthly (Buy) file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_16 Buckets Report_Monthly (Buy) file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    Else
+        'Workbooks.Open "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & Year(Date) & "\MTM\Dashboard\Harmonic Product Model List.xlsx", ReadOnly:=True
+        Workbooks.Open myHarmonicFile, ReadOnly:=True
+        myHarmonic = ActiveWorkbook.Name
+        ActiveSheet.Name = "temp"
+        
+        'Workbooks.Open "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & Year(Date) & "\MTM\Dashboard\Micron Product Model List.xlsx", ReadOnly:=True
+        Workbooks.Open myMicronFile, ReadOnly:=True
+        myMicron = ActiveWorkbook.Name
+        ActiveSheet.Name = "temp"
+        
+        Workbooks.Open Filename:=myLastWeek, ReadOnly:=True
+        myLastWeekFile = ActiveWorkbook.Name
+        ActiveSheet.Name = "temp"
+        Workbooks.Open Filename:=myThisWeek, ReadOnly:=True
+        myThisWeekFile = ActiveWorkbook.Name
+        Columns("Q:Q").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        myTotalBucket = Range("A" & Rows.Count).End(xlUp).Row
+        Range("Q3").Value = "Bucket"
+            'Ver1.6: Request to add in new criteria by Julie 10/3/2023
+            'Range("Q4:Q" & myTotalBucket).Value = "=IF(P4<=28,""1-4 weeks"",IF(P4<=56,""5-8 weeks"",IF(P4<=84,""9-12 weeks"",IF(P4<=112,""13-16 weeks"",IF(P4<=140,""17-20 weeks"",IF(P4<=168,""21-24 weeks"",IF(P4<=203,""25-29 weeks"",IF(P4<=280,""30-40 weeks"",IF(P4<=350,""41-50 weeks"",IF(P4<=420,""51-60 weeks"","">60 weeks""))))))))))"
+            Range("Q4:Q" & myTotalBucket).Value = "=IF(P4=999,""Part is EOL"",IF(P4=895,""Past is LTB"",IF(P4=888,""Part is on Allocation"",IF(P4=911,""New Part"",IF(P4<=28,""1-4 weeks"",IF(P4<=56,""5-8 weeks"",IF(P4<=84,""9-12 weeks"",IF(P4<=112,""13-16 weeks"",IF(P4<=140,""17-20 weeks"",IF(P4<=168,""21-24 weeks"",IF(P4<=203,""25-29 weeks"",IF(P4<=280,""30-40 weeks"",IF(P4<=350,""41-50 weeks"",IF(P4<=420,""51-60 weeks"","">60 weeks""))))))))))))))"
+        'Range("Q4:Q" & myTotalBucket).Value = Range("Q4:Q" & myTotalBucket).Value
+        Columns("Q:Q").AutoFit
+        myTotalCol = Cells(3, Columns.Count).End(xlToLeft).Column
+        For myAa = myTotalCol To 1 Step -1
+            If Cells(3, myAa).Value = "" Then
+                Cells(3, myAa).Value = "."
+            End If
+        Next myAa
+        Range("T3").Value = "ABC Code"
+        Range("DS3").Value = "Total Demand Qty"
+        Range("DS3,T2,T3,M3").Interior.Color = 65535
+        Columns("DS:DS").EntireColumn.AutoFit
+        myActiveSheet = ActiveSheet.Name
+        Sheets.Add After:=ActiveSheet
+        ActiveSheet.Name = "PV"
+        
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myActiveSheet & "!R3C1:R" & myTotalBucket & "C136").CreatePivotTable TableDestination:="PV!R3C1", TableName:="PivotTable1"
+        ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable1").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").Orientation = xlColumnField
+        
+        myPosition = 1
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "1-4 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("1-4 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "5-8 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("5-8 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "9-12 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("9-12 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "13-16 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("13-16 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "17-20 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("17-20 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "21-24 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("21-24 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "25-29 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("25-29 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "30-40 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("30-40 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "41-50 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("41-50 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "51-60 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("51-60 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), ">60 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems(">60 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        
+        If Application.WorksheetFunction.CountIf(Columns("A:A"), "006") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").PivotItems("006").Visible = False
+        End If
+        If Application.WorksheetFunction.CountIf(Columns("A:A"), "875") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").PivotItems("875").Visible = False
+        End If
+        
+        ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Item No"), "Count of Item No", xlCount
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Total Demand Qty").Orientation = xlPageField
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").Orientation = xlPageField
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("Total Demand Qty").CurrentPage = "(All)"
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("DS4:DS" & myTotalBucket), 0) > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Total Demand Qty").PivotItems("0").Visible = False
+        End If
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("Total Demand Qty").EnableMultiplePageItems = True
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").CurrentPage = "(All)"
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("M4:M" & myTotalBucket), "") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").PivotItems("(blank)").Visible = False
+        End If
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("M4:M" & myTotalBucket), "N") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").PivotItems("N").Visible = False
+        End If
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").EnableMultiplePageItems = True
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("ABC Code").Orientation = xlRowField
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("ABC Code").Position = 2
+        
+        ActiveSheet.PivotTables("PivotTable1").TableStyle2 = "PivotStyleMedium9"
+        ActiveWorkbook.ShowPivotTableFieldList = False
+        Range("C6").Select
+        ActiveWindow.FreezePanes = True
+        myPivotCol = Cells(5, Columns.Count).End(xlToLeft).Column
+        myPivotRow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(6, 3), Cells(myPivotRow, myPivotCol)).NumberFormat = "_(* #,##0_);_(* (#,##0);_(* ""-""??_);_(@_)"
+
+        Sheets(myActiveSheet).Select
+        Columns("E:E").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("E3").Value = "Family"
+        Range("E3").Interior.Color = 65535
+        Range("E4:E" & myTotalBucket).Value = "=IF(RIGHT(F4,4)=""-148"",VLOOKUP(F4,'[" & myMicron & "]temp'!$A:$B,2,0),IF(OR(RIGHT(F4,4)=""-586"",RIGHT(F4,4)=""-321""),VLOOKUP(F4,'[" & myHarmonic & "]temp'!$A:$B,2,0),""""))"
+        Range("E4:E" & myTotalBucket).Value = Range("E4:E" & myTotalBucket).Value
+        
+'        ActiveSheet.Range("$A$3:$EG$26857").AutoFilter Field:=2, Criteria1:="148"
+'        Range("F1254").Select
+'        ChDir "D:\Mgmt_Data\IA Reports\2020\06. Jun2020\06092020\Inventory Projection"
+'        Workbooks.Open Filename:="D:\Mgmt_Data\IA Reports\2020\06. Jun2020\06092020\Inventory Projection\Micron Product Model List 06092020.xlsx"
+'        Windows("Lead Time Profile 06112020.xlsx").Activate
+'        Range("E729").Select
+'        ActiveCell.FormulaR1C1 = "=VLOOKUP(RC[1],'[Micron Product Model List 06092020.xlsx]Sheet1'!C1:C2,2,0)"
+'        Selection.Copy
+'        Range("F729").Select
+'        Selection.End(xlDown).Select
+'        Range("E26302").Select
+'        Range(Selection, Selection.End(xlUp)).Select
+'        Selection.SpecialCells(xlCellTypeVisible).Select
+'        ActiveSheet.Paste
+'        Application.CutCopyMode = False
+'        ActiveSheet.ShowAllData
+'        Columns("E:E").Select
+'        Selection.Copy
+'        Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
+'        Range("E733").Select
+'        Workbooks.Open Filename:="D:\Mgmt_Data\IA Reports\2020\06. Jun2020\06092020\Inventory Projection\Harmonic Product Model List 06092020.xlsx"
+'        Windows("Lead Time Profile 06112020.xlsx").Activate
+'        ActiveSheet.Range("$A$3:$EG$26857").AutoFilter Field:=2, Criteria1:="=321", Operator:=xlOr, Criteria2:="=586"
+'        Range("E4").Select
+'        Application.CutCopyMode = False
+'        ActiveCell.FormulaR1C1 = "=VLOOKUP(RC[1],'[Harmonic Product Model List 06092020.xlsx]Sheet1'!C1:C2,2,0)"
+'        Selection.Copy
+'        Range("F4").Select
+'        Selection.End(xlDown).Select
+'        Range("E26336").Select
+'        Range(Selection, Selection.End(xlUp)).Select
+'        Selection.SpecialCells(xlCellTypeVisible).Select
+'        ActiveSheet.Paste
+'        Range("F17").Select
+'        Application.CutCopyMode = False
+'        ActiveSheet.ShowAllData
+'        Columns("E:E").Select
+'        Selection.Copy
+'        Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
+'        Range("E8").Select
+'        ActiveSheet.Range("$A$3:$EG$26857").AutoFilter Field:=5, Criteria1:="#N/A"
+'        ActiveSheet.Range("$A$3:$EG$26857").AutoFilter Field:=4, Criteria1:="<>"
+'        Range("E13516").Select
+'        Application.CutCopyMode = False
+'        ActiveCell.FormulaR1C1 = "Charon"
+'        Range("F13516").Select
+'        Selection.Copy
+'        Windows("Micron Product Model List 06092020.xlsx").Activate
+'        Range("A4502").Select
+'        Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
+'        Range("B4502").Select
+'        Application.CutCopyMode = False
+'        ActiveCell.FormulaR1C1 = "Charon"
+'        Range("E4498").Select
+'        ActiveWorkbook.Save
+'        ActiveWindow.Close
+'        Range("M26870").Select
+'        ActiveSheet.ShowAllData
+'        Range("F13").Select
+'        Windows("Harmonic Product Model List 06092020.xlsx").Activate
+'        ActiveWindow.Close
+'        Range("H19").Select
+'        Sheets("PV").Select
+'        Sheets("16 Buckets-Plxmonth (Include 0 ").Select
+        Columns("S:T").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("S3").Value = "Previous WK LT"
+        Range("T3").Value = "Delta"
+        Columns("S:S").EntireColumn.AutoFit
+        Range("S4:S" & myTotalBucket).Value = "=IFERROR(VLOOKUP(F4,'[" & myLastWeekFile & "]temp'!$E:$P,12,0),"""")"
+        Range("S4:S" & myTotalBucket).Value = Range("S4:S" & myTotalBucket).Value
+        Range("T4:T" & myTotalBucket).Value = "=Q4-S4"
+        
+        Columns("U:U").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("U3").Value = "Remarks"
+        Range("U4:U" & myTotalBucket).Value = "=IF(S4="""",""New"",IF(T4=0,""No Change"",IF(T4>0,""LT increased"",""LT decreased"")))"
+        Range("U4:U" & myTotalBucket).Value = Range("U4:U" & myTotalBucket).Value
+        
+        
+        
+        'New Micron&Harmonic
+        Sheets.Add After:=Sheets("PV")
+        ActiveSheet.Name = "LT Profile (Micron&Harmonic)"
+        
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myActiveSheet & "!R3C1:R" & myTotalBucket & "C136").CreatePivotTable TableDestination:="'LT Profile (Micron&Harmonic)'!R3C1", TableName:="PivotTable1"
+        ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable1").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Family").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").Orientation = xlColumnField
+        
+        myPosition = 1
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "1-4 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("1-4 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "5-8 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("5-8 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "9-12 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("9-12 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "13-16 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("13-16 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "17-20 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("17-20 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "21-24 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("21-24 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "25-29 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("25-29 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "30-40 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("30-40 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "41-50 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("41-50 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), "51-60 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems("51-60 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        If Application.WorksheetFunction.CountIf(Rows("4:4"), ">60 weeks") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").PivotItems(">60 weeks").Position = myPosition
+            myPosition = myPosition + 1
+        End If
+        
+        If Application.WorksheetFunction.CountIf(Columns("A:A"), "006") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").PivotItems("006").Visible = False
+        End If
+        If Application.WorksheetFunction.CountIf(Columns("A:A"), "875") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").PivotItems("875").Visible = False
+        End If
+        
+        ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Item No"), "Count of Item No", xlCount
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Total Demand Qty").Orientation = xlPageField
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").Orientation = xlPageField
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("Total Demand Qty").CurrentPage = "(All)"
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("DS4:DS" & myTotalBucket), 0) > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("Total Demand Qty").PivotItems("0").Visible = False
+        End If
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("Total Demand Qty").EnableMultiplePageItems = True
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").CurrentPage = "(All)"
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("M4:M" & myTotalBucket), "") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").PivotItems("").Visible = False
+        End If
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("M4:M" & myTotalBucket), "N") > 0 Then
+            ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").PivotItems("N").Visible = False
+        End If
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("NCNR").EnableMultiplePageItems = True
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("ABC Code").Orientation = xlRowField
+        'ActiveSheet.PivotTables("PivotTable1").PivotFields("ABC Code").Position = 2
+        
+        For Each myPivotItem In ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").PivotItems
+            If myPivotItem.Name = "148" Or myPivotItem.Name = "321" Or myPivotItem.Name = "586" Then
+            Else
+                ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").PivotItems(myPivotItem.Name).Visible = False
+            End If
+        Next
+        For Each pvtFld In ActiveSheet.PivotTables
+            pvtFld.PivotFields("Family").Subtotals(1) = True
+            pvtFld.PivotFields("Family").Subtotals(1) = False
+        Next pvtFld
+        
+        ActiveSheet.PivotTables("PivotTable1").TableStyle2 = "PivotStyleMedium9"
+        ActiveWorkbook.ShowPivotTableFieldList = False
+        Range("C6").Select
+        ActiveWindow.FreezePanes = True
+        myPivotCol = Cells(5, Columns.Count).End(xlToLeft).Column
+        myPivotRow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(6, 3), Cells(myPivotRow, myPivotCol)).NumberFormat = "_(* #,##0_);_(* (#,##0);_(* ""-""??_);_(@_)"
+
+        
+        Sheets("PV").Name = "LT Profile"
+        Sheets.Add After:=ActiveSheet
+        ActiveSheet.Name = "LT Comparison"
+        Range("A3").Select
+        'ActiveWorkbook.Worksheets("LT Profile").PivotTables("PivotTable1").PivotCache.CreatePivotTable TableDestination:="LT Comparison!R3C1", TableName:="PivotTable2", DefaultVersion:=xlPivotTableVersion15
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myActiveSheet & "!R3C1:R" & myTotalBucket & "C140").CreatePivotTable TableDestination:="'LT Comparison'!R3C1", TableName:="PivotTable2"
+        ActiveWorkbook.ShowPivotTableFieldList = True
+        ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable2").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable2").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").Orientation = xlRowField
+
+        
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields("Part Number"), "Count of Part Number", xlCount
+        'ActiveSheet.PivotTables("PivotTable2").PivotCache.Refresh
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Remarks").Orientation = xlColumnField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("Remarks").Position = 1
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("B4:B" & myTotalBucket), "006") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems("006").Visible = False
+        End If
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("B4:B" & myTotalBucket), "875") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems("875").Visible = False
+        End If
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("ABC Code").Orientation = xlRowField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("ABC Code").Position = 2
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("ABC Code").Orientation = xlPageField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("ABC Code").Position = 1
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").Orientation = xlPageField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").Position = 1
+        
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").Orientation = xlPageField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").CurrentPage = "(All)"
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("N4:N" & myTotalBucket), "") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").PivotItems("(blank)").Visible = False
+        End If
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("N4:N" & myTotalBucket), "N") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").PivotItems("N").Visible = False
+        End If
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").EnableMultiplePageItems = True
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").CurrentPage = "(All)"
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("DW4:DW" & myTotalBucket), 0) > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").PivotItems("0").Visible = False
+        End If
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").EnableMultiplePageItems = True
+        'Range("F9").Select
+        ActiveSheet.PivotTables("PivotTable2").TableStyle2 = "PivotStyleMedium9"
+        Range("C6").Select
+        ActiveWindow.FreezePanes = True
+        'Sheets("LT Profile").Select
+        'ActiveWorkbook.Save
+        'Sheets("LT Comparison").Select
+        'Range("C6:G49").Select
+        'Range("G49").Activate
+        myPivotCol = Cells(5, Columns.Count).End(xlToLeft).Column
+        myPivotRow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(6, 3), Cells(myPivotRow, myPivotCol)).NumberFormat = "_(* #,##0_);_(* (#,##0);_(* ""-""??_);_(@_)"
+        
+        'LT Micron&Harmonic
+        Sheets.Add After:=ActiveSheet
+        ActiveSheet.Name = "LT Micron&Harmonic"
+        Range("A3").Select
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myActiveSheet & "!R3C1:R" & myTotalBucket & "C140").CreatePivotTable TableDestination:="'LT Micron&Harmonic'!R3C1", TableName:="PivotTable2"
+        ActiveWorkbook.ShowPivotTableFieldList = True
+        ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable2").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable2").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Family").Orientation = xlRowField
+        
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields("Part Number"), "Count of Part Number", xlCount
+        'ActiveSheet.PivotTables("PivotTable2").PivotCache.Refresh
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Remarks").Orientation = xlColumnField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("Remarks").Position = 1
+        For Each myPivotItem In ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems
+            If myPivotItem.Name = "148" Or myPivotItem.Name = "321" Or myPivotItem.Name = "586" Then
+            Else
+                ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems(myPivotItem.Name).Visible = False
+            End If
+        Next
+        
+        For Each pvtFld In ActiveSheet.PivotTables
+            pvtFld.PivotFields("Family").Subtotals(1) = True
+            pvtFld.PivotFields("Family").Subtotals(1) = False
+        Next pvtFld
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("Family").Subtotals = Array(False, False, False, False, False, False, False, False, False, False, False, False)
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("ABC Code").Orientation = xlRowField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("ABC Code").Position = 2
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("ABC Code").Orientation = xlPageField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("ABC Code").Position = 1
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").Orientation = xlPageField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").Position = 1
+        
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").Orientation = xlPageField
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").CurrentPage = "(All)"
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("N4:N" & myTotalBucket), "") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").PivotItems("(blank)").Visible = False
+        End If
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("N4:N" & myTotalBucket), "N") > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").PivotItems("N").Visible = False
+        End If
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("NCNR").EnableMultiplePageItems = True
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").CurrentPage = "(All)"
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Range("DW4:DW" & myTotalBucket), 0) > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").PivotItems("0").Visible = False
+        End If
+        'ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").EnableMultiplePageItems = True
+        'Range("F9").Select
+        ActiveSheet.PivotTables("PivotTable2").TableStyle2 = "PivotStyleMedium9"
+        Range("D6").Select
+        ActiveWindow.FreezePanes = True
+        'Sheets("LT Profile").Select
+        'ActiveWorkbook.Save
+        'Sheets("LT Comparison").Select
+        'Range("C6:G49").Select
+        'Range("G49").Activate
+        myPivotCol = Cells(5, Columns.Count).End(xlToLeft).Column
+        myPivotRow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(6, 3), Cells(myPivotRow, myPivotCol)).NumberFormat = "_(* #,##0_);_(* (#,##0);_(* ""-""??_);_(@_)"
+        
+        Sheets("LT Profile").Select
+    
+    End If
+    
+    'Ver1.2: Change path
+'    'Check Folder Availbility
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\"
+'    End If
+'    'MTM
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\"
+'    End If
+'    'Dashboard
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\"
+'    End If
+'    'Lead Time Profile
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Lead Time Profile\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Lead Time Profile\"
+'    End If
+'    'Month  Year
+'    myMonthYear = Format(Date, "MM. MmmYYYY")
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Lead Time Profile\" & myMonthYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Lead Time Profile\" & myMonthYear & "\"
+'    End If
+'    mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Lead Time Profile\" & myMonthYear & "\"
+    
+    Application.EnableEvents = False
+    ActiveWorkbook.SaveAs Filename:=mySavePath & "Lead Time Profile " & Format(Date - 1, "MMDDYYYY"), FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"  'Password:="888"
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Lead Time Profile " & Format(Date - 1, "MMDDYYYY"), FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888" 'Password:="888"
+    ActiveWorkbook.Close False
+    Workbooks(myHarmonic).Close False
+    Workbooks(myMicron).Close False
+    Workbooks(myLastWeekFile).Close False
+    Application.EnableEvents = True
+        
+    'With CreateObject("Outlook.Application").CreateItem(0)
+    '    .To = "Sing-Yee.Ho@plexus.com;sk.loon@plexus.com"
+    '    '.BCC = "sk.loon@plexus.com"
+    '    '.To = "PLXS-MFGIslandViewPurchasingDAs@plexus.com"
+    '    '.CC = "isl_purch_mtm@plexus.com; Sonia.Chor@plexus.com; Sing-Yee.Ho@plexus.com"
+    '    .Subject = "Lead Time Profile have been save in Share drive"
+    '    .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>" & mySavePath & _
+    '              "<br><br>Thanks.<br/><br>This is an auto generated email. No reply required...</html>"
+    '    '.Display
+    '    .Send
+    'End With
+    Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "Sing-Yee.Ho@plexus.com", _
+            "", _
+            "sk.loon@plexus.com", _
+            "Lead Time Profile have been save in Share drive", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>" & mySavePath & "</html>", _
+            myAttachement(), _
+            0, 0)
+
+'    Next myRetry
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub SheetSelect(mySheet)
+    On Error Resume Next
+    Sheets(mySheet).Select
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub ItemBpPurchasingSelect()
+    myItemBpPurchasingFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Item BP Purchasing Data file")
+    If myItemBpPurchasingFile = False Then
+    Else
+        Range("B8").Value = myItemBpPurchasingFile
+    End If
+End Sub
+Sub OpenPoSelect()
+    myOpenPoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO file")
+    If myOpenPoFile = False Then
+    Else
+        Range("B10").Value = myOpenPoFile
+    End If
+End Sub
+Sub SupplierAgreementSelect()
+    mySupplierAgreementFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Supplier Agreement file")
+    If mySupplierAgreementFile = False Then
+    Else
+        Range("B12").Value = mySupplierAgreementFile
+    End If
+End Sub
+Sub DataIntegritySelect()
+    myDataIntegrityFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Data Integrity file")
+    If myDataIntegrityFile = False Then
+    Else
+        Range("B14").Value = myDataIntegrityFile
+    End If
+End Sub
+Sub BucketsReportSelect()
+    myBucketsFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select 16 Buckets Report_Monthly (Buy) file")
+    If myBucketsFile = False Then
+    Else
+        Range("B16").Value = myBucketsFile
+    End If
+End Sub
+Sub OpenPoRrSelect()
+    myOpenPoRrFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO report (RR) file")
+    If myOpenPoRrFile = False Then
+    Else
+        Range("B18").Value = myOpenPoRrFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+Sub SharePath()
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select a Folder"
+        If .Show = -1 Then ' if OK is pressed
+            Range("B4").Value = .SelectedItems(1)
+        End If
+    End With
+    
+'    If sFolder <> "" Then ' if a file was chosen
+'        ' *********************
+'        ' put your code in here
+'        ' *********************
+'    End If
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .CC = myCc
+        .BCC = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+
