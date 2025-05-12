@@ -1,0 +1,541 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myMacroPath As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub DataIntegrityMakePart()
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+
+    myMacroCheck = Dir(myMacroPath & "\" & Year(Date) & "\", vbDirectory)
+        If myMacroCheck = "" Then
+            MkDir myMacroPath & "\" & Year(Date) & "\"
+        End If
+
+    myCheck = Application.WorksheetFunction.CountIf(Sheets("ScheduleDate").Columns("B:B"), Date)
+    If myCheck > 0 Then
+        myType = Sheets("ScheduleDate").Range("C" & Application.WorksheetFunction.Match(CLng(Date), Sheets("ScheduleDate").Columns("B:B"), 0))
+        myMonthYear = Sheets("ScheduleDate").Range("D" & Application.WorksheetFunction.Match(CLng(Date), Sheets("ScheduleDate").Columns("B:B"), 0))
+        'myMonthYear = Format(Date, "MM. MmmYYYY")
+        myStrTime = Time
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        myMacrofile = ActiveWorkbook.Name
+        myMacroPath = ActiveWorkbook.Path
+        mySharePath = Range("B4").Value
+        myPrefix = Range("B6").Value
+        myTodayDate = Format(Date, "MMDDYYYY")
+        myTotalLogic = Sheets("Logic").Range("A" & Rows.Count).End(xlUp).Row
+        Sheets("Logic").Select
+        Range("A1:C" & myTotalLogic).Copy
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Call CopyTemp(7)
+        Sheets("Macro").Select
+        
+        If Dir(mySharePath & "830 Data Integrity." & Format(Date - 1, "YYYYMMDD") & "*.xlsx") = "" Then 'Yesterday date
+            With CreateObject("Outlook.Application").CreateItem(0)
+                .To = "sk.loon@plexus.com"
+                .CC = "Sing-Yee.Ho@plexus.com"
+                .Subject = "830 Data Integrity file not found!"
+                .HTMLBody = "830 Data Integrity file not found!"
+                '.Display
+                .Send
+            End With
+            GoTo myEnd
+        Else
+            Workbooks.Open Filename:=mySharePath & "830 Data Integrity." & Format(Date - 1, "YYYYMMDD") & "*.xlsx" 'Yesterday date
+            myMakePartFilename = ActiveWorkbook.Name
+            Application.DisplayAlerts = False
+            For Each myX In Worksheets
+                If myX.Name = "Data Integrity Make Part Summar" Or myX.Name = "Part Master-Make Part" Or myX.Name = "Independent Demand Issues" Or myX.Name = "Invalid On Hand Qty - Make Part" Then
+                Else
+                    myX.Delete
+                End If
+            Next
+            Application.DisplayAlerts = True
+            Sheets.Add
+            ActiveSheet.Name = "temp"
+            'Workbooks(myMacrofile).Sheets("Logic").Range("A1:C" & myTotalLogic).Copy
+            'Application.Wait (Now + TimeValue("00:00:02"))
+            'Call CopyTemp(7)
+            Call SheetSelect("Data Integrity Make Part Summar")
+            If ActiveSheet.Name <> "Data Integrity Make Part Summar" Then
+                With CreateObject("Outlook.Application").CreateItem(0)
+                    .To = "sk.loon@plexus.com"
+                    .CC = "Sing-Yee.Ho@plexus.com"
+                    .Subject = "830 Data Integrity file format error!"
+                    .HTMLBody = "Data Integrity Make Part Summar sheet not found!"
+                    '.Display
+                    .Send
+                End With
+                Application.EnableEvents = False
+                ActiveWorkbook.Close False
+                Application.EnableEvents = True
+                GoTo myEnd
+            End If
+            Columns("A:A").Delete Shift:=xlToLeft
+            Columns("C:C").Delete Shift:=xlToLeft
+            Columns("L:L").Delete Shift:=xlToLeft
+            myPurchaseTemp = Range("A" & Rows.Count).End(xlUp).Row
+            Rows(myPurchaseTemp + 2 & ":" & myPurchaseTemp + 2).Delete Shift:=xlUp
+            'Range("A1:B3").Interior.Pattern = xlNone
+            Range("A1:B4").Interior.ThemeColor = xlThemeColorDark1
+            Range("C1:K" & myPurchaseTemp + 1).Borders(xlEdgeLeft).LineStyle = xlContinuous
+            Range("C1:K" & myPurchaseTemp + 1).Borders(xlEdgeLeft).LineStyle = xlContinuous
+            Range("C1:K" & myPurchaseTemp + 1).Borders(xlEdgeTop).LineStyle = xlContinuous
+            Range("C1:K" & myPurchaseTemp + 1).Borders(xlEdgeBottom).LineStyle = xlContinuous
+            Range("C1:K" & myPurchaseTemp + 1).Borders(xlEdgeRight).LineStyle = xlContinuous
+            Range("C1:K" & myPurchaseTemp + 1).Borders(xlInsideVertical).LineStyle = xlContinuous
+            Range("C1:K" & myPurchaseTemp + 1).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+            Range("A5:B" & myPurchaseTemp + 1).Borders(xlEdgeLeft).LineStyle = xlContinuous
+            Range("A5:B" & myPurchaseTemp + 1).Borders(xlEdgeTop).LineStyle = xlContinuous
+            Range("A5:B" & myPurchaseTemp + 1).Borders(xlEdgeBottom).LineStyle = xlContinuous
+            Range("A5:B" & myPurchaseTemp + 1).Borders(xlEdgeRight).LineStyle = xlContinuous
+            Range("A5:B" & myPurchaseTemp + 1).Borders(xlInsideVertical).LineStyle = xlContinuous
+            Range("A5:B" & myPurchaseTemp + 1).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+            Range("A1:K" & myPurchaseTemp + 1).Copy
+            Call CopyTemp(1)
+            
+            Sheets("Invalid On Hand Qty - Make Part").Move after:=Sheets("Data Integrity Make Part Summar")
+            Columns("L:L").Delete Shift:=xlToLeft
+            Columns("M:M").Delete Shift:=xlToLeft
+            myTotalInvalid = Range("A" & Rows.Count).End(xlUp).Row
+            Range("M3:M" & myTotalInvalid).Value = "=IF(F3=""M"",Row(F3),"""")"
+            Range("M3:M" & myTotalInvalid).Value = Range("M3:M" & myTotalInvalid).Value
+            Range("A2:M" & myTotalInvalid).RemoveDuplicates Columns:=13, Header:=xlNo
+            Columns("M:M").ClearContents
+            Range("A2:L2").AutoFilter
+            
+            Sheets("Part Master-Make Part").Columns("AC:AC").Delete
+            Sheets("Part Master-Make Part").Columns("U:U").Delete
+            Sheets("Part Master-Make Part").Range("A5:AA5").AutoFilter
+            Sheets("Independent Demand Issues").Columns("W:W").Delete
+            Sheets("Independent Demand Issues").Columns("U:U").Delete
+            Sheets("Independent Demand Issues").Range("A2:U2").AutoFilter
+            Application.DisplayAlerts = False
+            Sheets("temp").Delete
+            Application.DisplayAlerts = True
+            Sheets("Data Integrity Make Part Summar").Select
+            Rows("5:5").AutoFilter
+            
+            
+            'Check Folder Availbility
+            'Year
+            myYear = Year(Date)
+            myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\", vbDirectory)
+            If myFolderCheck = "" Then
+                MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\"
+            End If
+            'Data Integrity
+            myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Data Integrity\", vbDirectory)
+            If myFolderCheck = "" Then
+                MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Data Integrity\"
+            End If
+            'Make Part
+            myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Data Integrity\Make Part\", vbDirectory)
+            If myFolderCheck = "" Then
+                MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Data Integrity\Make Part\"
+            End If
+            
+            myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Data Integrity\Make Part\" & myMonthYear & "\", vbDirectory)
+            If myFolderCheck = "" Then
+                MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Data Integrity\Make Part\" & myMonthYear & "\"
+            End If
+            mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Data Integrity\Make Part\" & myMonthYear & "\"
+            
+            Application.EnableEvents = False
+            ActiveWorkbook.SaveAs Filename:=mySavePath & "Data Integrity Make Part Summary " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"  'Password:="888"
+            'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Data Integrity Make Part Summary " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"  'Password:="888"
+            ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Data Integrity Make Part Summary " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"  'Password:="888"
+            ActiveWorkbook.Close False
+            Application.EnableEvents = True
+            
+        
+        If myType = "End" Then
+            With CreateObject("Outlook.Application").CreateItem(0)
+                '.To = "sk.loon@plexus.com"
+                .BCC = "sk.loon@plexus.com"
+                .To = "PLXS-MFGIslandViewPurchasingDAs@plexus.com"
+                .CC = "isl_purch_mtm@plexus.com; Sonia.Chor@plexus.com; Sing-Yee.Ho@plexus.com"
+                .Subject = "Data Integrity Workbook in Rapid Response (Make Part)"
+                .Attachments.Add myMacroPath & "\DI1.jpg"
+                .Attachments.Add myMacroPath & "\DI7.jpg"
+                .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>Hi DAs," & _
+                          "<br><br>Please help to clean up data integrity with below criteria  <font color=red>by this Friday, " & Format(Date + 4, "D Mmm Yyyy") & "</font>.<br/>" & _
+                          "<br>Below is the summary of Kinaxis RR Data Integrity for Make Part:-<br/>" & _
+                          "<br><img src=cid:DI1.jpg></img><br>" & _
+                          "<br>The details report has been saved in share drive:" & _
+                          "<br><a href=""" & mySavePath & "Data Integrity Make Part Summary " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx"">" & mySavePath & "Data Integrity Make Part Summary " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx</a>" & _
+                          "<br><br>The logic of the data integrity measurement as below:-" & _
+                          "<br><img src=cid:DI7.jpg></img><br>" & _
+                          "<br><br>Thanks.<br/><br>This is an auto generated email. No reply required...</html>"
+                '.Display
+                .Send
+
+            End With
+        Else
+            With CreateObject("Outlook.Application").CreateItem(0)
+                '.To = "sk.loon@plexus.com"
+                .BCC = "sk.loon@plexus.com"
+                .To = "PLXS-MFGIslandViewPurchasingDAs@plexus.com"
+                .CC = "isl_purch_mtm@plexus.com; Sonia.Chor@plexus.com; Sing-Yee.Ho@plexus.com"
+                .Subject = "Data Integrity Workbook in Rapid Response (Make Part)"
+                .Attachments.Add myMacroPath & "\DI1.jpg"
+                .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>Hi DAs," & _
+                          "<br>Here is the result after month end closing.<br/>" & _
+                          "<br><img src=cid:DI1.jpg></img><br>" & _
+                          "<br>File:" & _
+                          "<a href=""" & mySavePath & "Data Integrity Make Part Summary " & Format(Date - 1, "MMDDYYYY") & myPrefix & ".xlsx"">" & mySavePath & "Data Integrity Make Part Summary " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx</a>" & _
+                          "<br><br>Source file : RR Kinaxis Potential Data Integrity Make parts" & _
+                          "<br><br>Thanks.<br/><br>This is an auto generated email. No reply required...</html>"
+                '.Display
+                .Send
+            End With
+        End If
+    
+        End If
+    End If
+'    Next myRetry
+myEnd:
+    Application.EnableEvents = False
+    ActiveWorkbook.Save
+    Application.EnableEvents = True
+    Application.DisplayAlerts = False
+    Application.Quit
+    'Application.EnableEvents = True
+
+End Sub
+Sub CopyTemp(myCnt)
+    Sheets("temp").Select
+    'ActiveSheet.Range("A1").PasteSpecial
+    Application.Wait (Now + TimeValue("00:00:02"))
+    ActiveSheet.Pictures.Paste.Select
+    myObject = Selection.Name
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Selection.Copy
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set oDia = ActiveSheet.ChartObjects.Add(0, 0, ActiveSheet.Shapes(1).Width, ActiveSheet.Shapes(1).Height)
+    Set oChartArea = oDia.Chart
+    oDia.Activate
+    oChartArea.ChartArea.Select
+    Application.Wait (Now + TimeValue("00:00:01"))
+    oChartArea.Paste
+    Application.Wait (Now + TimeValue("00:00:01"))
+    oChartArea.Export (myMacroPath & "\DI" & myCnt & ".jpg")
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Selection.Delete
+    Application.Wait (Now + TimeValue("00:00:01"))
+    oDia.Delete
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ActiveSheet.Shapes(myObject).Delete
+    'Sheets("Summary").Select
+End Sub
+Sub SheetCombineCheck()
+    On Error GoTo ErrCheck
+    Sheets(Array("Data Integrity Make Part Summar", "Part Master-Make Part", "Independent Demand Issues", "Invalid On Hand Qty - Make Part")).Select
+    Exit Sub
+ErrCheck:
+    ActiveWorkbook.Close False
+End Sub
+Sub SheetSelect(mySheet)
+    On Error Resume Next
+    Sheets(mySheet).Select
+End Sub
+Sub CopyRetry(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV").Range("I" & myStr1 & ":L" & myPivotTotal1 - 1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ElseIf mySequence1 = "Last" Then
+        Sheets("PV").Range("I" & myPivotTotal1 & ":L" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Else
+        Sheets("PV").Range("A4:" & mySequence1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub CopyRetry1(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV Aged>2 Weeks").Range("A" & myStr1 & ":C" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub PasteRetry(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        ElseIf mySequence2 = "Last" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        Else
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub PasteRetry1(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub SendMails()
+    'Declare Send Mail Property
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    'Set OutMail = OutApp.CreateItem(0)
+    
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    
+    'generateHTMLEmail (1)
+    'mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+    mySubject = "Test" 'Replace(mySubject, Chr(10), " ")
+    'myAttachPath = Range("G1").Value & "\"
+    
+    'Ver18: Change to HTML mail
+    'myBody = Range("F12").Value + vbCr + Range("F47").Value
+    
+    
+    For X = 2 To myTotalSend
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                Set OutMail = OutApp.CreateItem(0)
+                myTo = ""
+                myCc = ""
+                
+                'If Range("G2").Value <> "" Then
+                '    myTo = Range("G2").Value & ";"
+                'End If
+                'If Range("G3").Value Then
+                '    myCC = Range("G3").Value & ";"
+                'End If
+                
+                
+                
+                'imgEmbedComm = "<html><body><img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+                             & "<br><br><br></body></html>"
+                 imgEmbedComm = "<br><B>Embedded Image:</B><br>" _
+& "<img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+& "<br>Best Regards, <br>Sumit</font></span>"
+                htmlBodyCont = imgEmbedComm
+    
+                
+                With OutMail
+                .To = myTo
+                .CC = myCc
+                .Subject = mySubject '& " (" & Cells(X, 1).Value & ")"
+                '.Body = myBody
+
+                .HTMLBody = htmlBodyCont & "1"
+                
+
+                    
+                    If Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send" Then
+                        .Send
+                        Cells(X, 4).Value = "Sent"
+                    Else
+                        .Display
+                        Range("i1").Value = ActiveWorkbook.Path & "\1.jpg"
+                        Cells(X, 4).Value = "Displayed"
+                    End If
+                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+    MsgBox "Done!!!"
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub ItemBpPurchasingSelect()
+    myItemBpPurchasingFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Item BP Purchasing Data file")
+    If myItemBpPurchasingFile = False Then
+    Else
+        Range("B8").Value = myItemBpPurchasingFile
+    End If
+End Sub
+Sub OpenPoSelect()
+    myOpenPoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO file")
+    If myOpenPoFile = False Then
+    Else
+        Range("B10").Value = myOpenPoFile
+    End If
+End Sub
+Sub SupplierAgreementSelect()
+    mySupplierAgreementFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Supplier Agreement file")
+    If mySupplierAgreementFile = False Then
+    Else
+        Range("B12").Value = mySupplierAgreementFile
+    End If
+End Sub
+Sub DataIntegritySelect()
+    myDataIntegrityFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Data Integrity file")
+    If myDataIntegrityFile = False Then
+    Else
+        Range("B14").Value = myDataIntegrityFile
+    End If
+End Sub
+Sub BucketsReportSelect()
+    myBucketsFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select 16 Buckets Report_Monthly (Buy) file")
+    If myBucketsFile = False Then
+    Else
+        Range("B16").Value = myBucketsFile
+    End If
+End Sub
+Sub OpenPoRrSelect()
+    myOpenPoRrFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO report (RR) file")
+    If myOpenPoRrFile = False Then
+    Else
+        Range("B18").Value = myOpenPoRrFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+Sub SharePath()
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select a Folder"
+        If .Show = -1 Then ' if OK is pressed
+            Range("B4").Value = .SelectedItems(1)
+        End If
+    End With
+    
+'    If sFolder <> "" Then ' if a file was chosen
+'        ' *********************
+'        ' put your code in here
+'        ' *********************
+'    End If
+End Sub
