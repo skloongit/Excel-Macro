@@ -1,0 +1,298 @@
+Function RangetoHTML(rng As Range)
+
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        .Cells(1).PasteSpecial Paste:=8
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        .DrawingObjects.Delete
+        On Error GoTo 0
+    End With
+
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    RangetoHTML = ts.readall
+    ts.Close
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+
+    'Close TempWB
+    Application.EnableEvents = False
+    TempWB.Close savechanges:=False
+    Application.EnableEvents = True
+    
+    'Delete the htm file we used in this function
+    Kill TempFile
+
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+Sub PartUnderLocator()
+    
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    Sheets("Macro").Select
+    If Range("E19").Value <> "" Then
+        myTo = Join(Application.WorksheetFunction.Transpose(Range("E18:E" & Range("E" & Rows.Count).End(xlUp).Row).Value), ";")
+    Else
+        myTo = Range("E18").Value
+    End If
+    If Range("F19").Value <> "" Then
+        myCc = Join(Application.WorksheetFunction.Transpose(Range("F18:F" & Range("F" & Rows.Count).End(xlUp).Row).Value), ";")
+    Else
+        myCc = Range("F18").Value
+    End If
+    'Set fso = CreateObject("Scripting.FileSystemObject")
+    myOrderDetails = Dir("\\ap\penadata\Applications\Report_Kinaxis\Material\830_WO Order Details 030,10C,10D,10F." & Format(Date - 1, "YYYYMMDD") & "*.xlsx")
+    'myOrderDetails = Dir("C:\SK Loon\Macro\Microsemi Part under locator\830_WO Order Details 030,10C,10D,10F." & Format(Date - 2, "YYYYMMDD") & "*.xlsx")
+    'myOrderDetails = Dir()
+    If myOrderDetails = "" Then
+        With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "sk.loon@plexus.com"
+            '.CC = "Sing-Yee.Ho@plexus.com"
+            .Subject = "Microsemi Part under locator Macro Error!"
+            .HTMLBody = "830_WOD Overall ISL file not found!"
+            .send
+        End With
+        GoTo myEnd1
+    End If
+    
+    'Workbooks.Open "C:\SK Loon\Macro\Microsemi Part under locator\" & myOrderDetails
+    Workbooks.Open ActiveWorkbook.Path & "\" & myOrderDetails
+    myOrderFile = ActiveWorkbook.Name
+    myOrderSheetname = ActiveSheet.Name
+    myTotalWod = Range("X" & Rows.Count).End(xlUp).Row
+    Range("W3:W" & myTotalWod).Value = "=IF(IFERROR(VLOOKUP(AA3,'[" & myMacroFile & "]Macro'!$B:$B,1,0),""Delete"")=""Delete"",""Delete"",IF(OR(RIGHT(X4,4)=""-10D"",RIGHT(X4,4)=""-10F""),ROW(AA4),""Delete""))"
+    Range("W3:W" & myTotalWod).Value = Range("W3:W" & myTotalWod).Value
+    Range("A3:BK" & myTotalWod).RemoveDuplicates Columns:=23, Header:=xlNo
+    myTotalWod = Range("X" & Rows.Count).End(xlUp).Row
+    Range("W3:W" & myTotalWod).Value = "=IF(AM3=""Past"",TODAY(),AM3)"
+    Range("W3:W" & myTotalWod).Value = Range("W3:W" & myTotalWod).Value
+    Range("AM3:AM" & myTotalWod).Value = Range("W3:W" & myTotalWod).Value
+    Sheets.Add
+    Range("A3:A" & myTotalWod).Value = Sheets(myOrderSheetname).Range("X3:X" & myTotalWod).Value
+    Range("B3:B" & myTotalWod).Value = Sheets(myOrderSheetname).Range("AA3:AA" & myTotalWod).Value
+    Range("D3:D" & myTotalWod).Value = Sheets(myOrderSheetname).Range("AM3:AM" & myTotalWod).Value
+    Range("E3:E" & myTotalWod).Value = Sheets(myOrderSheetname).Range("AP3:AP" & myTotalWod).Value
+    Range("A3:E" & myTotalWod).RemoveDuplicates Columns:=Array(1, 2, 3, 5), Header:=xlNo
+    myTotalWod = Range("A" & Rows.Count).End(xlUp).Row
+    Range("B3").Value = "Locator"
+    Range("C3").Value = "Need Qty"
+    Range("D3").Value = "Need Date"
+    Range("E3").Value = "Buyer"
+    'Range("C4:C" & myTotalWod).Value = "=SUMIFS('" & myOrderSheetname & "'!AH:AH,'" & myOrderSheetname & "'!X:X,A4,'" & myOrderSheetname & "'!AA:AA,B4,'" & myOrderSheetname & "'!AM:AM,D4,'" & myOrderSheetname & "'!AP:AP,E4)"
+    Range("C4:C" & myTotalWod).Value = "=SUMIFS('" & myOrderSheetname & "'!AH:AH,'" & myOrderSheetname & "'!X:X,A4,'" & myOrderSheetname & "'!AA:AA,B4,'" & myOrderSheetname & "'!AP:AP,E4)"
+    Range("C4:C" & myTotalWod).Value = Range("C4:C" & myTotalWod).Value
+    ActiveWorkbook.ActiveSheet.Sort.SortFields.Clear
+    ActiveWorkbook.ActiveSheet.Sort.SortFields.Add Key:=Range("E4:E" & myTotalWod), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.ActiveSheet.Sort.SortFields.Add Key:=Range("A4:A" & myTotalWod), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.ActiveSheet.Sort.SortFields.Add Key:=Range("B4:B" & myTotalWod), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.ActiveSheet.Sort.SortFields.Add Key:=Range("D4:D" & myTotalWod), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    With ActiveWorkbook.ActiveSheet.Sort
+        .SetRange Range("A3:E" & myTotalWod)
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    Columns("A:E").EntireColumn.AutoFit
+    Columns("A:A").ColumnWidth = Columns("A:A").ColumnWidth * 1.2
+    Columns("B:B").ColumnWidth = Columns("B:B").ColumnWidth * 1.2
+    Columns("C:C").ColumnWidth = Columns("C:C").ColumnWidth * 1.2
+    Columns("D:D").ColumnWidth = Columns("D:D").ColumnWidth * 1.2
+    Columns("E:E").ColumnWidth = Columns("E:E").ColumnWidth * 1.2
+    Columns("C:D").HorizontalAlignment = xlCenter
+    Columns("D:D").Delete
+    ActiveSheet.ListObjects.Add(xlSrcRange, Range("$A$3:$D$" & myTotalWod), , xlYes).Name = "Table1"
+    ActiveSheet.ListObjects("Table1").TableStyle = "TableStyleMedium13"
+    Range("Table1[#All]").Select
+    With Selection
+        .VerticalAlignment = xlCenter
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = False
+    End With
+    
+    'Send Email
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .CC = myCc
+        .BCC = "sk.loon@plexus.com"
+        .Subject = "Microsemi Part under locator"
+        .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>Hi Buyer," & _
+                  "<html><br>Please help to close below parts under locator" & RangetoHTML(Range("A3:D" & myTotalWod)) & _
+                  "<html><br>Thanks.<br/>" & _
+                  "This is an auto generated email. No reply required</html>"
+        '.Display
+        .send
+    End With
+    Application.Wait (Now + TimeValue("00:00:10"))
+    Application.CutCopyMode = False
+    Application.EnableEvents = False
+    Workbooks(myOrderFile).Close False
+    Application.EnableEvents = True
+    'Workbooks.Open Filename:="D:\Materials\IA Reports\2020\02. Feb2020\02072020\Coronavirus\Potential PO Impacted by Coronavirus Outbreak_masterfile 02072020.xlsx"
+    'Workbooks.Open myMacroPath & "\Temp.xlsx"
+    'MsgBox "Done!"
+myEnd1:
+'    Application.EnableEvents = False
+'    ActiveWorkbook.Close False
+'    Application.EnableEvents = True
+    Application.DisplayAlerts = False
+    Application.Quit
+End Sub
+Sub MergeMacro()
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    'Sheets("TempSheet").Select
+    'Sheets("TempSheet").Cells.ClearContents
+    
+    'myYear = Year(Date)
+    myDate = Format(Date, "MMDDYYYY")
+    mySharePath = Range("C35").Value
+    myLatestFile = Dir(mySharePath & Range("C17").Value & " " & myDate & ".xlsx")
+    If myLatestFile = "" Then
+        For myA = 1 To 20
+            myDate = Format(Date - myA, "MMDDYYYY")
+            myLatestFile = Dir(mySharePath & Range("C17").Value & " " & myDate & ".xlsx")
+            If myLatestFile <> "" Then
+                Exit For
+            End If
+        Next myA
+    End If
+    If myLatestFile = "" Then
+        With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "sk.loon@plexus.com"
+            .CC = "Sing-Yee.Ho@plexus.com"
+            .Subject = "CoronaVirus Latest file not found!"
+            .HTMLBody = "CoronaVirus Latest file not found!"
+            .send
+        End With
+        GoTo myEnd
+    End If
+    
+    Call fso.copyfile(mySharePath & Range("C17").Value & " " & myDate & ".xlsx", myMacroPath & "\Temp.xlsx", True)
+    'Workbooks.Open Range("C4").Value ', ReadOnly:=True
+    Workbooks.Open myMacroPath & "\Temp.xlsx", UpdateLinks:=False
+    myMasterFile = ActiveWorkbook.Name
+    Application.DisplayAlerts = False
+    If Workbooks(myMasterFile).MultiUserEditing Then
+        Workbooks(myMasterFile).ExclusiveAccess
+    End If
+    Application.DisplayAlerts = True
+    For Each myX In Worksheets
+        If Left(myX.Name, 7) = "Open PO" Then
+            Sheets(myX.Name).Select
+            Exit For
+        End If
+    Next
+    If Left(myX.Name, 7) <> "Open PO" Then
+        Application.Quit
+    End If
+    If ActiveSheet.AutoFilterMode = True Then
+       Rows("3:3").AutoFilter
+    End If
+    myOpoSheet = ActiveSheet.Name
+    myTempLastRow = Range("B" & Rows.Count).End(xlUp).Row
+    myB = 5
+    For myA = 1 To 5
+        Workbooks.Open Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & myDate & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+        For Each myX In Worksheets
+            If Left(myX.Name, 7) = "Open PO" Then
+                Sheets(myX.Name).Select
+                Exit For
+            End If
+        Next
+        If ActiveSheet.AutoFilterMode = True Then
+           Rows("3:3").AutoFilter
+        End If
+        myLastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+        'Header Check
+        For myX = 1 To myLastCol
+            If Cells(3, myX).Value <> Workbooks(myMasterFile).Sheets(myOpoSheet).Cells(3, myX).Value Then
+                With CreateObject("Outlook.Application").CreateItem(0)
+                    .To = "sk.loon@plexus.com"
+                    .CC = "Sing-Yee.Ho@plexus.com"
+                    .Subject = "CoronaVirus Different format detected!"
+                    .HTMLBody = Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value
+                    .send
+                End With
+                GoTo myEnd
+            End If
+        Next myX
+        myTempLastRowCopy = Range("A" & Rows.Count).End(xlUp).Row
+        myTempLastRow = Workbooks(myMasterFile).Sheets(myOpoSheet).Range("A" & Rows.Count).End(xlUp).Row
+        'myAddBookLastRow = Workbooks(myMacroFile).Sheets("TempSheet").Range("A" & Rows.Count).End(xlUp).Row
+        myAddBookLastRow = Workbooks(myMasterFile).Sheets("Address Book").Range("A" & Rows.Count).End(xlUp).Row
+        Rows("4:" & myTempLastRowCopy).Copy
+        Workbooks(myMasterFile).Sheets(myOpoSheet).Rows(myTempLastRow + 1).Insert
+        Sheets("Address Book").Select
+        myLastCol = Cells(1, Columns.Count).End(xlToLeft).Column
+        'Header Check
+        For myX = 1 To myLastCol
+            If Cells(1, myX).Value <> Workbooks(myMasterFile).Sheets("Address Book").Cells(1, myX).Value Then
+                With CreateObject("Outlook.Application").CreateItem(0)
+                    .To = "sk.loon@plexus.com"
+                    .CC = "Sing-Yee.Ho@plexus.com"
+                    .Subject = "CoronaVirus Different format detected!"
+                    .HTMLBody = Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value
+                    .send
+                End With
+                GoTo myEnd
+            End If
+        Next myX
+        myTempLastRowCopy = Range("A" & Rows.Count).End(xlUp).Row
+        Rows("1:" & myTempLastRowCopy).Copy
+        'Workbooks(myMacroFile).Sheets("TempSheet").Rows(myAddBookLastRow + 1).Insert
+        Workbooks(myMasterFile).Sheets("Address Book").Rows(myAddBookLastRow + 1).Insert
+        Application.CutCopyMode = False
+        ActiveWorkbook.Close False
+        'myA = myA + 1
+        myB = myB + 2
+    Next myA
+    Workbooks("Temp.xlsx").Activate
+    Sheets("Address Book").Select
+    'myTotalAdd = Workbooks(myMacroFile).Sheets("TempSheet").Range("A" & Rows.Count).End(xlUp).Row
+    'Workbooks(myMacroFile).Sheets("TempSheet").Range("A2:W" & myTotalAdd).Value = Range("A1:W" & myTotalAdd).Value
+    'Workbooks(myMacroFile).Sheets("TempSheet").Range("A2:AK" & myTotalAdd).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalAdd = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A1:AK" & myTotalAdd).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalAdd = Range("A" & Rows.Count).End(xlUp).Row
+    'Range("A1:W" & Range("A" & Rows.Count).End(xlUp).Row).ClearContents
+    'Range("A1:W" & myTotalAdd).Value = Workbooks(myMacroFile).Sheets("TempSheet").Range("A2:W" & myTotalAdd - 1).Value
+    Workbooks(myMasterFile).Sheets(myOpoSheet).Select
+
+    Exit Sub
+myEnd:
+    Application.Quit
+End Sub
