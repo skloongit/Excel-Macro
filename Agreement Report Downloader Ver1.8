@@ -1,0 +1,324 @@
+Dim myAttachement(0) As String
+Sub AgreementReportDownloader()
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySuffix = Range("B8").Value
+    myPath1 = Range("B4").Value
+        If Right(Trim(myPath1), 1) <> "\" Then
+            Range("B4").Value = myPath1 & "\"
+            myPath1 = Range("B4").Value
+        End If
+    
+    
+    'Ver1.5: Check file availibity
+    If Dir(myMacroPath & "\" & Year(Date) & "\Agreement - " & Format(Date, "MMDDYYYY") & mySuffix & ".xlsx", vbNormal) <> "" Then GoTo myEnd
+    
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+    
+    myMacroCheck = Dir(myMacroPath & "\" & Year(Date) & "\", vbDirectory)
+        If myMacroCheck = "" Then
+            MkDir myMacroPath & "\" & Year(Date) & "\"
+        End If
+    
+    '***************************Open SO Report Download (Report will be ready: 7.00am)***********************************************************************************
+    myAgreementFile = Dir(myPath1 & "R5538003_PLXS0004*")
+    Do Until myAgreementFile = ""
+        Set F = fso.GetFile(myPath1 & myAgreementFile)
+        'myLastModifiedDate = CDate(Format(f.DateLastModified, "m/d/yyyy"))
+        If Date = CDate(Format(F.DateLastModified, "m/d/yyyy")) Then
+            Workbooks.Open Filename:=myPath1 & myAgreementFile, ReadOnly:=True
+            Exit Do
+        End If
+        myAgreementFile = Dir()
+    Loop
+    
+    If myAgreementFile = "" Then
+        'Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus.com", "", "Agreement file in JDE share drive not found!", "Agreement file in JDE share drive not found!")
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Agreement file in JDE share drive not found!</html>", _
+                        myAttachement(), _
+                        0, 0)
+        GoTo myEnd
+    End If
+    myAgreementFilename = ActiveWorkbook.Name
+    
+'    'Check Folder Availbility
+'    'Year
+'    myYear = Year(Date)
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\"
+'    End If
+'    'Supplier Agreement
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Supplier Agreement\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Supplier Agreement\"
+'    End If
+'
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Supplier Agreement\" & myMonthYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Supplier Agreement\" & myMonthYear & "\"
+'    End If
+'    mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Supplier Agreement\" & myMonthYear & "\"
+
+    Columns("M:M").Insert
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("M4:M" & myTempTotal).Value = "=TRIM(L4)"
+    Range("M4:M" & myTempTotal).Value = Range("M4:M" & myTempTotal).Value
+    Range("L4:L" & myTempTotal).Value = Range("M4:M" & myTempTotal).Value
+    Range("M3:M" & myTempTotal).Value = "=IF(J3=830,ROW(J3),""Delete"")"
+    Range("M3:M" & myTempTotal).Value = Range("M3:M" & myTempTotal).Value
+    Range("A3:AM" & myTempTotal + 1).RemoveDuplicates Columns:=13, Header:=xlNo
+    Columns("M:M").Delete
+    Rows("3:3").AutoFilter
+    Rows("3:3").WrapText = True
+    'fso.MoveFile Source:=myHomePath & myCsvFiles, Destination:=mySavePath & "\Open PO report - " & myCsvFiles
+    myFileDate = Range("J1").Value
+    If Date = myFileDate Then
+        ActiveSheet.Name = "Agreement - " & Format(Date, "MMDDYYYY")
+        Application.EnableEvents = False
+        ActiveWorkbook.SaveAs Filename:=mySavePath & "Agreement - " & Format(Date, "MMDDYYYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+        'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Agreement - " & Format(Date, "MMDDYYYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Agreement - " & Format(Date, "MMDDYYYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+        Application.EnableEvents = True
+    Else
+        'Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus.com", "", "Agreement File Date file error!", "Agreement File Date file error!")
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Agreement File Date file error!</html>", _
+                        myAttachement(), _
+                        0, 0)
+        GoTo myEnd
+    End If
+    'ActiveWorkbook.Close False
+    Application.EnableEvents = False
+    Workbooks("Agreement - " & Format(Date, "MMDDYYYY") & mySuffix & ".xlsx").Close False
+    Application.EnableEvents = True
+    'Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus.com", "", "Agreement have been save in Share drive", "Agreement have been save in Share drive")
+    Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sing-yee.ho@plexus.com", _
+            "", _
+            "sk.loon@plexus.com", _
+            "Agreement have been save in Share drive", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Agreement have been save in Share drive</html>", _
+            myAttachement(), _
+            0, 0)
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub EmailSending(myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String)
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Cc = myCc
+        .Bcc = myBcc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        '.Display
+        .Send
+    End With
+End Sub
+Sub PasteAll()
+    On Error Resume Next
+    Range("A1").PasteSpecial xlPasteAll
+End Sub
+Sub ReadAllData()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("^a")
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    SendKeys "^{C}"
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Sub GetCursorPosDemo()
+Dim llCoord As POINTAPI
+' Get the cursor positions
+GetCursorPos llCoord
+' Display the cursor position coordinates
+MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+End Sub
+Private Sub MoveSingle(myX, myY)
+    SetCursorPos myX, myY 'x and y position
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub MoveSingleClick(myX, myY)
+  SetCursorPos myX, myY 'x and y position
+  Application.Wait (Now + TimeValue("00:00:01"))
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub SingleClick()
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub DoubleClick()
+  'Double click as a quick series of two clicks
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub RightClick()
+  'Right click
+  SetCursorPos 200, 200 'x and y position
+  mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+Sub TypeInCurrentWindow()
+DoEvents
+Application.EnableEvents = False
+Sleep 5000
+
+SendKeys "a"
+SendKeys "^a", True 'Select All
+Sleep 400 'Wait 0.4 seconds (400 milliseconds)
+SendKeys "^c", True 'Copy
+Sleep 400 'Wait 0.4 seconds
+'SendKeys "abcd", True 'Type abcd
+'Sleep 400 'Wait 0.4 seconds
+Application.EnableEvents = True
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+
