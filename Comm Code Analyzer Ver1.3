@@ -1,0 +1,492 @@
+Dim mySuccess  As String
+Dim myAttachement() As String
+Sub FileSelect()
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).Value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).Value = mySelect
+        End If
+End Sub
+Sub FileSelect1()
+    myMacroFile = ActiveWorkbook.Name
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).Value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).Value = mySelect
+        End If
+    Workbooks.Open Range("B15").Value, , True
+    myBomFile = ActiveWorkbook.Name
+    myBomSheet = ActiveSheet.Name
+    If ActiveSheet.AutoFilterMode = True Then
+       Rows("2:2").AutoFilter
+    End If
+    myTempLast = Range("E" & Rows.Count).End(xlUp).Row
+    Range("E2:E" & myTempLast).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTempLast = Range("E" & Rows.Count).End(xlUp).Row
+    Workbooks(myMacroFile).Activate
+    Sheets("AssyPartList").Columns("A:A").ClearContents
+    Range("B22:B" & Rows.Count).ClearContents
+    Range("B22:B" & Rows.Count).Validation.Delete
+    If Workbooks(myBomFile).Sheets(myBomSheet).Range("E3").Value <> "" Then
+        Sheets("AssyPartList").Range("A1:A" & myTempLast - 2).Value = Workbooks(myBomFile).Sheets(myBomSheet).Range("E3:E" & myTempLast).Value
+        
+        'Range("B22:B" & myTempLast + 19).Select
+        With Range("B22:B" & myTempLast + 19).Validation
+            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:=xlBetween, Formula1:="=AssyPartList!$A$1:$A$" & myTempLast - 2
+            .IgnoreBlank = True
+            .InCellDropdown = True
+            .InputTitle = ""
+            .ErrorTitle = ""
+            .InputMessage = ""
+            .ErrorMessage = ""
+            .ShowInput = True
+            .ShowError = True
+        End With
+    End If
+    'Range("B22:B" & myTempLast + 19).Value = Sheets("AssyPartList").Range("A1:A" & myTempLast - 2).Value
+    Workbooks(myBomFile).Close False
+End Sub
+Sub CommCodeAnalyzer()
+    ReDim myAttachement(0)
+    Dim myTo As String
+    Dim myCc As String
+    Dim mySubject As String
+    Dim myBody As String
+    'myStrTime = Time
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    
+    For myA = 0 To 3
+        
+        'Ver1.3:
+        'If Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\Penang_PlxsCoreData_AML_ActiveBuy_ActiveDemand." & Format(Date - myA, "YYYYMMDD") & "*.xlsx", vbNormal) <> "" Then
+        If Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\Penang_PlxsCoreData_AML_ActiveBuy_ActiveDemand." & Format(Date - myA, "YYYYMMDD") & "*.xlsx", vbNormal) <> "" Then
+            If Dir(myMacroPath & "\Comm Code Analyzer Configuration.xlsx", vbNormal) = "" Then
+                'SendEmail "sk.loon@plexus.com", "", "Error: Comm Code Analyzer", "Comm Code Analyzer Configuration file not found!"
+                Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ThisWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Comm Code Analyzer Configuration file not found!</html>", _
+                        myAttachement(), _
+                        0, 0)
+                        
+                GoTo myEnd
+            Else
+                Workbooks.Open myMacroPath & "\Comm Code Analyzer Configuration.xlsx"
+                'To
+                If Sheets("To").Range("A1").Value <> "" Then
+                    If Sheets("To").Range("A2").Value <> "" Then
+                        myTempToTotal = Sheets("To").Range("A" & Rows.Count).End(xlUp).Row
+                        myTo = Join(Application.WorksheetFunction.Transpose(Sheets("To").Range("A1:A" & myTempToTotal).Value), ";")
+                    Else
+                        myTo = Sheets("To").Range("A1").Value
+                    End If
+                End If
+                'Cc
+                If Sheets("Cc").Range("A1").Value <> "" Then
+                    If Sheets("Cc").Range("A2").Value <> "" Then
+                        myTempCcTotal = Sheets("Cc").Range("A" & Rows.Count).End(xlUp).Row
+                        myCc = Join(Application.WorksheetFunction.Transpose(Sheets("Cc").Range("A1:A" & myTempCcTotal).Value), ";")
+                    Else
+                        myCc = Sheets("Cc").Range("A1").Value
+                    End If
+                End If
+                If Sheets("Subject").Range("A1").Value <> "" Then
+                    mySubject = Sheets("Subject").Range("A1").Value
+                End If
+                If Sheets("Contents").Range("A1").Value <> "" Then
+                    myBody = Sheets("Contents").Range("A1").Value
+                End If
+                ActiveWorkbook.Close False
+            End If
+            'Ver1.3:
+            'Workbooks.Open "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\Penang_PlxsCoreData_AML_ActiveBuy_ActiveDemand." & Format(Date - myA, "YYYYMMDD") & "*.xlsx", False, True
+            Workbooks.Open "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\Penang_PlxsCoreData_AML_ActiveBuy_ActiveDemand." & Format(Date - myA, "YYYYMMDD") & "*.xlsx", False, True
+            myRrFile = ActiveWorkbook.Name
+            Exit For
+        End If
+    Next myA
+    
+    If myRrFile = "" Then
+        'SendEmail "sk.loon@plexus.com", "", "Error: Comm Code Analyzer", "Penang_PlxsCoreData_AML_ActiveBuy_ActiveDemand file not found!"
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Penang_PlxsCoreData_AML_ActiveBuy_ActiveDemand file not found!</html>", _
+                myAttachement(), _
+                0, 0)
+                        
+        GoTo myEnd
+    End If
+    
+    Rows("1:1").Delete
+    myActiveSheet = ActiveSheet.Name
+    myRrTotal = Range("A" & Rows.Count).End(xlUp).Row
+    '******AML Unique*************************************
+    Sheets.Add
+    ActiveSheet.Name = "AML Unique"
+    Sheets(myActiveSheet).Range("O1:O" & myRrTotal).Copy
+    Range("A1").PasteSpecial xlPasteAll
+    Sheets(myActiveSheet).Range("C1:C" & myRrTotal).Copy
+    Range("B1").PasteSpecial xlPasteAll
+    Sheets(myActiveSheet).Range("A1:A" & myRrTotal).Copy
+    Range("C1").PasteSpecial xlPasteAll
+    Sheets(myActiveSheet).Range("H1:H" & myRrTotal).Copy
+    Range("D1").PasteSpecial xlPasteAll
+    Range("A1:D" & myRrTotal).RemoveDuplicates Columns:=Array(1, 2, 3, 4), Header:=xlYes
+    myUniqueTotal = Range("A" & Rows.Count).End(xlUp).Row
+    ActiveWorkbook.Worksheets("AML Unique").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("AML Unique").Sort.SortFields.Add Key:=Range("A2:A" & myUniqueTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("AML Unique").Sort.SortFields.Add Key:=Range("B2:B" & myUniqueTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("AML Unique").Sort.SortFields.Add Key:=Range("C2:C" & myUniqueTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        'Ver1.1: Include Comm Code
+        'ActiveWorkbook.Worksheets("AML Unique").Sort.SetRange Range("A1:C" & myUniqueTotal)
+        ActiveWorkbook.Worksheets("AML Unique").Sort.SetRange Range("A1:D" & myUniqueTotal)
+    ActiveWorkbook.Worksheets("AML Unique").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("AML Unique").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("AML Unique").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("AML Unique").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("AML Unique").Sort.Apply
+    '*********Comm Code Unique*****************************
+    'Sheets.Add
+    Sheets("AML Unique").Copy before:=ActiveSheet
+    ActiveSheet.Name = "Comm Code Unique"
+    'Sheets(myActiveSheet).Range("O1:O" & myRrTotal).Copy
+    'Range("A1").PasteSpecial xlPasteAll
+    'Sheets(myActiveSheet).Range("H1:H" & myRrTotal).Copy
+    'Range("B1").PasteSpecial xlPasteAll
+    'Range("A1:B" & myRrTotal).RemoveDuplicates Columns:=Array(1, 2), Header:=xlYes
+    'myUniqueTotal = Range("A" & Rows.Count).End(xlUp).Row
+    ActiveWorkbook.Worksheets("Comm Code Unique").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Comm Code Unique").Sort.SortFields.Add Key:=Range("A2:A" & myUniqueTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Comm Code Unique").Sort.SortFields.Add Key:=Range("D2:D" & myUniqueTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Comm Code Unique").Sort.SetRange Range("A1:D" & myUniqueTotal)
+    ActiveWorkbook.Worksheets("Comm Code Unique").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Comm Code Unique").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Comm Code Unique").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Comm Code Unique").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Comm Code Unique").Sort.Apply
+    Range("E1").Value = "Count"
+    Range("E2:E" & myUniqueTotal).Value = "=IF(A2=A3,IF(D2=D3,E3,E3+1),1)"
+    Range("E2:E" & myUniqueTotal).Value = Range("E2:E" & myUniqueTotal).Value
+    Range("F1").Value = "All Comm Code"
+    Range("F2:F" & myUniqueTotal).Value = "=IF(A2=A3,IF(COUNTIF(F3,""*""&D2&""*"")>0,F3,F3&"",""&D2),D2)"
+    Range("F2:F" & myUniqueTotal).Value = Range("F2:F" & myUniqueTotal).Value
+    Columns("G:G").ColumnWidth = 100
+    Range("G2:G" & myUniqueTotal).Value = "=IF(A2=A3,B2&""(""&C2&"")[""&D2&""]""&Char(10)&G3,B2&""(""&C2&"")[""&D2&""]"")"
+    Range("G2:G" & myUniqueTotal).Value = Range("G2:G" & myUniqueTotal).Value
+    
+    'Range("D2:D" & myUniqueTotal).Value = "=IF(A2=A3,D3&"",""&B2,B2)"
+    'Range("D2:D" & myUniqueTotal).Value = Range("D2:D" & myUniqueTotal).Value
+    'Range("B2:B" & myUniqueTotal).Value = Range("D2:D" & myUniqueTotal).Value
+    '
+    Range("D1:D" & myUniqueTotal).Value = "=IF(E1=1,""Delete"",Row(C1))"
+    Range("D1:D" & myUniqueTotal).Value = Range("D1:D" & myUniqueTotal).Value
+    Range("D1").Value = "Delete"
+    Range("A1:G" & myRrTotal).RemoveDuplicates Columns:=4, Header:=xlNo
+    myUniqueTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A1:G" & myRrTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+    myUniqueTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("G1").Value = "Part Number(Site)[Comm Code]"
+    Range("B1").Value = "# Comm Code"
+    Range("A1").Copy
+    Range("B1:D1").PasteSpecial xlPasteFormats
+    Columns("A:G").AutoFit
+    Range("A1:G" & myUniqueTotal).Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("A1:G" & myUniqueTotal).Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("A1:G" & myUniqueTotal).Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("A1:G" & myUniqueTotal).Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("A1:G" & myUniqueTotal).Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("A1:G" & myUniqueTotal).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    Columns("B:D").Delete
+    Columns("A:D").VerticalAlignment = xlTop
+    Columns("B:B").HorizontalAlignment = xlCenter
+    Columns("A:A").HorizontalAlignment = xlLeft
+    Application.DisplayAlerts = False
+    Sheets("AML Unique").Delete
+    Sheets("AML").Delete
+    Application.DisplayAlerts = True
+    If Dir(myMacroPath & "\Raw Files", vbDirectory) = "" Then
+        MkDir (myMacroPath & "\Raw Files")
+    End If
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Raw Files\Penang AML Active Buy Part - " & Format(Date, "MMDDYYYY"), FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False ', writeResPassword:="888"    'Password:="888"
+    ActiveWorkbook.Close False
+    
+'        With CreateObject("Outlook.Application").CreateItem(0)
+'            .SentOnBehalfOfName = "PLXS-MFG.Hillside.SystemAnalyticalAutomation@plexus.com"
+'            .To = myTo
+'            .Cc = myCc
+'            .Bcc = "Sk.loon@plexus.com"
+'            .Subject = mySubject
+'            .Attachments.Add myMacroPath & "\Raw Files\Penang AML Active Buy Part - " & Format(Date, "MMDDYYYY") & ".xlsx"
+'
+'
+'
+'            .HTMLBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>" & Replace(Replace(myBody, "WW", "WW" & myCurWw), Chr(10), "<br>") & _
+'                      myEmailCode & _
+'                      mySignature & "</p><br></BODY>© Copyright Plexus Islandview 2024. All rights reserved. <a href='mailto:PLXS-MFG.Hillside.SystemAnalyticalAutomation@plexus.com?subject=Unsubscribe Penang AML Active Buy Part'>Unsubscribe</a> | <a href='mailto:PLXS-MFG.Hillside.SystemAnalyticalAutomation@plexus.com?subject=Subscribe Penang AML Active Buy Part'>Subscribe</a></html>"
+'                      '.HTMLBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>" & Replace(myBody, "WW", "WW" & myWwEnd) & _
+'                      "<html>" & RangetoHTML(Range("B3", Cells(9, myLastCol))) & _
+'                      "<html><br><br><img src=cid:Temp.jpg></img>" & _
+'                      "<p>" & _
+'                      mySignature & "</p></BODY></html>"
+'
+'            .Display
+'            .Send
+'        End With
+        myBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>" & Replace(Replace(myBody, "WW", "WW" & myCurWw), Chr(10), "<br>") & myEmailCode
+        myAttachement(0) = myMacroPath & "\Raw Files\Penang AML Active Buy Part - " & Format(Date, "MMDDYYYY") & ".xlsx"
+        Call SendSmtpEmail( _
+            "PLXS-MFG Hillside SystemAnalyticalAutomation <PLXS-MFG.Hillside.SystemAnalyticalAutomation@plexus.com>", _
+            myTo, _
+            myCc, _
+            "Sk.loon@plexus.com", _
+            mySubject, _
+            myBody, _
+            myAttachement(), _
+            1, 0)
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub ErrorHandler1()
+    On Error GoTo myFail
+    'Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture 'Need error handler
+    Selection.CopyPicture Appearance:=xlScreen, Format:=xlBitmap  'Need error handler
+    'Selection.Copy
+    mySuccess = "Yes"
+    Exit Sub
+myFail:
+End Sub
+Sub SendEmail(myTo As String, myCc As String, mySubject As String, myBody As String)
+     With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Cc = myCc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        .Send
+    End With
+End Sub
+Function RangetoHTML(rng As Range)
+
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        .Cells(1).PasteSpecial Paste:=8
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        .DrawingObjects.Delete
+        On Error GoTo 0
+    End With
+
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    RangetoHTML = ts.ReadAll
+    ts.Close
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+
+    'Close TempWB
+    Application.EnableEvents = False
+    TempWB.Close savechanges:=False
+    Application.EnableEvents = True
+
+    'Delete the htm file we used in this function
+    Kill TempFile
+
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+Sub DeleteSum()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheets("Summ").Delete
+    Application.DisplayAlerts = False
+End Sub
+Sub NewFileSelect()
+    On Error GoTo NewError
+    Workbooks(Range("F18").Value).Activate
+    Exit Sub
+NewError:
+    MsgBox Range("F18").Value & " file not found!"
+    End
+End Sub
+Sub FileClose()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Workbooks("FML.xlsx").Close False
+    Application.DisplayAlerts = True
+End Sub
+Sub DeleteCustomer()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheets("Details Shortage_Customer").Delete
+    Application.DisplayAlerts = True
+End Sub
+Sub DeleteTemp()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheets("WOCT").Delete
+    Application.DisplayAlerts = True
+End Sub
+Sub DeleteTempTemp()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheets("TempTemp").Delete
+    Application.DisplayAlerts = True
+End Sub
+Sub MasterFileSelect()
+    On Error GoTo AgingError
+    Sheets("FF2 WO+WR Aging ").Select
+    Exit Sub
+AgingError:
+
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+'Function RangetoHTML(rng As Range)
+'
+'    Dim fso As Object
+'    Dim ts As Object
+'    Dim TempFile As String
+'    Dim TempWB As Workbook
+'
+'    On Error GoTo myQuit
+'    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+'
+'    'Copy the range and create a new workbook to past the data in
+'    rng.Copy
+'    Set TempWB = Workbooks.Add(1)
+'    With TempWB.Sheets(1)
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial Paste:=8
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteValues, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).Select
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        Application.CutCopyMode = False
+'        On Error Resume Next
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Visible = True
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Delete
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        On Error GoTo 0
+'    End With
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Publish the sheet to a htm file
+'    With TempWB.PublishObjects.Add( _
+'         SourceType:=xlSourceRange, _
+'         Filename:=TempFile, _
+'         Sheet:=TempWB.Sheets(1).Name, _
+'         Source:=TempWB.Sheets(1).UsedRange.Address, _
+'         HtmlType:=xlHtmlStatic)
+'        .Publish (True)
+'    End With
+'
+'    'Read all data from the htm file into RangetoHTML
+'    Set fso = CreateObject("Scripting.FileSystemObject")
+'    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = ts.ReadAll
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    ts.Close
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Close TempWB
+'    TempWB.Close savechanges:=False
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Delete the htm file we used in this function
+'    Kill TempFile
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    Set ts = Nothing
+'    Set fso = Nothing
+'    Set TempWB = Nothing
+'myQuit:
+'End Function
+'
