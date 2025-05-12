@@ -1,0 +1,469 @@
+Sub FixBoardDailyReportCreator()
+    Dim myArr(3) As String
+    Dim myA As Integer
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    
+    myConfigFile = Dir(myMacroPath & "\Fix Board Daily Report Configuration.xlsm")
+    If myConfigFile = "" Then
+        SendEmail "sk.loon@plexus.com", "", "Error: Fix Board Daily Report Creator", "Fix Board Daily Report Configuration.xlsm file not found!"
+        GoTo myEnd
+    End If
+    
+    'Ver1.2: Change file name
+    'mySrt = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneOperations\ETS\REWORK FF1\SRT CHECK-IN\SRT CHECK IN TRANSACTION REV01.xlsx"
+    'Ver1.3: Change file name
+    'mySrt = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneOperations\ETS\REWORK FF1\SRT CHECK-IN\SRT CHECK IN TRANSACTION REV01-1.xlsx"
+        'Ver1.4:
+        'mySrt = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneOperations\ETS\REWORK FF1\SRT CHECK-IN\SRT CHECK IN TRANSACTION REV02.xlsx"
+        mySrt = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneOperations\ETS\REWORK FF1\SRT CHECK-IN\SRT CHECK IN TRANSACTION *"
+    
+    myCheckIn = " CHECK IN"
+    myCheckOut = " CHECK OUT"
+    'mySrtFile = Dir("\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneOperations\ETS\REWORK FF1\SRT CHECK-IN\SRT CHECK IN TRANSACTION  (Autosaved).xlsx")
+    mySrtFile = Dir(mySrt)
+    
+    If mySrtFile = "" Then
+        'SendEmail "sk.loon@plexus.com", "", "Error: Fix Board Daily Report Creator", "SRT CHECK IN TRANSACTION  (Autosaved).xlsx file not found!"
+        SendEmail "sk.loon@plexus.com", "", "Error: Fix Board Daily Report Creator", "SRT CHECK IN TRANSACTION  REV01.xlsx file not found!"
+        GoTo myEnd
+    End If
+    
+    myDate = Date
+'    'Year
+'    myYear = Format(Date, "Yyyy")
+'    myMonth = Format(myDate, "Mmm")
+'    mySharePath = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneMCC\MCC\Macro WIP\" & myYear & "\" & myMonth
+'
+'    my198 = Dir(mySharePath & "\Serial Number Aging 198-" & Format(myDate, "MMDDYYYY") & ".xlsx")
+'    If my198 = "" Then
+'        SendEmail "sk.loon@plexus.com", "", "Error: Fix Board Daily Report Creator", "Serial Number Aging 198 file not found!"
+'        GoTo myEnd
+'    End If
+'
+'    my260 = Dir(mySharePath & "\Serial Number Aging 260-" & Format(myDate, "MMDDYYYY") & ".xlsx")
+'    If my260 = "" Then
+'        SendEmail "sk.loon@plexus.com", "", "Error: Fix Board Daily Report Creator", "Serial Number Aging 260 file not found!"
+'        GoTo myEnd
+'    End If
+'
+'    my318 = Dir(mySharePath & "\Serial Number Aging 318-" & Format(myDate, "MMDDYYYY") & ".xlsx")
+'    If my318 = "" Then
+'        SendEmail "sk.loon@plexus.com", "", "Error: Fix Board Daily Report Creator", "Serial Number Aging 318 file not found!"
+'        GoTo myEnd
+'    End If
+    'Ver1.5:
+    mySerial = Dir(myMacroPath & "\GSF Serial Number Downloader\" & Year(Date) & "\Serial Number Aging " & Format(myDate, "MMDDYYYY") & ".xlsx")
+    If mySerial = "" Then
+        SendEmail "sk.loon@plexus.com", "", "Error: Fix Board Daily Report Creator", "Serial Number Aging file not found!"
+        GoTo myEnd
+    End If
+    
+    Workbooks.Open myMacroPath & "\Fix Board Daily Report Configuration.xlsm", ReadOnly:=True, UpdateLinks:=False
+    Application.EnableEvents = True
+    myTo = Sheets("EmailConfiguration").Range("B3").Value
+    myCc = Sheets("EmailConfiguration").Range("B6").Value
+    mySubject = Sheets("EmailConfiguration").Range("B9").Value
+    myBody = Sheets("EmailConfiguration").Range("B12").Value
+    myFrom = Sheets("EmailConfiguration").Range("B20").Value
+    Workbooks("Fix Board Daily Report Configuration.xlsm").Close False
+    
+    'Ver1.2: Change file name
+    'Workbooks.Open "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneOperations\ETS\REWORK FF1\SRT CHECK-IN\SRT CHECK IN TRANSACTION  (Autosaved).xlsx", ReadOnly:=True, UpdateLinks:=False
+    Workbooks.Open mySrt, ReadOnly:=True, UpdateLinks:=False
+    mySrtFilename = ActiveWorkbook.Name
+    'SheetSelect ("TEMPORARY CHECK IN")
+        'Ver1.4:
+        'SheetSelect (myCheckIn)
+        For Each mySheet In ActiveWorkbook.Sheets
+            'sfda=Replace(mySheet.Name, " ", "", 1)
+            If Left(UCase(Replace(mySheet.Name, " ", "", 1)), 7) = "CHECKIN" And mySheet.Visible Then
+                myCheckIn = mySheet.Name
+                Sheets(mySheet.Name).Select
+                Exit For
+            End If
+        Next mySheet
+
+    'If ActiveSheet.Name <> "TEMPORARY CHECK IN" Then
+    'Ver1.4:
+    'If ActiveSheet.Name <> myCheckIn Then
+    If myCheckIn = "" Then
+        ActiveWorkbook.Close False
+        SendEmail "sk.loon@plexus.com", "", "Error: Fix Board Daily Report Creator", "STEMPORARY CHECK IN sheet not found!"
+        GoTo myEnd
+    End If
+    ActiveSheet.Range("$A$1:$K$" & Range("A" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=Array(2, 9), Header:=xlNo
+    
+    'Ver1.2: Change file name
+    'SheetSelect ("TEMPORARY CHECK OUT")
+        'Ver1.4:
+        'SheetSelect (myCheckOut)
+        For Each mySheet In ActiveWorkbook.Sheets
+            'sfda=Replace(mySheet.Name, " ", "", 1)
+            If Left(UCase(Replace(mySheet.Name, " ", "", 1)), 8) = "CHECKOUT" And mySheet.Visible Then
+                myCheckOut = mySheet.Name
+                Sheets(mySheet.Name).Select
+                Exit For
+            End If
+        Next mySheet
+    
+    
+    'If ActiveSheet.Name <> "TEMPORARY CHECK OUT" Then
+    
+    'Ver1.4:
+    'If ActiveSheet.Name <> myCheckOut Then
+    If myCheckOut = "" Then
+        ActiveWorkbook.Close False
+        SendEmail "sk.loon@plexus.com", "", "Error: Fix Board Daily Report Creator", "STEMPORARY CHECK OUT sheet not found!"
+        GoTo myEnd
+    End If
+    ActiveSheet.Range("$A$1:$K$" & Range("A" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=Array(2, 5), Header:=xlNo
+        
+    'VEr1.5
+    'Workbooks.Open mySharePath & "\Serial Number Aging 198-" & Format(myDate, "MMDDYYYY") & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+    Workbooks.Open myMacroPath & "\GSF Serial Number Downloader\" & Year(Date) & "\Serial Number Aging " & Format(myDate, "MMDDYYYY") & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+    
+    mySerialFile = ActiveWorkbook.Name
+    mySerialSheet = ActiveSheet.Name
+    mySerialTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("W1:W" & mySerialTotal).Value = "=IF(OR(LEFT(D1,3)=""198"",LEFT(D1,3)=""260"",LEFT(D1,3)=""318""),Row(D1),""Delete"")"
+    Range("W1:W" & mySerialTotal).Value = Range("W1:W" & mySerialTotal).Value
+    ActiveSheet.Range("$A$1:$W$" & mySerialTotal).RemoveDuplicates Columns:=23, Header:=xlNo
+    Columns("W:W").ClearContents
+    A = 0
+    
+'    Workbooks.Open mySharePath & "\Serial Number Aging 260-" & Format(myDate, "MMDDYYYY") & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+'    myTemp = Range("A" & Rows.Count).End(xlUp).Row
+'    If myTemp > 1 Then
+'        Range("A2:V" & myTemp).Copy
+'        Workbooks(mySerialFile).Sheets(mySerialSheet).Range("A" & mySerialTotal + 1).PasteSpecial xlPasteAll
+'    End If
+'    Application.CutCopyMode = False
+'    ActiveWorkbook.Close False
+'    Workbooks.Open mySharePath & "\Serial Number Aging 318-" & Format(myDate, "MMDDYYYY") & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+'    myTemp = Range("A" & Rows.Count).End(xlUp).Row
+'    If myTemp > 1 Then
+'        Range("A2:V" & myTemp).Copy
+'        Workbooks(mySerialFile).Sheets(mySerialSheet).Range("A" & mySerialTotal + 1).PasteSpecial xlPasteAll
+'    End If
+'    Application.CutCopyMode = False
+'    ActiveWorkbook.Close False
+    mySerialTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Columns("V:V").Copy
+    Columns("W:AC").Insert
+    Columns("W:AC").ClearContents
+    Range("W1").Value = "Overall Status"
+    Range("X1").Value = "SRT Number of check in"
+    Range("Y1").Value = "SRT Number of check out"
+    Range("Z1").Value = "SRT Status"
+    Range("AA1").Value = "In-Line Number of check in"
+    Range("AB1").Value = "In-Line Number of check out"
+    Range("AC1").Value = "In-Line Status"
+    Range("W1").Interior.Color = 49407 'Orange
+    Range("X1:Z1").Interior.Color = 65535 'Yellow
+    Range("AA1:AC1").Interior.Color = 5296274 'Green
+        'Ver1.3: Add in
+        'Range("W2:W" & mySerialTotal).Value = "=IF(OR(O2=""Fix"",O2=""Special Fix""),Row(O2),""Overall Status"")"
+        Range("W2:W" & mySerialTotal).Value = "=IF(OR(O2=""Fix"",O2=""Special Fix""),Row(O2),IF(AND(Q2=""F13"",S2=""Fix""),Row(O2),IF(AND(Q2=""R01"",S2=""WIP""),Row(O2),""Overall Status"")))"
+    Range("W2:W" & mySerialTotal).Value = Range("W2:W" & mySerialTotal).Value
+    Range("A1:AC" & mySerialTotal).RemoveDuplicates Columns:=23, Header:=xlNo
+    mySerialTotal = Range("A" & Rows.Count).End(xlUp).Row
+        'Ver1.2: Change file name
+        'Range("X2:X" & mySerialTotal).Value = "=COUNTIF('[SRT CHECK IN TRANSACTION  (Autosaved).xlsx]TEMPORARY CHECK IN'!$B:$B,A2)"
+        Range("X2:X" & mySerialTotal).Value = "=COUNTIF('[" & mySrtFilename & "]" & myCheckIn & "'!$B:$B,A2)"
+    Range("X2:X" & mySerialTotal).Value = Range("X2:X" & mySerialTotal).Value
+        'Ver1.2: Change file name'Range("X2:X" & mySerialTotal).Value = "=COUNTIF('[SRT CHECK IN TRANSACTION  (Autosaved).xlsx]TEMPORARY CHECK IN'!$B:$B,A2)"
+        'Range("Y2:Y" & mySerialTotal).Value = "=COUNTIF('[SRT CHECK IN TRANSACTION  (Autosaved).xlsx]TEMPORARY CHECK OUT'!$B:$B,A2)"
+        Range("Y2:Y" & mySerialTotal).Value = "=COUNTIF('[" & mySrtFilename & "]" & myCheckOut & "'!$B:$B,A2)"
+    Range("Y2:Y" & mySerialTotal).Value = Range("Y2:Y" & mySerialTotal).Value
+    Range("Z2:Z" & mySerialTotal).Value = "=IF(X2+Y2=0,""Zero In/Out"",IF(X2-Y2=1,""SRT WIP"",IF(X2<Y2,""Multiple Scan Out"",IF(X2>Y2,""Multiple Scan In"",""In=Out""))))"
+    Range("Z2:Z" & mySerialTotal).Value = Range("Z2:Z" & mySerialTotal).Value
+        'Ver1.5:
+        'Range("W2:W" & mySerialTotal).Value = "=IF(OR(Z2=""Zero In/Out"",Z2=""In=Out""),IF(Q2=0,"""",Q2),Z2)"
+        Range("W2:W" & mySerialTotal).Value = "=IF(OR(Z2=""Zero In/Out"",Z2=""In=Out""),IF(Q2=0,IF(N2=0,"""",N2),Q2),Z2)"
+    Range("W2:W" & mySerialTotal).Value = Range("W2:W" & mySerialTotal).Value
+    Columns("X:Y").NumberFormat = general
+    Columns("W:AC").AutoFit
+    Rows("2:2").Select
+    ActiveWindow.FreezePanes = True
+    Range("A1").Select
+    Sheets.Add
+    Sheets(mySerialSheet).Range("W1:W" & mySerialTotal).Copy
+    Range("A1").PasteSpecial xlPasteAll
+    Selection.RemoveDuplicates Columns:=1, Header:=xlNo
+    ActiveSheet.Name = "Summary"
+    mySummaryTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A1:A" & mySummaryTotal).Copy
+    Range("B1").PasteSpecial xlPasteAll
+    Range("B1").Value = "# of board"
+    Range("B2:B" & mySummaryTotal).Value = "=COUNTIF(SerialNumberAgingReport!$W$1:$W$" & mySerialTotal & ",IF(A2=0,"""",A2))"
+    Range("B2:B" & mySummaryTotal).Value = Range("B2:B" & mySummaryTotal).Value
+        Range("C2:C" & mySummaryTotal).Value = "=IF(A2="""",""<Blank>"",A2)"
+        Range("C2:C" & mySummaryTotal).Value = Range("C2:C" & mySummaryTotal).Value
+        Range("A2:A" & mySummaryTotal).Value = Range("C2:C" & mySummaryTotal).Value
+        Range("C2:C" & mySummaryTotal).ClearContents
+    Columns("B:B").NumberFormat = general
+    ActiveWorkbook.Worksheets("Summary").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Summary").Sort.SortFields.Add Key:=Range("B1"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Summary").Sort.SetRange Range("A1:B" & Range("A" & Rows.Count).End(xlUp).Row)
+    ActiveWorkbook.Worksheets("Summary").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Summary").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Summary").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Summary").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Summary").Sort.Apply
+    
+    Range("A" & mySummaryTotal + 1).Value = "Total"
+    Range("B" & mySummaryTotal + 1).Value = "=SUM(B2:B" & mySummaryTotal & ")"
+    mySummaryTotal = mySummaryTotal + 1
+    'Ver1.5:
+    Sheets(mySerialSheet).Range("Z1:Z5").Copy
+    Range("D1:E1").PasteSpecial xlPasteAll
+    'Rows("1:1").Insert
+    Range("D1:E1").Insert shift:=xlDown
+    Range("D1").Value = "Duration: " & Date - 1 & " 07:00:01 PM to " & Date & " 07:00:00 AM"
+    Range("E2").Value = "# of board"
+    Range("D3").Value = "SRT WIP"
+    Range("D4").Value = "In=Out"
+    Range("D5").Value = "Multiple Scan In"
+    Range("D6").Value = "Multiple Scan Out"
+    Columns("D:D").ColumnWidth = 15
+    Range("D5:E6").Style = "Bad"
+    Range("D4:E4").Style = "Good"
+    Columns("D:E").Font.Name = "Arial"
+    Columns("D:E").Font.Size = 8
+    Columns("E:E").NumberFormat = general
+    Range("F3").Value = Date - 1 & " 07:00:00 PM"
+    Range("G3").Value = Date & " 07:00:00 AM"
+    Range("E3:E6").Value = "=COUNTIFS(SerialNumberAgingReport!Z:Z,D3,SerialNumberAgingReport!V:V,"">""&$F$3,SerialNumberAgingReport!V:V,""<=""&$G$3)"
+    Range("E3:E6").Value = Range("E3:E6").Value
+    Columns("E:E").HorizontalAlignment = xlCenter
+    Columns("A:A").ColumnWidth = 12
+    Rows("2:2").AutoFit
+    
+    Range("D1:E6").Copy
+    Range("D8").PasteSpecial xlPasteAll
+    Range("D8").Value = "Duration: " & Date - 1 & " 07:00:01 AM to " & Date - 1 & " 07:00:00 PM"
+    Range("F10").Value = Date - 1 & " 07:00:00 AM"
+    Range("G10").Value = Date - 1 & " 07:00:00 PM"
+    Range("E10:E13").Value = "=COUNTIFS(SerialNumberAgingReport!Z:Z,D10,SerialNumberAgingReport!V:V,"">""&$F$10,SerialNumberAgingReport!V:V,""<=""&$G$10)"
+    Range("E10:E13").Value = Range("E10:E13").Value
+    Columns("F:G").ClearContents
+    
+    For myA = 13 To 2 Step -1
+        If Range("D" & myA).Value <> "" And Range("E" & myA).Value = 0 And myA <> 8 Then
+            Range("D" & myA & ":E" & myA).Delete shift:=xlUp
+        End If
+    Next myA
+    
+'    Sheets(mySerialSheet).Range("Z1:Z" & mySerialTotal).Copy
+'    Range("D1").PasteSpecial xlPasteAll
+'    Selection.RemoveDuplicates Columns:=1, Header:=xlNo
+'    mySummaryTotal = Range("D" & Rows.Count).End(xlUp).Row
+'    Range("D1:D" & mySummaryTotal).Copy
+'    Range("E1").PasteSpecial xlPasteAll
+'    Range("E1").Value = "# of board"
+'    Range("E2:E" & mySummaryTotal).Value = "=COUNTIF(SerialNumberAgingReport!Z:Z,D2)"
+'    Range("E2:E" & mySummaryTotal).Value = Range("E2:E" & mySummaryTotal).Value
+'    ActiveWorkbook.Worksheets("Summary").Sort.SortFields.Clear
+'    ActiveWorkbook.Worksheets("Summary").Sort.SortFields.Add Key:=Range("E1"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+'    ActiveWorkbook.Worksheets("Summary").Sort.SetRange Range("D1:E" & Range("D" & Rows.Count).End(xlUp).Row)
+'    ActiveWorkbook.Worksheets("Summary").Sort.Header = xlYes
+'    ActiveWorkbook.Worksheets("Summary").Sort.MatchCase = False
+'    ActiveWorkbook.Worksheets("Summary").Sort.Orientation = xlTopToBottom
+'    ActiveWorkbook.Worksheets("Summary").Sort.SortMethod = xlPinYin
+'    ActiveWorkbook.Worksheets("Summary").Sort.Apply
+'
+'    'Multiple Scan out, Multiple Scan In
+'
+'    'Ver1.1: Add in coloring
+'    myLast = Range("D" & Rows.Count).End(xlUp).Row
+'    For myA = 2 To myLast
+'        If Range("D" & myA).Value = "Zero In/Out" Then
+'            Range("D" & myA & ":E" & myA).Style = "Good"
+'        ElseIf Range("D" & myA).Value = "In=Out" Then
+'            Range("D" & myA & ":E" & myA).Style = "Good"
+'        ElseIf Left(Range("D" & myA).Value, 8) = "Multiple" Then
+'            Range("D" & myA & ":E" & myA).Style = "Bad"
+'        End If
+'    Next myA
+'    Columns("D:E").Font.Name = "Arial"
+'    Columns("D:E").Font.Size = 8
+'
+'    Sheets(mySerialSheet).Range("AC1:AC" & mySerialTotal).Copy
+'    Range("G1").PasteSpecial xlPasteAll
+'    Selection.RemoveDuplicates Columns:=1, Header:=xlNo
+'    mySummaryTotal = Range("G" & Rows.Count).End(xlUp).Row
+'    Range("G1:G" & mySummaryTotal).Copy
+'    Range("H1").PasteSpecial xlPasteAll
+'    Range("H1").Value = "# of board"
+'    If mySummaryTotal > 1 Then
+'        Range("H2:H" & mySummaryTotal).Value = "=COUNTIF(SerialNumberAgingReport!AC:AC,G2)"
+'        Range("H2:H" & mySummaryTotal).Value = Range("H2:H" & mySummaryTotal).Value
+'        ActiveWorkbook.Worksheets("Summary").Sort.SortFields.Clear
+'        ActiveWorkbook.Worksheets("Summary").Sort.SortFields.Add Key:=Range("H1"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+'        ActiveWorkbook.Worksheets("Summary").Sort.SetRange Range("G1:H" & Range("G" & Rows.Count).End(xlUp).Row)
+'        ActiveWorkbook.Worksheets("Summary").Sort.Header = xlYes
+'        ActiveWorkbook.Worksheets("Summary").Sort.MatchCase = False
+'        ActiveWorkbook.Worksheets("Summary").Sort.Orientation = xlTopToBottom
+'        ActiveWorkbook.Worksheets("Summary").Sort.SortMethod = xlPinYin
+'        ActiveWorkbook.Worksheets("Summary").Sort.Apply
+'    End If
+    
+    If Dir(myMacroPath & "\Fix Board Daily Report", vbDirectory) = "" Then
+        MkDir (myMacroPath & "\Fix Board Daily Report")
+    End If
+    myOverall = Range("A" & Rows.Count).End(xlUp).Row
+    mySrt = Range("D" & Rows.Count).End(xlUp).Row
+    myInline = Range("G" & Rows.Count).End(xlUp).Row
+    Columns("B:B").HorizontalAlignment = xlCenter
+    Columns("E:E").HorizontalAlignment = xlCenter
+    Columns("H:H").HorizontalAlignment = xlCenter
+    'Columns("A:H").AutoFit
+    Cells.Borders(xlEdgeLeft).LineStyle = xlNone
+    Cells.Borders(xlEdgeRight).LineStyle = xlNone
+    Cells.Borders(xlEdgeTop).LineStyle = xlNone
+    Cells.Borders(xlEdgeBottom).LineStyle = xlNone
+    Cells.Borders(xlEdgeBottom).LineStyle = xlNone
+    Cells.Borders(xlInsideVertical).LineStyle = xlNone
+    Cells.Borders(xlInsideHorizontal).LineStyle = xlNone
+    Range("A1:B" & myOverall).Borders(xlEdgeLeft).Weight = xlMedium
+    Range("A1:B" & myOverall).Borders(xlEdgeRight).Weight = xlMedium
+    Range("A1:B" & myOverall).Borders(xlEdgeTop).Weight = xlMedium
+    Range("A1:B" & myOverall).Borders(xlEdgeBottom).Weight = xlMedium
+    Range("A1:B" & myOverall).Borders(xlEdgeBottom).Weight = xlMedium
+    Range("A1:B" & myOverall).Borders(xlInsideVertical).Weight = xlThin
+    Range("A1:B" & myOverall).Borders(xlInsideHorizontal).Weight = xlThin
+    
+    myFirstSrt = Range("D1").End(xlDown).Row
+    Range("D2:E" & myFirstSrt).Borders(xlEdgeLeft).Weight = xlMedium
+    Range("D2:E" & myFirstSrt).Borders(xlEdgeRight).Weight = xlMedium
+    Range("D2:E" & myFirstSrt).Borders(xlEdgeTop).Weight = xlMedium
+    Range("D2:E" & myFirstSrt).Borders(xlEdgeBottom).Weight = xlMedium
+    Range("D2:E" & myFirstSrt).Borders(xlEdgeBottom).Weight = xlMedium
+    Range("D2:E" & myFirstSrt).Borders(xlInsideVertical).Weight = xlThin
+    Range("D2:E" & myFirstSrt).Borders(xlInsideHorizontal).Weight = xlThin
+    
+    Range("D" & myFirstSrt + 3 & ":E" & mySrt).Borders(xlEdgeLeft).Weight = xlMedium
+    Range("D" & myFirstSrt + 3 & ":E" & mySrt).Borders(xlEdgeRight).Weight = xlMedium
+    Range("D" & myFirstSrt + 3 & ":E" & mySrt).Borders(xlEdgeTop).Weight = xlMedium
+    Range("D" & myFirstSrt + 3 & ":E" & mySrt).Borders(xlEdgeBottom).Weight = xlMedium
+    Range("D" & myFirstSrt + 3 & ":E" & mySrt).Borders(xlEdgeBottom).Weight = xlMedium
+    Range("D" & myFirstSrt + 3 & ":E" & mySrt).Borders(xlInsideVertical).Weight = xlThin
+    Range("D" & myFirstSrt + 3 & ":E" & mySrt).Borders(xlInsideHorizontal).Weight = xlThin
+'    Range("G1:H" & myInline).Borders(xlEdgeLeft).Weight = xlMedium
+'    Range("G1:H" & myInline).Borders(xlEdgeRight).Weight = xlMedium
+'    Range("G1:H" & myInline).Borders(xlEdgeTop).Weight = xlMedium
+'    Range("G1:H" & myInline).Borders(xlEdgeBottom).Weight = xlMedium
+'    Range("G1:H" & myInline).Borders(xlEdgeBottom).Weight = xlMedium
+'    Range("G1:H" & myInline).Borders(xlInsideVertical).Weight = xlThin
+'    Range("G1:H" & myInline).Borders(xlInsideHorizontal).Weight = xlThin
+    
+    'myTimeStamp = FileDateTime(mySharePath & "\Serial Number Aging 318-" & Format(myDate, "MMDDYYYY") & ".xlsx")
+    myTimeStamp = FileDateTime(myMacroPath & "\GSF Serial Number Downloader\" & Year(Date) & "\Serial Number Aging " & Format(myDate, "MMDDYYYY") & ".xlsx")
+    
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Fix Board Daily Report\Fix Board Daily Report " & Format(myDate, "MMDDYY") & "", FileFormat:=xlOpenXMLWorkbook ', AccessMode:=xlShared
+
+    'Sending Email
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .SentOnBehalfOfName = "PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com"
+        '.to = "Nor-Arzila.Tajudin@plexus.com; EH.Tan@plexus.com"
+        .to = myTo
+        .CC = myCc
+        .BCC = "sk.loon@plexus.com"
+        .Attachments.Add myMacroPath & "\Fix Board Daily Report\Fix Board Daily Report " & Format(myDate, "MMDDYY") & ".xlsx"
+        .Subject = mySubject & " " & Format(myDate, "MMDDYY")
+            '.HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 9pt;""/font><p>******** Automated Reporting *******<br>" & Replace(myBody, Chr(10), "<br>") & _
+                  "<html>" & _
+                  RangetoHTML(Range("A1:B" & myOverall)) & _
+                  "<html>" & _
+                  RangetoHTML(Range("D1:E" & mySrt)) & _
+                  "<html>" & _
+                  RangetoHTML(Range("G1:H" & myInline)) & _
+                  Replace(myFrom, Chr(10), "<br>") & "</html>"
+            'Ver1.3:
+            '.HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 9pt;""/font><p>******** Automated Reporting (Data is a snapshot as of " & myTimeStamp & ") *******<br>" & Replace(myBody, Chr(10), "<br>") & _
+                  "<html>" & _
+                  RangetoHTML(Range("A1:H" & myOverall)) & _
+                  Replace(myFrom, Chr(10), "<br>") & "</html>"
+            .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 9pt;""/font>************** Automated Reporting  *****************************<br><font color=blue>Note: This report contain of the following criteria:<br>1. Unit Location = Fix<br>2. Unit Location = Special Fix<br>3. Unit Location Deviation = Fix, Deviation Process Type = F13<br>4.  Unit Location Deviation = WIP, Deviation Process Type = R01<br></font><br>" & Replace(myBody, Chr(10), "<br>") & _
+                  "<html>" & _
+                  RangetoHTML(Range("A1:H" & myOverall)) & _
+                  Replace(myFrom, Chr(10), "<br>") & "</html>"
+        .Display
+        .send
+    End With
+    Workbooks("Fix Board Daily Report " & Format(myDate, "MMDDYY") & ".xlsx").Close False
+    'Workbooks("SRT CHECK IN TRANSACTION  (Autosaved).xlsx").Close False
+    Workbooks(mySrtFilename).Close False
+    '
+myEnd:
+    Workbooks(myMacroFile).Activate
+    Sheets("Macro").Select
+    Workbooks(myMacroFile).Save
+    Application.Quit
+End Sub
+Sub SendEmail(myTo As String, myCc As String, mySubject As String, myBody As String)
+     With CreateObject("Outlook.Application").CreateItem(0)
+        .to = myTo
+        .CC = myCc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        .send
+    End With
+End Sub
+Function RangetoHTML(rng As Range)
+
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        .Cells(1).PasteSpecial Paste:=8
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        .DrawingObjects.Delete
+        On Error GoTo 0
+    End With
+
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    RangetoHTML = ts.readall
+    ts.Close
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+
+    'Close TempWB
+    TempWB.Close savechanges:=False
+
+    'Delete the htm file we used in this function
+    Kill TempFile
+
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+Sub SheetSelect(mySheet)
+    On Error Resume Next
+    Sheets(mySheet).Select
+End Sub
+
