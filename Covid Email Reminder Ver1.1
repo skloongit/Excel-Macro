@@ -1,0 +1,150 @@
+Sub CovidEmailReminder()
+    On Error GoTo Err1
+    Dim http As New XMLHTTP60, htmldoc As New HTMLDocument
+    Dim htmlas As Object, htmla As Object, html As Object
+    Dim stream As Object, tempArr As Variant
+    Dim fileSource As String
+    myMacroPath = ActiveWorkbook.Path
+    
+    If Dir(myMacroPath & "\Whole.jpg") <> "" Then
+        Kill myMacroPath & "\Whole.jpg"
+    End If
+    If Dir(myMacroPath & "\West.jpg") <> "" Then
+        Kill myMacroPath & "\West.jpg"
+    End If
+    If Dir(myMacroPath & "\East.jpg") <> "" Then
+        Kill myMacroPath & "\East.jpg"
+    End If
+    If Dir(myMacroPath & "\New.jpg") <> "" Then
+        Kill myMacroPath & "\New.jpg"
+    End If
+    
+    With http
+        '.Open "GET", "http://covid-19.moh.gov.my/terkini-negeri/" & Format(Date - 1, "YYYY/MM") & "/kemaskini-negeri-covid-19-di-malaysia-sehingga-" & Format(Date - 1, "ddmmyyyy"), False
+        .Open "GET", "http://covid-19.moh.gov.my/terkini-negeri/" & Format(Date - 1, "YYYY") & "/feb/kemaskini-negeri-covid-19-di-malaysia-sehingga-" & Format(Date - 1, "ddmmyyyy"), False
+        .send
+        htmldoc.body.innerHTML = .responseText
+    End With
+    
+    Set htmlas = htmldoc.getElementsByClassName("e-content")
+    
+    For Each htmla In htmlas
+        Set html = htmla.getElementsByTagName("img")(0)
+        fileSource = Replace(html.src, "about:", "http://covid-19.moh.gov.my")
+        tempArr = Split(html.src, "/")
+        tempArr = tempArr(UBound(tempArr))
+    
+        With http
+            .Open "GET", fileSource, False
+            .send
+        End With
+    
+        Set stream = CreateObject("ADODB.Stream")
+    
+        stream.Open
+        stream.Type = 1
+        stream.write http.responseBody
+        stream.SaveToFile (myMacroPath & "\Whole.jpg")
+        stream.Close
+    Next htmla
+    
+    Set htmlas = htmldoc.getElementsByClassName("tab")
+    
+    For Each htmla In htmlas
+        Set html = htmla.getElementsByTagName("img")(0)
+        fileSource = Replace(html.src, "about:", "http://covid-19.moh.gov.my")
+        tempArr = Split(html.src, "/")
+        tempArr = tempArr(UBound(tempArr))
+    
+        With http
+            .Open "GET", fileSource, False
+            .send
+        End With
+    
+        Set stream = CreateObject("ADODB.Stream")
+    
+        stream.Open
+        stream.Type = 1
+        stream.write http.responseBody
+        stream.SaveToFile (myMacroPath & "\New.jpg")
+        stream.Close
+        
+        Set html = htmla.getElementsByTagName("img")(1)
+        fileSource = Replace(html.src, "about:", "http://covid-19.moh.gov.my")
+        tempArr = Split(html.src, "/")
+        tempArr = tempArr(UBound(tempArr))
+    
+        With http
+            .Open "GET", fileSource, False
+            .send
+        End With
+    
+        Set stream = CreateObject("ADODB.Stream")
+    
+        stream.Open
+        stream.Type = 1
+        stream.write http.responseBody
+        stream.SaveToFile (myMacroPath & "\East.jpg")
+        stream.Close
+        
+        Set html = htmla.getElementsByTagName("img")(2)
+        fileSource = Replace(html.src, "about:", "http://covid-19.moh.gov.my")
+        tempArr = Split(html.src, "/")
+        tempArr = tempArr(UBound(tempArr))
+    
+        With http
+            .Open "GET", fileSource, False
+            .send
+        End With
+    
+        Set stream = CreateObject("ADODB.Stream")
+    
+        stream.Open
+        stream.Type = 1
+        stream.write http.responseBody
+        stream.SaveToFile (myMacroPath & "\West.jpg")
+        stream.Close
+        Exit For
+    Next htmla
+    
+    If Dir(myMacroPath & "\East.jpg") = "" Or Dir(myMacroPath & "\West.jpg") = "" Or Dir(myMacroPath & "\Whole.jpg") = "" Then
+Err1:
+        With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "sk.loon@plexus.com"
+            .Subject = "Erorr: Important Message (COVID-19): Covid-19 in Malaysia as of " & Format(Date - 1, "D Mmm Yyyy")
+            .HTMLBody = "ERROR!!!"
+            .send
+        End With
+    Else
+        With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "Purchasing_IslandView_Buyers@plexus.com; PLXS-MFGIslandViewPurchasingDAs@plexus.com; isl_purch_mtm@plexus.com"
+            .CC = "Sonia.Chor@plexus.com"
+            .BCC = "sk.loon@plexus.com"
+            .Subject = "Important Message (COVID-19): Covid-19 in Malaysia as of " & Format(Date - 1, "D Mmm Yyyy")
+    
+            'myStatement = "<br><img src=cid:Temp.jpg></img><br>"
+            .Attachments.Add myMacroPath & "\Whole.jpg"
+            .Attachments.Add myMacroPath & "\West.jpg"
+            .Attachments.Add myMacroPath & "\East.jpg"
+            .Attachments.Add myMacroPath & "\StayAtHome.jpg"
+            .Attachments.Add myMacroPath & "\ActNow.jpg"
+            
+            .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p align=""center""><u>Internal Communication</u></p>" & _
+                      "<html><b>CONFIDENTIALITY NOTICE:</b>  This e-mail and the information contained within are confidential. They are intended solely for the use of internal communication with Plexus employees. You are not allowed to use, disclose, share, or reproduce all or any part of the information contained in this e-mail to any external third parties. Any unauthorized use or disclosure may be unlawful." & _
+                      "<html><br><br>Dear Purchasing Colleagues," & _
+                      "<html><br>This communication intended to internal purchasing/material planning dept only." & _
+                      "<html><br><br>We have seen an increase in COVID-19 positive cases among the locals, including transmissions through various social events and activities.<br/>" & _
+                      "<html>We have seen in the past and presently how rapidly the coronavirus can spread." & _
+                      "<html><br>Please do not travel to red zone as per the Map below. Do consult nurse if you need to travel over to red zone." & _
+                      "<html><br><img src=cid:East.jpg></img>" & _
+                      "<html><br><img src=cid:West.jpg></img>" & _
+                      "<html><br><img src=cid:Whole.jpg></img>" & _
+                      "<html><br><br>It's our collective responsibility to break the chain of COVID-19 outbreak in the workplace and community thoroughly. Please continue to practice all the good COVID-19 protocols to protect yourself and others." & _
+                      "<html><br><br><html><img src=cid:StayAtHome.jpg></img>" & _
+                      "<html><br><br><html><img src=cid:ActNow.jpg></img>"
+            '.display
+            .send
+        End With
+    End If
+
+End Sub
