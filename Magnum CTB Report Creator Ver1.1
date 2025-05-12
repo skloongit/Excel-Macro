@@ -1,0 +1,802 @@
+Sub FileSelect()
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).Value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).Value = mySelect
+        End If
+End Sub
+Sub FileSelect1()
+    myMacroFile = ActiveWorkbook.Name
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).Value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).Value = mySelect
+        End If
+    Range("B22:F" & Rows.Count).ClearContents
+    Workbooks.Open Range("B13").Value, , True
+    myShortageFile = ActiveWorkbook.Name
+    Sheets("Detail Shortages by Parent Ord").Select
+    myTempLast = Range("E" & Rows.Count).End(xlUp).Row
+    myEmptyCheck = Application.WorksheetFunction.CountIf(Range("D3:D" & myTempLast), "")
+    If myEmptyCheck > 0 Then
+        Range("C1:C" & myTempLast).Value = "=IF(D1=0,Row(D1),""Delete"")"
+        Range("C1:C" & myTempLast).Value = Range("C1:C" & myTempLast).Value
+        Range("C2:E" & myTempLast).RemoveDuplicates Columns:=1, Header:=xlNo
+        myTempLast = Range("E" & Rows.Count).End(xlUp).Row
+        Range("E3:E" & myTempLast).RemoveDuplicates Columns:=1, Header:=xlNo
+        myTempLast = Range("E" & Rows.Count).End(xlUp).Row
+        Range("E3:E" & myTempLast).Copy
+        Workbooks(myMacroFile).Activate
+        Sheets("Macro").Select
+        Range("F22").PasteSpecial xlPasteValues
+        Workbooks(myShortageFile).Close False
+        MsgBox "Part without Product Group found! Please update it in Shortage List Peg Report!"
+    Else
+        Range("D3").Value = ""
+        Range("D3:D" & myTempLast).RemoveDuplicates Columns:=1, Header:=xlNo
+        myTempLast = Range("D" & Rows.Count).End(xlUp).Row
+        Range("D4:D" & myTempLast).Copy
+        Workbooks(myMacroFile).Activate
+        Sheets("Macro").Select
+        Range("B22").PasteSpecial xlPasteValues
+        Workbooks(myShortageFile).Close False
+    End If
+    
+    
+    
+'    myPullPath = Replace(Range("B13").Value, Dir(Range("B13").Value), "[" & Dir(Range("B13").Value))
+'    Sheets("Temp").Select
+'    myCounter = 0
+'    myCheck = 1
+'    For myA = 1 To 50
+'        Range("D" & myCounter + 1 & ":D" & myCounter + 20000).Value = "='" & myPullPath & "]Detail Shortages by Parent Orde'!$E" & myCounter + 1
+'        Range("D" & myCounter + 1 & ":D" & myCounter + 20000).Value = Range("D" & myCounter + 1 & ":D" & myCounter + 20000).Value
+'        If Range("D" & myCounter + 20000).Value = 0 Then
+'            Range("D" & myCounter + 1 & ":D" & myCounter + 20000).Replace What:="0", Replacement:="", LookAt:=xlWhole, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+'            myTempLast = Range("D" & Rows.Count).End(xlUp).Row
+'            Range("C1:C" & myTempLast).Value = "='" & myPullPath & "]Detail Shortages by Parent Orde'!$D1"
+'            Range("C1:C" & myTempLast).Value = Range("C1:C" & myTempLast).Value
+'            myEmptyCheck = Application.WorksheetFunction.CountIf(Range("C3:C" & myTempLast), 0)
+'            If myEmptyCheck > 0 Then
+'                Range("B1:B" & myTempLast).Value = "=IF(C1=0,Row(C1),""Delete"")"
+'                Range("B1:B" & myTempLast).Value = Range("B1:B" & myTempLast).Value
+'                Range("B1:D" & myTempLast).RemoveDuplicates Columns:=1, Header:=xlNo
+'                myTempLast = Range("D" & Rows.Count).End(xlUp).Row
+'                Range("D3:D" & myTempLast).RemoveDuplicates Columns:=1, Header:=xlNo
+'                myTempLast = Range("D" & Rows.Count).End(xlUp).Row
+'                Range("D3:D" & myTempLast).Copy
+'                Sheets("Macro").Select
+'                Range("F22").PasteSpecial xlPasteValues
+'            Else
+'
+'            End If
+'            Exit For
+'        End If
+'        myCounter = myCounter + 20000
+'    Next myA
+    
+End Sub
+Sub Ctb()
+    Set FSO = New Scripting.FileSystemObject
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    
+    myStrTime = Time
+    myShortageFile = Range("B13").Value
+    myTotalGated = Range("B11").Value
+    
+    Workbooks.Open myShortageFile, False, True
+    myShortageFile = ActiveWorkbook.Name
+    ErrHnd1 'Sheets("Detail Shortages by Parent Orde").Select
+    
+    If ActiveSheet.AutoFilterMode = True Then
+       Rows("3:3").AutoFilter
+       Rows("3:3").AutoFilter
+    Else
+       Rows("3:3").AutoFilter
+    End If
+    
+    'Type
+    Set mySearchValue = Rows("3:3").Find(What:="Type", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Type] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Type", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        Range(Cells(1, mySearchValue), Cells(1, mySearchValue)).EntireColumn.Cut
+        Columns("CN").Insert
+    End If
+    
+    'Assembly
+    Set mySearchValue = Rows("2:2").Find(What:="Assembly", after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Assembly] header not found in row 2! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("2:2").Find(What:="Assembly", after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        Range(Cells(1, mySearchValue), Cells(1, mySearchValue)).EntireColumn.Cut
+        Columns("CN").Insert
+    End If
+    
+    'Final
+    Set mySearchValue = Rows("2:2").Find(What:="Final", after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Final] header not found in row 2! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("2:2").Find(What:="Final", after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        Range(Cells(1, mySearchValue), Cells(1, mySearchValue)).EntireColumn.Cut
+        Columns("CN").Insert
+    End If
+    
+    'Part
+    Set mySearchValue = Rows("3:3").Find(What:="Part", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Part] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Part", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 1 Then
+            Range(Cells(1, 1), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+            Range("A3").Value = "FG"
+        End If
+    End If
+    
+    'Number:Line
+    Set mySearchValue = Rows("3:3").Find(What:="Number:Line", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Number:Line] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Number:Line", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 2 Then
+            Range(Cells(1, 2), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Qty
+    Set mySearchValue = Rows("3:3").Find(What:="Qty", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Qty] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Qty", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 3 Then
+            Range(Cells(1, 3), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Request
+    Set mySearchValue = Rows("3:3").Find(What:="Request", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Request] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Request", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 4 Then
+            Range(Cells(1, 4), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Due
+    Set mySearchValue = Rows("3:3").Find(What:="Due", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Due] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Due", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 5 Then
+            Range(Cells(1, 5), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Assy Part
+    Set mySearchValue = Rows("3:3").Find(What:="Assy Part", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Assy Part] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Assy Part", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 7 Then
+            Range(Cells(1, 6), Cells(1, mySearchValue - 2)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Order Id
+    Set mySearchValue = Rows("3:3").Find(What:="Order Id", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Order Id] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Order Id", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 8 Then
+            Range(Cells(1, 8), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Status
+    Set mySearchValue = Rows("3:3").Find(What:="Status", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Status] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Status", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 9 Then
+            Range(Cells(1, 9), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Qty
+    Set mySearchValue = Rows("3:3").Find(What:="Qty", after:=Range("I3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Qty] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Qty", after:=Range("I3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 10 Then
+            Range(Cells(1, 10), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Part
+    Set mySearchValue = Rows("3:3").Find(What:="Part", after:=Range("I3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Part] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Part", after:=Range("I3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 12 Then
+            Range(Cells(1, 11), Cells(1, mySearchValue - 2)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Description
+    Set mySearchValue = Rows("3:3").Find(What:="Description", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Description] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Description", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 13 Then
+            Range(Cells(1, 13), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Number:Line
+    Set mySearchValue = Rows("3:3").Find(What:="Number:Line", after:=Range("L3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Number:Line] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Number:Line", after:=Range("L3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 14 Then
+            Range(Cells(1, 14), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Type
+    Set mySearchValue = Rows("3:3").Find(What:="Type", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Type] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Type", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 15 Then
+            Range(Cells(1, 15), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Status
+    Set mySearchValue = Rows("3:3").Find(What:="Status", after:=Range("L3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Status] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Status", after:=Range("L3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 16 Then
+            Range(Cells(1, 16), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Qty Per
+    Set mySearchValue = Rows("3:3").Find(What:="Qty Per", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Qty Per] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Qty Per", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 17 Then
+            Range(Cells(1, 17), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Supply Qty
+    Set mySearchValue = Rows("3:3").Find(What:="Supply Qty", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Supply Qty] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Supply Qty", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 18 Then
+            Range(Cells(1, 18), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Need Qty
+    Set mySearchValue = Rows("3:3").Find(What:="Need Qty", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Need Qty] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Need Qty", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 19 Then
+            Range(Cells(1, 19), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'ETA
+    Set mySearchValue = Rows("3:3").Find(What:="ETA", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[ETA] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="ETA", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 20 Then
+            Range(Cells(1, 20), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Need Date
+    Set mySearchValue = Rows("3:3").Find(What:="Need Date", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Need Date] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Need Date", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 21 Then
+            Range(Cells(1, 21), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Name
+    Set mySearchValue = Rows("3:3").Find(What:="Name", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Name] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Name", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 22 Then
+            Range(Cells(1, 22), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Planner
+    Set mySearchValue = Rows("3:3").Find(What:="Planner", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Planner] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Planner", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 23 Then
+            Range(Cells(1, 23), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Time
+    Set mySearchValue = Rows("3:3").Find(What:="Time", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Time] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Time", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 24 Then
+            Range(Cells(1, 24), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Offset
+    Set mySearchValue = Rows("3:3").Find(What:="Offset", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Offset] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Offset", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 25 Then
+            Range(Cells(1, 25), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Type
+    Set mySearchValue = Rows("3:3").Find(What:="Type", after:=Range("V3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Type] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Type", after:=Range("V3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 26 Then
+            Range(Cells(1, 26), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Code7
+    Set mySearchValue = Rows("3:3").Find(What:="Code7", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Code7] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Code7", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 27 Then
+            Range(Cells(1, 27), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'PO Comments
+    Set mySearchValue = Rows("3:3").Find(What:="PO Comments", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[PO Comments] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="PO Comments", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 28 Then
+            Range(Cells(1, 28), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'PO Tracking #
+    Set mySearchValue = Rows("3:3").Find(What:="PO Tracking #", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[PO Tracking #] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="PO Tracking #", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 29 Then
+            Range(Cells(1, 29), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Part Comments
+    Set mySearchValue = Rows("3:3").Find(What:="Part Comments", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Part Comments] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Part Comments", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 30 Then
+            Range(Cells(1, 30), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Flag
+    Set mySearchValue = Rows("3:3").Find(What:="Flag", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Flag] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Flag", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 31 Then
+            Range(Cells(1, 31), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'ETA
+    Set mySearchValue = Rows("3:3").Find(What:="ETA", after:=Range("V3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[ETA] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="ETA", after:=Range("V3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 32 Then
+            Range(Cells(1, 32), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'RYG
+    Set mySearchValue = Rows("3:3").Find(What:="RYG", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[RYG] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="RYG", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 33 Then
+            Range(Cells(1, 33), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Gap
+    Set mySearchValue = Rows("3:3").Find(What:="Gap", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Gap] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Gap", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 34 Then
+            Range(Cells(1, 34), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Remarks
+    Set mySearchValue = Rows("3:3").Find(What:="Remarks", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Remarks] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Remarks", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 35 Then
+            Range(Cells(1, 35), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    'Selling Price
+    Set mySearchValue = Rows("3:3").Find(What:="Selling Price", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox "[Selling Price] header not found in row 3! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Rows("3:3").Find(What:="Selling Price", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 36 Then
+            Range(Cells(1, 36), Cells(1, mySearchValue - 1)).EntireColumn.Delete
+        End If
+    End If
+    
+    ActiveSheet.Copy
+    Application.EnableEvents = False
+    Workbooks(myShortageFile).Close False
+    Application.EnableEvents = True
+    myTempLast = Range("A" & Rows.Count).End(xlUp).Row
+    Sheets.Add after:=ActiveSheet
+    ActiveSheet.Name = "CTB"
+    Sheets("Detail Shortages by Parent Orde").Range("G3:H" & myTempLast).Copy
+    Range("A1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("J3:J" & myTempLast).Copy
+    Range("C1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("I3:I" & myTempLast).Copy
+    Range("D1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("AK3:AK" & myTempLast).Copy
+    Range("E1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("A3:A" & myTempLast).Copy
+    Range("F1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("E3:E" & myTempLast).Copy
+    Range("G1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("AL3:AM" & myTempLast).Copy
+    Range("H1").PasteSpecial xlPasteValues
+    Range("G1").Value = "CRD"
+    Range("H1").Value = "Assy CTB"
+    Range("I1").Value = "FG CTB"
+    Range("B1").Value = "WO"
+    Columns("G:I").NumberFormat = "M/D/YYYY"
+    myTempLast = Range("A" & Rows.Count).End(xlUp).Row
+    'Delete S2
+    Range("J1").Value = "Delete"
+    Range("J2:J" & myTempLast).Value = "=IF(E2=""S2"",""Delete"",ROW(E2))"
+    Range("J2:J" & myTempLast).Value = Range("J2:J" & myTempLast).Value
+    Range("A1:J" & myTempLast).RemoveDuplicates Columns:=10, Header:=xlNo
+    myTempLast = Range("A" & Rows.Count).End(xlUp).Row
+    'Delete (Type = CF, FG not start with 2)
+    Range("J2:J" & myTempLast).Value = "=IF(AND(E2=""CF"",LEFT(F2,1)<>""2""),""Delete"",ROW(E2))"
+    Range("J2:J" & myTempLast).Value = Range("J2:J" & myTempLast).Value
+    Range("A1:J" & myTempLast).RemoveDuplicates Columns:=10, Header:=xlNo
+    myTempLast = Range("A" & Rows.Count).End(xlUp).Row
+    'Delete Qty < 1
+    Range("J2:J" & myTempLast).Value = "=IF(OR(A2="""",C2<1),""Delete"",ROW(C2))"
+    Range("J2:J" & myTempLast).Value = Range("J2:J" & myTempLast).Value
+    Range("A1:J" & myTempLast).RemoveDuplicates Columns:=10, Header:=xlNo
+    myTempLast = Range("A" & Rows.Count).End(xlUp).Row
+    'CONCATENATE Assy Part & Order ID
+    Range("J2:J" & myTempLast).Value = "=IF(LEFT(B2,4)=""Plan"",B2,IFERROR(LEFT(B2,FIND("":"",B2,1)-1),B2))"
+    Range("J2:J" & myTempLast).Value = Range("J2:J" & myTempLast).Value
+    Range("B2:B" & myTempLast).Value = Range("J2:J" & myTempLast).Value
+    Range("J1:J" & myTempLast).Value = "=A1&B1"
+    Range("J1:J" & myTempLast).Value = Range("J1:J" & myTempLast).Value
+    ActiveWorkbook.Worksheets("CTB").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("CTB").Sort.SortFields.Add Key:=Range("J2"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("CTB").Sort.SortFields.Add Key:=Range("H2"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("CTB").Sort.SetRange Range("A1:J" & myTempLast)
+    ActiveWorkbook.Worksheets("CTB").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("CTB").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("CTB").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("CTB").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("CTB").Sort.Apply
+    'Get Latest Assy CTB
+    Range("K1").Value = "Max Assy CTB"
+    Range("K2:K" & myTempLast).Value = "=IF(J2=J1,K1,H2)"
+    Range("K2:K" & myTempLast).Value = Range("K2:K" & myTempLast).Value
+    Columns("K:K").NumberFormat = "M/D/YYYY"
+    Range("L2:L" & myTempLast).Value = "=IF(OR(D2=""20"",D2=""40""),H2,K2)"
+    Range("L2:L" & myTempLast).Value = Range("L2:L" & myTempLast).Value
+    Range("H2:H" & myTempLast).Value = Range("L2:L" & myTempLast).Value
+    Range("M1").Value = "Check"
+    Range("M2:M" & myTempLast).Value = "=IF(OR(D2=""20"",D2=""40""),""Check"","""")"
+    Range("M2:M" & myTempLast).Value = Range("M2:M" & myTempLast).Value
+    Range("N1").Value = "Remarks"
+    'Ver1.1: Remove duplicate
+    Range("A1:N" & myTempLast).RemoveDuplicates Columns:=Array(10, 7), Header:=xlNo
+    myTempLast = Range("A" & Rows.Count).End(xlUp).Row
+    
+    'Temp Sheet to get Gated
+    myTempTotal = Sheets("Detail Shortages by Parent Orde").Range("A" & Rows.Count).End(xlUp).Row
+    Sheets.Add after:=ActiveSheet
+    ActiveSheet.Name = "Gated"
+    Sheets("Detail Shortages by Parent Orde").Range("G3:H" & myTempLast).Copy
+    Range("A1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("J3:J" & myTempLast).Copy
+    Range("C1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("I3:I" & myTempLast).Copy
+    Range("D1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("AK3:AK" & myTempLast).Copy
+    Range("E1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("A3:A" & myTempLast).Copy
+    Range("F1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("E3:E" & myTempLast).Copy
+    Range("G1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("AL3:AM" & myTempLast).Copy
+    Range("H1").PasteSpecial xlPasteValues
+    Range("G1").Value = "CRD"
+    Range("H1").Value = "Assy CTB"
+    Range("I1").Value = "FG CTB"
+    Range("B1").Value = "WO"
+    Columns("G:I").NumberFormat = "M/D/YYYY"
+    Sheets("Detail Shortages by Parent Orde").Range("V3:V" & myTempLast).Copy
+    Range("J1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("AF3:AF" & myTempLast).Copy
+    Range("K1").PasteSpecial xlPasteValues
+    Sheets("Detail Shortages by Parent Orde").Range("L3:L" & myTempLast).Copy
+    Range("L1").PasteSpecial xlPasteValues
+    'Delete S2
+    Range("N1").Value = "Delete"
+    Range("N2:N" & myTempTotal).Value = "=IF(E2=""S2"",""Delete"",ROW(E2))"
+    Range("N2:N" & myTempTotal).Value = Range("N2:N" & myTempTotal).Value
+    Range("A1:N" & myTempTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    'Delete (Type = CF, FG not start with 2)
+    Range("N2:N" & myTempTotal).Value = "=IF(AND(E2=""CF"",LEFT(F2,1)<>""2""),""Delete"",ROW(E2))"
+    Range("N2:N" & myTempTotal).Value = Range("N2:N" & myTempTotal).Value
+    Range("A1:N" & myTempTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    'Delete Qty < 1
+    Range("N2:N" & myTempTotal).Value = "=IF(OR(A2="""",C2<1),""Delete"",ROW(C2))"
+    Range("N2:N" & myTempTotal).Value = Range("N2:N" & myTempTotal).Value
+    Range("A1:N" & myTempTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    'Remain ETA date only
+    Range("N2:N" & myTempTotal).Value = "=IF(ISTEXT(K2),""Delete"",ROW(C2))"
+    Range("N2:N" & myTempTotal).Value = Range("N2:N" & myTempTotal).Value
+    Range("A1:N" & myTempTotal).RemoveDuplicates Columns:=14, Header:=xlNo
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    
+    'CONCATENATE Assy Part & Order ID
+    Range("N2:N" & myTempTotal).Value = "=IF(LEFT(B2,4)=""Plan"",B2,IFERROR(LEFT(B2,FIND("":"",B2,1)-1),B2))"
+    Range("N2:N" & myTempTotal).Value = Range("N2:N" & myTempTotal).Value
+    Range("B2:B" & myTempTotal).Value = Range("N2:N" & myTempTotal).Value
+    Range("N2:N" & myTempTotal).Value = "=A2&B2"
+    Range("N2:N" & myTempTotal).Value = Range("N2:N" & myTempTotal).Value
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("N2"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("L2"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("K2"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SetRange Range("A1:N" & myTempTotal)
+    ActiveWorkbook.Worksheets("Gated").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Gated").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Gated").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Gated").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Gated").Sort.Apply
+    
+    'Remove duplicate Assy Part, WO, Name, ETA
+    Range("A1:N" & myTempTotal).RemoveDuplicates Columns:=Array(10, 11, 12, 14), Header:=xlNo
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("N2"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("L2"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SetRange Range("A1:N" & myTempTotal)
+    ActiveWorkbook.Worksheets("Gated").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Gated").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Gated").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Gated").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Gated").Sort.Apply
+    
+    'Get multiple ETA for similar Part, WO, Name, ETA
+    Range("M1").Value = "Multiple ETA"
+    Range("M2:M" & myTempTotal).Value = "=IF(AND(N2=N1,L2=L1,J2=J1),M1&"", ""&TEXT(K2,""m/d/yy""),TEXT(K2,""m/d/yy""))"
+    Range("M2:M" & myTempTotal).Copy
+    Range("M2").PasteSpecial xlPasteValues
+    Range("O2:O" & myTempTotal).Value = "=Row(N2)"
+    Range("O2:O" & myTempTotal).Value = Range("O2:O" & myTempTotal).Value
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Clear
+    'ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("N2"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    'ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("L2"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("O2"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SetRange Range("A1:O" & myTempTotal)
+    ActiveWorkbook.Worksheets("Gated").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Gated").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Gated").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Gated").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Gated").Sort.Apply
+    Range("A1:N" & myTempTotal).RemoveDuplicates Columns:=Array(10, 12, 14), Header:=xlNo
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("N2"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("K2"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SetRange Range("A1:O" & myTempTotal)
+    ActiveWorkbook.Worksheets("Gated").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Gated").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Gated").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Gated").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Gated").Sort.Apply
+    
+    'Remain user define number of gated
+    Range("O2:O" & myTempTotal).Value = "=IF(N2=N1,O1+1,1)"
+    Range("O2:O" & myTempTotal).Value = Range("O2:O" & myTempTotal).Value
+    Range("P1").Value = "Delete"
+    Range("P2:P" & myTempTotal).Value = "=IF(O2>" & myTotalGated & ",""Delete"",ROW(O2))"
+    Range("P2:P" & myTempTotal).Value = Range("P2:P" & myTempTotal).Value
+    Range("A1:P" & myTempTotal).RemoveDuplicates Columns:=16, Header:=xlNo
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Columns("K:K").NumberFormat = "M/D/YYYY"
+    Range("Q2:Q" & myTempTotal).Value = "=IF(N2=N1,IF(L2=L1,Q1&"", ""&TEXT(M2,""m/d/yy""),Q1&CHAR(10)&L2&"" (""&IFERROR(LEFT(J2,FIND("" "",J2,1)-1),J2)&"") ETA ""&TEXT(M2,""m/d/yy"")),L2&"" (""&IFERROR(LEFT(J2,FIND("" "",J2,1)-1),J2)&"") ETA ""&TEXT(M2,""m/d/yy""))"
+    Range("Q2:Q" & myTempTotal).Value = Range("Q2:Q" & myTempTotal).Value
+    Range("O2:O" & myTempTotal).Value = "=Row(N2)"
+    Range("O2:O" & myTempTotal).Value = Range("O2:O" & myTempTotal).Value
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Clear
+    'ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("N2"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    'ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("K2"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SortFields.Add Key:=Range("P2"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Gated").Sort.SetRange Range("A1:Q" & myTempTotal)
+    ActiveWorkbook.Worksheets("Gated").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Gated").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Gated").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Gated").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Gated").Sort.Apply
+    
+    Sheets("CTB").Select
+    Columns("N:N").ColumnWidth = 120
+    Range("N2:N" & myTempLast).Value = "=IF(J2=J1,"""",IFERROR(VLOOKUP(J2,Gated!N:Q,4,0),""Clean""))"
+    Range("N2:N" & myTempLast).Value = Range("N2:N" & myTempLast).Value
+    
+    Columns("J:L").Delete
+    Columns("K:K").EntireColumn.AutoFit
+    Range("L2:L" & myTempLast).Value = "=IF(A2=A1,L1+1,1)"
+    Range("L2:L" & myTempLast).Value = Range("L2:L" & myTempLast).Value
+    ActiveSheet.Range("$A$1:$N$" & myTempLast).AutoFilter Field:=12, Criteria1:="1"
+    
+    'Range("A2:L" & myTempLast).Borders(xlEdgeTop).LineStyle = xlContinuous
+    'Range("A2:L" & myTempLast).Borders(xlEdgeTop).ColorIndex = xlAutomatic
+    'Range("A2:L" & myTempLast).Borders(xlEdgeTop).TintAndShade = 0
+    Range("A2:L" & myTempLast).Borders(xlEdgeTop).Weight = xlMedium
+
+    ActiveSheet.ShowAllData
+    Columns("L:L").Delete
+    
+    Sheets("Detail Shortages by Parent Orde").Columns("AK:AM").Delete
+    Application.DisplayAlerts = False
+    Sheets("Gated").Delete
+    Application.DisplayAlerts = False
+    
+    myEndTime = Time
+    MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub ClearAllFilter()
+    On Error Resume Next
+    ActiveSheet.ShowAllData
+End Sub
+Sub ErrHnd1()
+    On Error GoTo Err1
+    Sheets("Detail Shortages by Parent Orde").Select
+    Exit Sub
+Err1:
+    MsgBox "Error: [Detail Shortages by Parent Orde] sheet not found!!!"
+    End
+End Sub
+Sub ErrHnd2()
+    On Error GoTo Err2
+    Sheets("PV").Select
+    ActiveSheet.Name = "PV_2"
+    Exit Sub
+Err2:
+End Sub
+    
