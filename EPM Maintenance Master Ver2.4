@@ -1,0 +1,1121 @@
+Public Declare Function EmptyClipboard Lib "user32" () As Long
+Public Declare Function SetCursorPos Lib "user32" (ByVal X As Long, ByVal Y As Long) As Long
+Public Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, ByVal dwExtraInfo As Long)
+Public Const MOUSEEVENTF_LEFTDOWN = &H2
+Public Const MOUSEEVENTF_LEFTUP = &H4
+Public Const MOUSEEVENTF_RIGHTDOWN As Long = &H8
+Public Const MOUSEEVENTF_RIGHTUP As Long = &H10
+Declare Function GetCursorPos Lib "user32" (lpPoint As POINTAPI) As Long
+Private Declare Function SendMessage Lib "user32" Alias "SendMessageA" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
+
+' Create custom variable that holds two integers
+Type POINTAPI
+    Xcoord As Long
+    Ycoord As Long
+    X As Long
+    Y As Long
+End Type
+Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hWnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Private Declare Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As Long
+Private Declare Function PostMessage Lib "user32" Alias "PostMessageA" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Const WM_CLOSE = &H10
+Public Declare Function SetForegroundWindow Lib "user32" (ByVal hWnd As Long) As Long
+Private Declare Function ShowWindow Lib "user32" (ByVal hWnd As Long, ByVal nCmdSHow As Long) As Long
+
+Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As RECT) As Long
+Private Type RECT
+    Left As Long
+    Top As Long
+    Right As Long
+    Bottom As Long
+End Type
+
+Dim pos As RECT
+Private Declare Function Wow64EnableWow64FsRedirection Lib "kernel32.dll" (ByVal Enable As Boolean) As Boolean
+Dim mySendStatus As String
+Dim myAttachement(0) As String
+Function RangetoHTML(rng As Range)
+    
+    Dim FSO As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set FSO = CreateObject("Scripting.FileSystemObject")
+    Set ts = FSO.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set FSO = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+Sub FindUserGroupInfo()
+    Dim objRoot, strDomain, objConn, objComm, objRecordset
+    Dim sFilter, sAttribs, sDepth, sBase, sQuery
+    
+    myTotalEmail = Range("Q" & Rows.Count).End(xlUp).Row
+    Set objRoot = GetObject("LDAP://RootDSE")
+    strDomain = objRoot.Get("DefaultNamingContext")
+    Set objConn = CreateObject("ADODB.Connection")
+    Set objComm = CreateObject("ADODB.Command")
+    
+    'Set WSHnet = CreateObject("WScript.Network")
+    'UserName = Range("B10").Value
+    For myA = 2 To myTotalEmail
+        'UserMail = "Agnes.Tan@plexus.com"
+        sFilter = "(&(objectClass=person)(mail=" & Range("Q" & myA).Value & "))"
+        
+        'sAttribs = "sn,givenname,sAMAccountName"
+        sAttribs = "sn,givenname,sAMAccountName,mail,EmployeeID,Manager,Division,Department,TelephoneNumber,mobile,ipphone," _
+                   & "displayName,description,physicaldeliveryofficename,homephone,pager,mobile,info,title,assistant,comment," _
+                   & "company,desktopProfile,division,otherMailbox,userPrincipalName,otherMobile,personalTitle"
+    
+        sDepth = "SubTree"
+        sBase = "<LDAP://" & strDomain & ">"
+        sQuery = sBase & ";" & sFilter & ";" & sAttribs & ";" & sDepth
+        
+        If myA = 2 Then
+            objConn.Open "Data Source=Active Directory Provider;Provider=ADsDSOObject"
+        End If
+        Set objComm.ActiveConnection = objConn
+        objComm.Properties("Page Size") = 10000
+        objComm.CommandText = sQuery
+        Set objRecordset = objComm.Execute
+        
+        If Not objRecordset.EOF Then
+            Range("R" & myA).Value = Range("Q" & myA).Value
+        Else
+            Range("R" & myA).Value = Range("Q" & myA).Value & " (Invalid)"
+        End If
+    Next myA
+
+End Sub
+Sub PmReport()
+    'Close existing Excel if any
+    ExcelWnd = FindWindow(vbNullString, "Microsoft Excel")
+    Do Until ExcelWnd = 0
+        SetForegroundWindow ExcelWnd 'Set to foreground
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.SendKeys ("{TAB}")
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.SendKeys (" ")
+        ExcelWnd = FindWindow(vbNullString, "Microsoft Excel")
+    Loop
+
+    Dim llCoord As POINTAPI
+    Dim lngRet As Long
+    Dim Pid As Long
+    Dim Winwedgedl As Long
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    
+    
+    myCenterX = 738
+    'myCenterY = 85
+    myCenterY = 99
+    myLeftOperandX = 400
+    myComparisonX = 680
+    myRightOperandX = 860
+    'myY = 200 '1.225, 2.250, 3.275
+    myY = 214 '1.225, 2.250, 3.275
+    myAddRowX = 232
+    myHomePath = "\\neen-data-profiles.na.plexus.com\profile_data$\COMMON\USERFOLDERS\sk.loon.AP\Desktop\"
+    If Dir(myMacroPath & "\EPM\Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & ".xlsx", vbNormal) <> "" Then
+        GoTo myEnd
+    End If
+    myHour = Int(Format(Time, "H"))
+    If myHour > 12 Then
+        For myZ = 1 To 30
+            myLatestFile = Dir(myMacroPath & "\" & Year(Date - myZ) & "\Equipment Maintenance Schedule - " & Format(Date - myZ, "MMDDYYYY") & ".xlsx")
+            If myLatestFile <> "" Then Exit For
+        Next myZ
+        If myZ > 30 Then
+            'Call SendEmail("EPM Maintenance Master Error!", "Unable find latest file within 30 days", "sk.loon@plexus.com", "")
+            Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable find latest file within 30 days</html>", _
+                        myAttachement(), _
+                        0, 0)
+            
+            GoTo myEnd
+        End If
+        'Ver1.9: Correction
+        'Workbooks.Open myMacroPath & "\" & Year(Date - myA) & "\" & myLatestFile, False, True
+        Workbooks.Open myMacroPath & "\" & Year(Date - myZ) & "\" & myLatestFile, False, True
+        
+        GoTo myMissingFile
+    End If
+    
+    
+    
+    'Close all JDE
+    CreateObject("shell.application").minimizeall
+    Call CloseAllWnd
+
+    'Ver2.0: Get JDE shortcut link
+    Dim BufObj As MSForms.DataObject
+    Dim objSFolders As Object
+    Set BufObj = New MSForms.DataObject
+    Set objSFolders = CreateObject("WScript.Shell").SpecialFolders
+    Range("A1").Value = "='\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\Macro_Backup\Info\[Book1.xlsm]Macro'!$B$4"
+    myPass = Replace(Replace(Replace(Replace(Range("A1").Value, "^", "{^}"), "%", "{%}"), "+", "{+}"), "~", "{~}")
+    Range("A1").ClearContents
+    
+    
+   Set FSO = CreateObject("Scripting.FileSystemObject")
+myRetry:
+    'Call JdeLogin(myPass)
+    myResult = JdeLogin(CStr(myPass))
+    
+    'Ver2.1:
+    If myResult = "Fail" Then
+        Call CloseAllWnd
+        myResult = JdeLogin(CStr(myPass))
+    End If
+    
+    If myResult = "Fail" Then GoTo myEnd
+    
+    'Equipment List with maintenance schedule ***********************************************************************************
+    Application.Wait (Now + TimeValue("00:00:05"))
+    'SetCursorPos 82, 507 'Equipment List with maintenance schedule
+    SetCursorPos 82, 490 'Equipment List with maintenance schedule
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'Data Selection
+    Application.Wait (Now + TimeValue("00:00:15"))
+    'SetCursorPos 241, 223 'Data Selection
+    SetCursorPos 245, 237 'Data Selection
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos 263, 164 'Submit
+    SetCursorPos 263, 178 'Submit
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:05"))
+    
+    
+    'Business Unit (F4102)(MCU)[BC]*********************************************************************************************************
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos 213, 250 'Second line Checkbox
+    SetCursorPos 213, 264 'Second line Checkbox
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos 213, 275 'Third line Checkbox
+    SetCursorPos 213, 289 'Third line Checkbox
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos 271, 166 'Delete
+    SetCursorPos 271, 180 'Delete
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos myRightOperandX, myY + (25 * 1)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.SendKeys ("Literal")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos myCenterX, myCenterY
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Call ListOfValues("830")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Call Tick
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Call Tick
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Call Tick
+    Application.Wait (Now + TimeValue("00:01:00"))
+Redownload:
+    'Downloading
+    myCsvFiles = Dir(myHomePath & "*.csv")
+    Do While myCsvFiles <> ""
+        Kill myHomePath & myCsvFiles
+        myCsvFiles = Dir(myHomePath & "*.csv")
+    Loop
+    
+    Application.Wait (Now + TimeValue("00:00:03"))
+    'SetCursorPos 134, 406 'View Submitted Job Status
+    SetCursorPos 134, 390 'View Submitted Job Status
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:20"))
+    
+    SetCursorPos 883, 280 'Job
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Application.SendKeys ("R5512011_PLX00001")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    'Magnifying glass
+    SetCursorPos 245, 180 'Magnifying glass
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'Select fist line
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos 230, 340 'Check first line
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos 240, 481 'View CSV
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:15"))
+    SetCursorPos 1700, 157 'Save As button
+    Application.Wait (Now + TimeValue("00:00:10"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:13"))
+    Application.Wait (Now + TimeValue("00:00:07"))
+    Sample
+    
+    Application.Wait (Now + TimeValue("00:00:05"))
+    
+    For myA = 1 To 30
+        Application.Wait (Now + TimeValue("00:00:10"))
+        myCsvFiles = Dir(myHomePath & "*.csv")
+        If myCsvFiles <> "" Then
+            Exit For
+        End If
+    Next myA
+    If myA > 30 Then
+        'Call SendEmail("EPM Maintenance Master error...", "Unable to download CSV file from JDE", "sk.loon@plexus.com", "")
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to download CSV file from JDE</html>", _
+                        myAttachement(), _
+                        0, 0)
+        
+        GoTo myEnd
+    
+    End If
+    
+    '???
+        'Ver1.6: Postion change
+        'SetCursorPos 270, 166 'Delete
+        SetCursorPos 275, 180 'Delete
+        'SetCursorPos 240, 166 'Delete
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:15"))
+    'SetCursorPos 770, 510 'OK
+    SetCursorPos 1065, 164 'OK
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    
+    Application.CutCopyMode = False
+    Workbooks.Open Filename:=myHomePath & myCsvFiles
+    
+    If Range("A1").Value <> "R5512011" Then
+        ActiveWorkbook.Close False
+        'Call SendEmail("EPM Maintenance Master error...", "Wrong report download from JDE", "sk.loon@plexus.com", "")
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Wrong report download from JDE</html>", _
+                        myAttachement(), _
+                        0, 0)
+                        
+        GoTo myEnd
+    End If
+    If Range("R1").Value <> Date Then
+        ActiveWorkbook.Close False
+        'Call SendEmail("EPM Maintenance Master error...", "Wrong report Date from JDE", "sk.loon@plexus.com", "")
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Wrong report download from JDE</html>", _
+                        myAttachement(), _
+                        0, 0)
+        
+        GoTo myEnd
+    End If
+myMissingFile:
+    mySheet = Format(Date, "MMDDYYYY")
+    'ActiveWorkbook.Close False
+    ActiveSheet.Name = mySheet
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    Rows("1:2").Delete
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A1:A" & myTempTotal).Value = "=IF(P1<TODAY()+7,IF(R1<>65,IF(P1<>"""",ROW(P1),""Delete""),""Delete""),""Delete"")"
+    Range("A1:A" & myTempTotal).Value = Range("A1:A" & myTempTotal).Value
+    Range("A1:W" & myTempTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+    Columns("A:B").Delete
+    Columns("D:D").Delete
+    Columns("E:E").Delete
+    Columns("F:F").Insert
+    Range("F1").Value = "Manager"
+    Columns("H:J").Delete
+    Columns("M:R").Delete
+    Range("M1").Value = "Aging"
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("M2:M" & myTempTotal).Value = "=J2-TODAY()"
+    Range("M2:M" & myTempTotal).Value = Range("M2:M" & myTempTotal).Value
+    ActiveWorkbook.Worksheets(mySheet).Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets(mySheet).Sort.SortFields.Add Key:=Range("M1"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets(mySheet).Sort.SortFields.Add Key:=Range("F1"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets(mySheet).Sort.SetRange Range("A2:M" & myTempTotal)
+    ActiveWorkbook.Worksheets(mySheet).Sort.Header = xlNo
+    ActiveWorkbook.Worksheets(mySheet).Sort.MatchCase = False
+    ActiveWorkbook.Worksheets(mySheet).Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets(mySheet).Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets(mySheet).Sort.Apply
+    Rows("1:1").WrapText = True
+    Cells.Font.Name = "Calibri"
+    Cells.Font.Size = 9
+    Range("A1:M1").Interior.Pattern = xlSolid
+    Range("A1:M1").Interior.Color = 15773696
+    ActiveWindow.Zoom = 80
+    Columns("A:M").HorizontalAlignment = xlCenter
+    Cells.Columns.AutoFit
+    Range("A1:M" & myTempTotal).Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("A1:M" & myTempTotal).Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("A1:M" & myTempTotal).Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("A1:M" & myTempTotal).Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("A1:M" & myTempTotal).Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("A1:M" & myTempTotal).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    Rows("1:1").AutoFit
+    Sheets.Add
+    ActiveSheet.Name = "Summary"
+    Range("A1").Value = "Islandview"
+    Range("B1").Value = "Total"
+    Range("A2").Value = "PM/Cal Overdue"
+    Range("A3").Value = "PM/Cal Due " & Format(Date, "DD Mmm (Ddd)")
+    Range("A4").Value = "PM/Cal Due " & Format(Date + 1, "DD Mmm (Ddd)")
+    Range("A5").Value = "PM/Cal Due " & Format(Date + 2, "DD Mmm") & "-" & Format(Date + 6, "DD Mmm")
+    If myZ > 0 Then
+        Range("B2").Value = "-"
+    Else
+        Range("B2").Value = Application.WorksheetFunction.CountIf(Sheets(mySheet).Columns("M:M"), "<" & 0)
+    End If
+    Range("B3").Value = Application.WorksheetFunction.CountIf(Sheets(mySheet).Columns("M:M"), 0)
+    Range("B4").Value = Application.WorksheetFunction.CountIf(Sheets(mySheet).Columns("M:M"), 1)
+    Range("B5").Value = Application.WorksheetFunction.CountIf(Sheets(mySheet).Columns("M:M"), ">" & 1)
+    Cells.Font.Name = "Tahoma"
+    Cells.Font.Size = 10
+    Columns("A:B").AutoFit
+    Columns("B:B").HorizontalAlignment = xlCenter
+    Columns("B:B").ColumnWidth = Columns("B:B").ColumnWidth + 2
+    Range("A1:B1").Interior.Pattern = xlSolid
+    Range("A1:B1").Interior.Color = 15773696
+    Range("A2:B2").Font.Color = -16776961
+    Range("A3:B3").Font.Color = -4165632
+    Range("A4:B4").Font.Color = -11489280
+    Range("A5:B5").Font.Color = -6279056
+    Range("A1:B5").Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("A1:B5").Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("A1:B5").Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("A1:B5").Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("A1:B5").Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("A1:B5").Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    ActiveWindow.Zoom = 80
+    
+    Workbooks.Open myMacroPath & "\Email List.xlsx", False, True
+    'To
+    If Sheets("Email To").Range("B2").Value <> "" Then
+        If Sheets("Email To").Range("B3").Value <> "" Then
+            myTempToTotal = Sheets("Email To").Range("B" & Rows.Count).End(xlUp).Row
+            myTo = Join(Application.WorksheetFunction.Transpose(Sheets("Email To").Range("B2:B" & myTempToTotal).Value), ";")
+        Else
+            myTo = Sheets("Email To").Range("B2").Value
+        End If
+    End If
+    'Cc
+    If Sheets("Email Cc").Range("B2").Value <> "" Then
+        If Sheets("Email Cc").Range("B3").Value <> "" Then
+            myTempCcTotal = Sheets("Email Cc").Range("B" & Rows.Count).End(xlUp).Row
+            myCc = Join(Application.WorksheetFunction.Transpose(Sheets("Email Cc").Range("B2:B" & myTempCcTotal).Value), ";")
+        Else
+            myCc = Sheets("Email Cc").Range("B2").Value
+        End If
+    End If
+    
+    Workbooks("Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & ".xlsx").Activate
+    Sheets(mySheet).Select
+    Columns("F:F").Insert
+    Range("F1").Value = "Owner Email"
+    Range("F2:F" & myTempTotal).Value = "=IFERROR(VLOOKUP(E2,'[Email List.xlsx]Owner email list'!$B:$C,2,0),"""")"
+    Range("F2:F" & myTempTotal).Value = Range("F2:F" & myTempTotal).Value
+    Range("P2:P" & myTempTotal).Value = Range("E2:E" & myTempTotal).Value
+    Range("Q2:Q" & myTempTotal).Value = Range("F2:F" & myTempTotal).Value
+    Range("P1:Q" & myTempTotal).RemoveDuplicates Columns:=2, Header:=xlNo
+    myTotalEmail = Range("Q" & Rows.Count).End(xlUp).Row
+    Range("G2:G" & myTempTotal).Value = "=IFERROR(VLOOKUP(E2,'[Email List.xlsx]Owner email list'!$B:$E,4,0),"""")"
+    Range("G2:G" & myTempTotal).Value = Range("G2:G" & myTempTotal).Value
+    Columns("G:G").AutoFit
+    Call FindUserGroupInfo
+    Range("S2:S" & myTempTotal).Value = "=VLOOKUP(F2,Q:R,2,0)"
+    Range("S2:S" & myTempTotal).Value = Range("S2:S" & myTempTotal).Value
+    Range("F2:F" & myTempTotal).Value = "=IFERROR(VLOOKUP(E2,P:R,3,0),""N/A"")"
+    Range("F2:F" & myTempTotal).Value = Range("F2:F" & myTempTotal).Value
+    'Range("G2:G" & myTempTotal).Value = Range("S2:S" & myTempTotal).Value
+'    Range("S2:S" & myTotalEmail).Value = "=IF(Right(R2,1)="")"",""Delete"",Row(R2))"
+'    Range("S2:S" & myTotalEmail).Value = Range("S2:S" & myTotalEmail).Value
+'    Range("S1").Value = "Delete"
+'    Range("Q1:S" & myTotalEmail).RemoveDuplicates Columns:=3, Header:=xlNo
+'    myTotalEmail = Range("Q" & Rows.Count).End(xlUp).Row
+''    'To
+'    If myTotalEmail > 1 Then
+'        If Range("Q3").Value <> "" Then
+'            myTo1 = Join(Application.WorksheetFunction.Transpose(Range("Q2:Q" & myTotalEmail).Value), ";")
+'        Else
+'            myTo1 = Range("Q2").Value
+'        End If
+'    End If
+    If myZ > 0 Then
+        Range("Q2:Q" & myTempTotal).Value = "=IF(N2<0,""Delete"",Row(N2))"
+        Range("Q2:Q" & myTempTotal).Value = Range("Q2:Q" & myTempTotal).Value
+        Range("Q1").Value = "Delete"
+        Range("A1:Q" & myTempTotal).RemoveDuplicates Columns:=17, Header:=xlNo
+    End If
+    Columns("Q:S").ClearContents
+    
+    Sheets("Summary").Select
+    Columns("B:C").Insert
+    Range("B1").Value = "Invalid Email"
+    Range("C1").Value = "No Email"
+    Range("B2").Value = Application.WorksheetFunction.CountIfs(Sheets(mySheet).Columns("F:F"), "*Invalid*", Sheets(mySheet).Columns("N:N"), "<" & 0)
+    Range("B3").Value = Application.WorksheetFunction.CountIfs(Sheets(mySheet).Columns("F:F"), "*Invalid*", Sheets(mySheet).Columns("N:N"), 0)
+    Range("B4").Value = Application.WorksheetFunction.CountIfs(Sheets(mySheet).Columns("F:F"), "*Invalid*", Sheets(mySheet).Columns("N:N"), 1)
+    Range("B5").Value = Application.WorksheetFunction.CountIfs(Sheets(mySheet).Columns("F:F"), "*Invalid*", Sheets(mySheet).Columns("N:N"), ">" & 1)
+    Range("C2").Value = Application.WorksheetFunction.CountIfs(Sheets(mySheet).Columns("F:F"), "N/A", Sheets(mySheet).Columns("N:N"), "<" & 0)
+    Range("C3").Value = Application.WorksheetFunction.CountIfs(Sheets(mySheet).Columns("F:F"), "N/A", Sheets(mySheet).Columns("N:N"), 0)
+    Range("C4").Value = Application.WorksheetFunction.CountIfs(Sheets(mySheet).Columns("F:F"), "N/A", Sheets(mySheet).Columns("N:N"), 1)
+    Range("C5").Value = Application.WorksheetFunction.CountIfs(Sheets(mySheet).Columns("F:F"), "N/A", Sheets(mySheet).Columns("N:N"), ">" & 1)
+    Columns("A:C").AutoFit
+    Columns("B:C").HorizontalAlignment = xlCenter
+    'MsgBox myMacroPath & "\EPM\1Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & ".xlsx"
+    Application.DisplayAlerts = False
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\EPM\Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & " .xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\EPM\Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    Application.DisplayAlerts = True
+'    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+'
+
+    myCopyLastRow = Application.WorksheetFunction.CountIf(Sheets(mySheet).Columns("N:N"), "<" & 2) + 1
+    'Sending Email
+    
+    'Dim FSO As Scripting.FileSystemObject
+    'Set FSO = New Scripting.FileSystemObject
+    'Call FSO.CopyFile(SourceFilePath, DestPath, OverWrite)
+    
+    'Ver1.6:
+    For myA = 1 To 10
+        SendSummary
+        If mySendStatus = "Yes" Then Exit For
+    
+    Next myA
+'    With CreateObject("Outlook.Application").CreateItem(0)
+'        .SentOnBehalfOfName = "PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com"
+'        .to = "pc.lee@plexus.com; James.Yee@plexus.com"
+'        '.to = myTo & ";" & myTo1
+'        '.CC = myCc
+'        .BCC = "sk.loon@plexus.com"
+'
+'        .Subject = "JDE EPM PM/Cal Overdue List (EPM Schedule " & Format(Date, "DD") & "-" & Format(Date + 1, "DD Mmm Yy") & ")"
+'            .HTMLBody = "<html><font style=""font-family: Tahoma; font-size: 10pt;""/font><p>******** Automated Reporting (This is a beta version for data validation & testing only.)*******<br>" & Replace(myBody, Chr(10), "<br>") & _
+'                  "Hi Team,<br><br> Please help on time update accordingly PM/Cal due, to prevent PM/Cal overdue and make sure all the PM label ""date"" updated is tally with JDE EPM schedule.<br><br>" & _
+'                  "<b><font color=red><span style='background:yellow;mso-highlight:yellow'>XXX_C</font> = Calibration equipment no longer update in JDE, please migrate to MET/TEAM. (except for torque driver)</b></span>" & _
+'                  RangetoHTML(Sheets("Summary").Range("A1:D6")) & _
+'                  RangetoHTML(Sheets(mySheet).Range("A1:N" & myCopyLastRow)) & _
+'                  "Thanks..."
+'        .attachments.Add myMacroPath & "\EPM\Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & ".xlsx"
+'        .display
+'        .send
+'    End With
+    
+    
+    'ClearProcessing Options
+    'GetCursorPos llCoord
+    'MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+    
+    Workbooks("Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & ".xlsx").Close False
+    Workbooks("Email List.xlsx").Close False
+    
+'    SetForegroundWindow Winwedgehdl 'Set to foreground
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    SetCursorPos 270, 166 'Delete
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:15"))
+'    SetCursorPos 770, 510 'OK
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    Application.Wait (Now + TimeValue("00:00:02"))
+    'Ver1.3: Close all JDE
+'    'Ver1.2: Close JDE
+'    Application.WindowState = xlMinimized
+'    Winwedgehdl = FindWindow(vbNullString, "Work with Submitted Jobs - Submitted Job Search - Internet Exp - \\Remote")
+'    SetForegroundWindow Winwedgehdl 'Set to foreground
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    SetCursorPos 1424, 74 'Click drop down 'X 1419, 9
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    'SetCursorPos 1281, 267 'Log out
+'    SetCursorPos 1231, 337 'Log out
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    SetCursorPos 809, 519 'OK
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    SetCursorPos 1419, 9 'X
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    PostMessage Winwedgehdl, WM_CLOSE, CLng(0), CLng(0)
+    
+'    Application.EnableEvents = False
+'    Workbooks(myMacrofile).Save
+'    Application.EnableEvents = True
+                
+
+myEnd:
+    Application.Wait (Now + TimeValue("00:00:01"))
+'    SendMessage hWndParent, WM_CLOSE, 0, 0 'Close JDE
+'    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    'Ver1.3: Close all JDE
+    Call CloseAllWnd
+
+    Application.DisplayAlerts = False
+    Application.Quit
+End Sub
+Sub SendSummary()
+    Dim myBody As String
+    On Error GoTo myErr
+    myCopyLastRow = Application.WorksheetFunction.CountIf(Sheets(Format(Date, "MMDDYYYY")).Columns("N:N"), "<" & 2) + 1
+    'Sending Email
+    
+'    With CreateObject("Outlook.Application").CreateItem(0)
+'        .SentOnBehalfOfName = "PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com"
+'        .To = "pc.lee@plexus.com; James.Yee@plexus.com"
+'        '.to = myTo & ";" & myTo1
+'        '.CC = myCc
+'        .Bcc = "sk.loon@plexus.com"
+'
+'        .Subject = "JDE EPM PM/Cal Overdue List (EPM Schedule " & Format(Date, "DD") & "-" & Format(Date + 1, "DD Mmm Yy") & ")"
+'            .HTMLBody = "<html><font style=""font-family: Tahoma; font-size: 10pt;""/font><p>******** Automated Reporting (This is a beta version for data validation & testing only.)*******<br>" & Replace(myBody, Chr(10), "<br>") & _
+'                  "Hi Team,<br><br> Please help on time update accordingly PM/Cal due, to prevent PM/Cal overdue and make sure all the PM label ""date"" updated is tally with JDE EPM schedule.<br><br>" & _
+'                  "<b><font color=red><span style='background:yellow;mso-highlight:yellow'>XXX_C</font> = Calibration equipment no longer update in JDE, please migrate to MET/TEAM. (except for torque driver)</b></span>" & _
+'                  RangetoHTML(Sheets("Summary").Range("A1:D6")) & _
+'                  RangetoHTML(Sheets(Format(Date, "MMDDYYYY")).Range("A1:N" & myCopyLastRow)) & _
+'                  "Thanks..."
+'        .Attachments.Add "C:\SK Loon\EPM Maintenance Master\EPM\Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & ".xlsx"
+'        .display
+'        .Send
+'    End With
+    myBody = "<html><font style=""font-family: Tahoma; font-size: 10pt;""/font><p>******** Automated Reporting *******<br>" & Replace(myBody, Chr(10), "<br>") & _
+                  "Hi Team,<br><br> Please help on time update accordingly PM/Cal due, to prevent PM/Cal overdue and make sure all the PM label ""date"" updated is tally with JDE EPM schedule.<br><br>" & _
+                  "<b><font color=red><span style='background:yellow;mso-highlight:yellow'>XXX_C</font> = Calibration equipment no longer update in JDE, please migrate to MET/TEAM. (except for torque driver)</b></span>" & _
+                  RangetoHTML(Sheets("Summary").Range("A1:D6")) & _
+                  RangetoHTML(Sheets(Format(Date, "MMDDYYYY")).Range("A1:N" & myCopyLastRow))
+    myAttachement(0) = "C:\SK Loon\EPM Maintenance Master\EPM\Equipment Maintenance Schedule - " & Format(Date, "MMDDYYYY") & " .xlsx"
+    Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "pc.lee@plexus.com; James.Yee@plexus.com", _
+                        "", _
+                        "sk.loon@plexus.com", _
+                        "JDE EPM PM/Cal Overdue List (EPM Schedule " & Format(Date, "DD") & "-" & Format(Date + 1, "DD Mmm Yy") & ")", _
+                        myBody, _
+                        myAttachement(), _
+                        1, 0)
+    
+    mySendStatus = "Yes"
+    Exit Sub
+myErr:
+    
+End Sub
+
+Sub DataSelection()
+    Application.Wait (Now + TimeValue("00:00:10"))
+    'SetCursorPos 241, 223 'Data Selection
+    SetCursorPos 241, 247 'Data Selection
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:05"))
+    'SetCursorPos 263, 164 'Submit
+    SetCursorPos 263, 178 'Submit
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Sub ListOfValues(myValues)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.SendKeys (myValues)
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos 271, 166 '+
+    SetCursorPos 271, 180 '+
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+End Sub
+Sub SingleValue(myValues)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.SendKeys (myValues)
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'SetCursorPos 212, 166 'Tick
+    SetCursorPos 212, 180 'Tick
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+End Sub
+Sub Tick()
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'SetCursorPos 212, 166 'Tick
+    SetCursorPos 212, 180 'Tick
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+End Sub
+Function JdeLogin(myPass As String)
+    Dim objSFolders As Object
+    Dim BufObj As MSForms.DataObject
+    Set BufObj = New MSForms.DataObject
+    Set objSFolders = CreateObject("WScript.Shell").SpecialFolders
+myRetry:
+    strFile = objSFolders("StartMenu") & "\Programs\JDEdwards 9 APAC - PD"
+    strAction = "OPEN"  ' action might be OPEN, NEW or other, depending on what you need to do
+    lngErr = ShellExecute(0, strAction, strFile, "", "", 0)
+    Application.Wait (Now + TimeValue("00:00:30"))
+    
+    'Set Username and Password
+    For myCounter = 1 To 31
+        Application.Wait (Now + TimeValue("00:00:15"))
+        'Can't update Microsoft Edge - \\Remote
+        hWnd = FindWindow(vbNullString, "Can't update Microsoft Edge - \\Remote")
+        Application.Wait (Now + TimeValue("00:00:01"))
+        SendMessage hWnd, WM_CLOSE, 0, 0 'Close WMS
+        Application.Wait (Now + TimeValue("00:00:01"))
+        
+        Winwedgehdl = GetJdeWnd 'Get Microsoft Edge Windows Title
+        ShowWindow Winwedgehdl, 3 '1 is restore, 2 is minimize, 3 is maximize
+        SetForegroundWindow Winwedgehdl 'Set to foreground
+        Application.Wait (Now + TimeValue("00:00:15"))
+        If Winwedgehdl = 0 Then
+            If myCounter > 30 Then
+                If myRetryCnt = 2 Then
+                    'Call SendEmail(ActiveWorkbook.Name & " Error!", "Unable find JD Edwards \\Remote!", "sk.loon@plexus.com", "")
+                    Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable find JD Edwards \\Remote!</html>", _
+                        myAttachement(), _
+                        0, 0)
+                    
+                    JdeLogin = "Fail"
+                    GoTo myExitSub
+                Else
+                    myRetryCnt = myRetryCnt + 1
+                    GoTo myRetry
+                End If
+            End If
+        Else
+            Application.Wait (Now + TimeValue("00:00:05"))
+            Exit For
+        End If
+    Next myCounter
+    
+    'Can't update Microsoft Edge - \\Remote
+    hWnd = FindWindow(vbNullString, "Can't update Microsoft Edge - \\Remote")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SendMessage hWnd, WM_CLOSE, 0, 0 'Close WMS
+    Application.Wait (Now + TimeValue("00:00:04"))
+
+    ShowWindow Winwedgehdl, 3 '1 is restore, 2 is minimize, 3 is maximize
+    Application.Wait (Now + TimeValue("00:00:04"))
+    SetCursorPos 950, 535 'Select Password Textbox
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+    Application.SendKeys (myPass)
+    Application.Wait (Now + TimeValue("00:00:03"))
+    SetCursorPos 950, 502 'Select Login Textbox
+    Application.Wait (Now + TimeValue("00:00:03"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Application.SendKeys ("sk.loon")
+    Application.Wait (Now + TimeValue("00:00:03"))
+    
+    SetCursorPos 1060, 590 'Click Sign In
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:10"))
+    
+    'Verify URL
+    For myA = 1 To 30
+        Application.Wait (Now + TimeValue("00:00:05"))
+        'BufObj.SetText ""
+        'BufObj.PutInClipboard
+        EmptyClipboard
+        SetCursorPos 1060, 50 'Move to address bar
+        Application.Wait (Now + TimeValue("00:00:02"))
+        mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:02"))
+        SetCursorPos 1100, 175 'Move to address bar
+        Application.Wait (Now + TimeValue("00:00:03"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:02"))
+        BufObj.GetFromClipboard
+        GetClipboardText = BufObj.GetText
+        'If InStr(1, GetClipboardText, "https://jdepd03.plexus.com/jde/E1Menu.maf?jdeowpBackButtonProtect=PROTECTED", vbBinaryCompare) > 0 Then
+        If GetClipboardText = "https://jdepd03.plexus.com/jde/E1Menu.maf?jdeowpBackButtonProtect=PROTECTED" Then
+            myLogin = "Success"
+            Exit For
+        End If
+    Next myA
+    
+    If myLogin <> "Success" Then
+        'Add in retry
+        myRetryLogin = myRetryLogin + 1
+        If myRetryLogin < 4 Then
+            SendMessage hwndParent, WM_CLOSE, 0, 0 'Close JDE
+            GoTo myRetry
+        End If
+    
+        'Call SendEmail(ActiveWorkbook.Name & " Error!", "Unable login...", "sk.loon@plexus.com", "")
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable login...</html>", _
+                        myAttachement(), _
+                        0, 0)
+        
+        JdeLogin = "Fail"
+        GoTo myExitSub
+    End If
+    
+    For myCounter = 1 To 30
+        Application.Wait (Now + TimeValue("00:00:05"))
+        hwndParent = GetJdeWnd 'Get Microsoft Edge Windows Title
+        If hwndParent <> 0 Then
+            Exit For
+        End If
+    Next myCounter
+    If myCounter > 30 Then
+        myRetryLogin = myRetryLogin + 1
+        If myRetryLogin = 3 Then
+            'Call SendEmail(ActiveWorkbook.Name & " Error!", "Unable login...", "sk.loon@plexus.com", "")
+            Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable login...</html>", _
+                        myAttachement(), _
+                        0, 0)
+            
+            JdeLogin = "Fail"
+            GoTo myExitSub
+        Else
+            GoTo myRetry
+        End If
+    End If
+myExitSub:
+End Function
+Sub SendEmail(mySubject As String, myBody As String, myTo As String, myCc As String)
+     With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Cc = myCc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        .Send
+    End With
+End Sub
+Sub ReadAllData()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("^a")
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    SendKeys "^{C}"
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Private Sub MoveSingle(myX, myY)
+    SetCursorPos myX, myY 'x and y position
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub MoveSingleClick(myX, myY)
+  SetCursorPos myX, myY 'x and y position
+  Application.Wait (Now + TimeValue("00:00:01"))
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub SingleClick()
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub DoubleClick()
+  'Double click as a quick series of two clicks
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub RightClick()
+  'Right click
+  SetCursorPos 200, 200 'x and y position
+  mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+Sub TypeInCurrentWindow()
+DoEvents
+Application.EnableEvents = False
+Sleep 5000
+
+SendKeys "a"
+SendKeys "^a", True 'Select All
+Sleep 400 'Wait 0.4 seconds (400 milliseconds)
+SendKeys "^c", True 'Copy
+Sleep 400 'Wait 0.4 seconds
+'SendKeys "abcd", True 'Type abcd
+'Sleep 400 'Wait 0.4 seconds
+Application.EnableEvents = True
+End Sub
+Sub GetCursorPosDemo()
+Dim llCoord As POINTAPI
+' Get the cursor positions
+GetCursorPos llCoord
+' Display the cursor position coordinates
+MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+'Function RangetoHTML(rng As Range)
+'
+'    Dim fso As Object
+'    Dim ts As Object
+'    Dim TempFile As String
+'    Dim TempWB As Workbook
+'
+'    On Error GoTo myQuit
+'    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+'
+'    'Copy the range and create a new workbook to past the data in
+'    rng.Copy
+'    Set TempWB = Workbooks.Add(1)
+'    With TempWB.Sheets(1)
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial Paste:=8
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteValues, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).Select
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        Application.CutCopyMode = False
+'        On Error Resume Next
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Visible = True
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Delete
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        On Error GoTo 0
+'    End With
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Publish the sheet to a htm file
+'    With TempWB.PublishObjects.Add( _
+'         SourceType:=xlSourceRange, _
+'         Filename:=TempFile, _
+'         Sheet:=TempWB.Sheets(1).Name, _
+'         Source:=TempWB.Sheets(1).UsedRange.Address, _
+'         HtmlType:=xlHtmlStatic)
+'        .Publish (True)
+'    End With
+'
+'    'Read all data from the htm file into RangetoHTML
+'    Set fso = CreateObject("Scripting.FileSystemObject")
+'    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = ts.ReadAll
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    ts.Close
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Close TempWB
+'    TempWB.Close savechanges:=False
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Delete the htm file we used in this function
+'    Kill TempFile
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    Set ts = Nothing
+'    Set fso = Nothing
+'    Set TempWB = Nothing
+'myQuit:
+'End Function
