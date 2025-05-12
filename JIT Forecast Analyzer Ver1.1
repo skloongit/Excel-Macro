@@ -1,0 +1,50 @@
+Sub ForecastAnalyzer()
+'
+    myMacroFile = ActiveWorkbook.Name
+    myMacroSheet = ActiveSheet.Name
+    myTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range(Cells(2, 2), Cells(Rows.Count, Columns.Count)).ClearContents
+    
+    'Ver1.1: Select multiple file
+    'mySelectFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Forecast Commit File...")
+    mySelectFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Forecast Commit File (1 or more)...", MultiSelect:=True)
+    
+    myStrTime = Time
+    
+    For j = 1 To UBound(mySelectFile)
+        'Ver1.1: Select multiple file
+        'Workbooks.Open mySelectFile
+        myLastCol = Cells(2, Columns.Count).End(xlToLeft).Column
+        Workbooks.Open (mySelectFile(j))
+        
+        mySelectFilename = ActiveWorkbook.Name
+        WS_Count = ActiveWorkbook.Worksheets.Count
+        For i = 1 To WS_Count
+           'Ver1.1: Select multiple file
+           'Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(2, i + 1).Value = ActiveWorkbook.Worksheets(i).Name
+           'Workbooks(myMacroFile).Sheets(myMacroSheet).Range(Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(3, i + 1), Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(myTotal, i + 1)).Value = "=SUMIF('[" & mySelectFilename & "]" & ActiveWorkbook.Worksheets(i).Name & "'!$E:$E,A3,'[" & mySelectFilename & "]" & ActiveWorkbook.Worksheets(i).Name & "'!$N:$N)"
+           'Workbooks(myMacroFile).Sheets(myMacroSheet).Range(Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(3, i + 1), Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(myTotal, i + 1)).Value = Workbooks(myMacroFile).Sheets(myMacroSheet).Range(Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(3, i + 1), Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(myTotal, i + 1)).Value
+           Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(2, i + myLastCol).Value = ActiveWorkbook.Worksheets(i).Name
+           Workbooks(myMacroFile).Sheets(myMacroSheet).Range(Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(3, i + myLastCol), Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(myTotal, i + myLastCol)).Value = "=SUMIF('[" & mySelectFilename & "]" & ActiveWorkbook.Worksheets(i).Name & "'!$E:$E,A3,'[" & mySelectFilename & "]" & ActiveWorkbook.Worksheets(i).Name & "'!$N:$N)"
+           Workbooks(myMacroFile).Sheets(myMacroSheet).Range(Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(3, i + myLastCol), Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(myTotal, i + myLastCol)).Value = Workbooks(myMacroFile).Sheets(myMacroSheet).Range(Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(3, i + 1), Workbooks(myMacroFile).Sheets(myMacroSheet).Cells(myTotal, i + 1)).Value
+        Next i
+        'Workbooks(mySelectFilename).Close False
+        Workbooks(mySelectFilename).Close False
+    Next j
+            
+            Range(Cells(2, 1), Range("A2").End(xlToRight).End(xlDown)).Select
+            Selection.Borders(xlEdgeLeft).LineStyle = xlContinuous
+            Selection.Borders(xlEdgeTop).LineStyle = xlContinuous
+            Selection.Borders(xlEdgeBottom).LineStyle = xlContinuous
+            Selection.Borders(xlEdgeRight).LineStyle = xlContinuous
+            Selection.Borders(xlInsideVertical).LineStyle = xlContinuous
+            Selection.Borders(xlInsideHorizontal).LineStyle = xlContinuous
+            Selection.Columns.AutoFit
+            Selection.Rows.AutoFit
+        Range("A1").Select
+    
+    
+    myEndTime = Time
+    
+    MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
