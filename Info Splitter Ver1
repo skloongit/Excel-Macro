@@ -1,0 +1,967 @@
+    Dim myEmail As String
+    Dim UserName As String
+    'Private Declare Function GetUserName Lib "advapi32.dll" Alias "GetUserNameA" _
+    (ByVal lpBuffer As String, _
+     nSize As Long) As Long
+     Public Const UNLEN = 256
+     
+Sub SplitSupplier()
+'
+'
+    'Setting info
+    myFilename = ActiveWorkbook.Name
+    mySplitColumn = Workbooks(myFilename).Sheets("Setting").Range("C5").Value
+    myFileFormat = Workbooks(myFilename).Sheets("Setting").Range("C7").Value
+    
+    'Ver14: E5 already been use up
+    'mySplitNumber = Workbooks(myFilename).Sheets("Setting").Range("E5").Value
+    Range("E1").Value = "=CODE(""" & mySplitColumn & """)"
+    mySplitNumber = Range("E1").Value - 64
+    Range("E1").ClearContents
+    
+    'Ver14: Remain all other sheet in splitted file
+    myOtherSheet = Workbooks(myFilename).Sheets("Setting").Range("F5").Value
+    
+    Sheets("Macro").Columns("A:D").ClearContents
+    Sheets("Macro").Range("A2:D" & Rows.Count).Clear
+    Range("B1").Value = "Email?"
+    Range("C1").Value = "Send?"
+    Range("D1").Value = "Status"
+    
+    window_name = Application.GetOpenFilename
+    If window_name = False Then
+        ' They pressed Cancel
+        MsgBox "No File Selected!!!"
+        Exit Sub
+    Else
+        Workbooks.Open Filename:=window_name
+        mySelectedFile = ActiveWorkbook.Name
+        myPath = ActiveWorkbook.Path
+        myLastColumn = Range("A1").End(xlToRight).Column
+        'Ver8: Change copy method to cater for those who upgrade their Excel
+            'Ver21: Read last column from the right instead from the left to avoid any blank header in between.
+            'myLastColumnAlpha = Range("A1").End(xlToRight).Offset(0, 1).Address(1, 0)
+            myLastColumnAlpha = Cells(1, Columns.Count).End(xlToLeft).Offset(0, 1).Address(1, 0)
+        myLastColumnAlpha = Left(myLastColumnAlpha, InStr(myLastColumnAlpha, "$") - 1)
+        
+        'Ver13: Change to check the last row of the selected column
+        'myLastRow = Range("A1").End(xlDown).Row
+        myLastRow = Range(mySplitColumn & Rows.Count).End(xlUp).Row
+        
+        Columns(mySplitNumber).Insert
+        'Range(mySplitColumn & "1:" & mySplitColumn & myLastRow).Value = "=Trim(RC[1])" 'Add substitute in
+        Range(mySplitColumn & "1:" & mySplitColumn & myLastRow).Value = "=Substitute(Substitute(Trim(RC[1]),""/"",""""),""\"","""")"
+        Range(mySplitColumn & "1:" & mySplitColumn & myLastRow).Value = Range(mySplitColumn & "1:" & mySplitColumn & myLastRow).Value
+        Columns(mySplitNumber + 1).Delete
+                
+        'Replace / with or
+        Application.DisplayAlerts = False
+        'Replace using substitute formula during trim
+        'Columns(mySplitColumn & ":" & mySplitColumn).Replace What:="/", Replacement:="or", LookAt:=xlPart, _
+            SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+            ReplaceFormat:=False
+        'Exclude certain parameter
+        If Workbooks(myFilename).Sheets("Setting").Range("C10").Value <> "" Then
+            If Workbooks(myFilename).Sheets("Setting").Range("C11").Value = "" Then
+                myTotalExclusion = 1
+            Else
+                myTotalExclusion = Workbooks(myFilename).Sheets("Setting").Range("C10").End(xlDown).Row - 9
+            End If
+            myColumnExclusion = Workbooks(myFilename).Sheets("Setting").Range("C9").Value
+            For q = 1 To myTotalExclusion
+            Columns(myColumnExclusion & ":" & myColumnExclusion).Replace What:=Workbooks(myFilename).Sheets("Setting").Range("C" & q + 9).Value, Replacement:="", LookAt:=xlPart, _
+                SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+                ReplaceFormat:=False
+            Next q
+            Columns(myColumnExclusion & ":" & myColumnExclusion).SpecialCells(xlCellTypeBlanks).Select
+            Selection.EntireRow.Delete
+        End If
+        Application.DisplayAlerts = True
+        
+        'Ver17: Change Auto filter method to remove duplicate
+        'Range("A1").AutoFilter
+        Workbooks(myFilename).Sheets("Macro").Range("A1:A" & myLastRow).Value = Range(mySplitColumn & "1:" & mySplitColumn & myLastRow).Value
+        Workbooks(myFilename).Sheets("Macro").Range("A1:A" & myLastRow).RemoveDuplicates Columns:=1, Header:=xlNo
+        myTotalSupplier = Workbooks(myFilename).Sheets("Macro").Range("A1").End(xlDown).Row
+        ''Workbooks(myFilename).Sheets("Macro").Sort.SetRange Range("A1:A41").Apply
+        '    With Workbooks(myFilename).Sheets("Macro").Sort
+        '        .SetRange Range("A1:A" & myTotalSupplier)
+        '        .Header = xlYes
+        '        .MatchCase = False
+        '        .Orientation = xlTopToBottom
+        '        .SortMethod = xlPinYin
+        '        .Apply
+        '    End With
+        
+        'Ver14: Get all other Sheetname
+        Dim a() As String
+        ReDim a(0 To 0) As String
+        Count = 0
+        If myOtherSheet = "Yes" Then
+            For Each myA In ActiveWorkbook.Sheets
+                'If myA.Name <> ActiveSheet.Name Then
+                    ReDim Preserve a(0 To Count) As String
+                    a(Count) = myA.Name
+                    Count = Count + 1
+                'End If
+            Next
+        End If
+        myActiveSheetName = ActiveSheet.Name
+        myActiveWorkbook = ActiveWorkbook.Name
+        
+        For K = 2 To myTotalSupplier
+            If Workbooks(myFilename).Sheets("Macro").Range("A" & K).Value <> "" Then
+                'Ver23: Split file from original file for xlsm
+                If myFileFormat = ".xlsm" Then
+                    
+                Else
+                    'Ver14: Copy other sheet to splitted file
+                    If myOtherSheet = "Yes" Then
+                        Sheets(a).Copy 'after:=ActiveWorkbook.Sheets(1)
+                        Sheets(myActiveSheetName).Select
+                        'Ver17: Change Auto filter method to remove duplicate
+                        'ActiveSheet.Range("$A$1:$AC$" & myLastRow).AutoFilter Field:=mySplitNumber, Criteria1:="<>" & Workbooks(myFilename).Sheets("Macro").Range("A" & K).Value
+                        'ActiveSheet.Range("$A$2:$AC$" & myLastRow).SpecialCells(xlCellTypeVisible).EntireRow.Delete
+                        'Range("A1").AutoFilter
+                    Else
+                        Sheets(ActiveSheet.Name).Copy
+                        'Ver17: Change Auto filter method to remove duplicate
+                        'ActiveSheet.Range("$A$1:$AC$" & myLastRow).AutoFilter Field:=mySplitNumber, Criteria1:="<>" & Workbooks(myFilename).Sheets("Macro").Range("A" & K).Value
+                        'ActiveSheet.Range("$A$2:$AC$" & myLastRow).SpecialCells(xlCellTypeVisible).EntireRow.Delete
+                        'Range("A1").AutoFilter
+                    End If
+                End If
+                
+                'Ver17: Change Auto filter method to remove duplicate
+                Columns("A:A").Insert
+                Range("A1").Value = "Delete"
+                Range("A2:$A" & myLastRow).Value = "=IF(RC[" & mySplitNumber & "]= """ & Workbooks(myFilename).Sheets("Macro").Range("A" & K).Value & """,Row(RC[1]),""Delete"")"
+                Range("A1:" & myLastColumnAlpha & myLastRow).RemoveDuplicates Columns:=1, Header:=xlNo
+                Columns("A:A").Delete
+                
+                'Ver14: New method of copying
+                'ActiveSheet.Range("$A$1:$AC$" & myLastRow).AutoFilter Field:=mySplitNumber, Criteria1:=Workbooks(myFilename).Sheets("Macro").Range("A" & K).Value
+                ''Ver8: Change copy method to cater for those who upgrade their Excel
+                'Range("A1:" & myLastColumnAlpha & myLastRow + 1).Copy
+                ''Rows("1:" & myLastRow + 1).Copy
+                '
+                'Workbooks.Add
+                'ActiveSheet.Range("A1").PasteSpecial Paste:=xlPasteAll, Operation:=xlNone, SkipBlanks:=False, Transpose:=False 'Ver5: Paste with formula
+                'Cells.EntireColumn.AutoFit
+                Application.DisplayAlerts = False
+                
+                
+                
+                If myFileFormat = ".xls" Then
+                    ActiveWorkbook.SaveAs Filename:=myPath & "\" & Workbooks(myFilename).Sheets("Macro").Range("A" & K).Value & myFileFormat, _
+                        FileFormat:=xlExcel8, CreateBackup:=False
+                'Ver22: Add save format (.xlsm)
+                ElseIf myFileFormat = ".xlsm" Then
+                    Application.EnableEvents = False
+                    ActiveWorkbook.SaveAs Filename:=myPath & "\" & Workbooks(myFilename).Sheets("Macro").Range("A" & K).Value & myFileFormat, _
+                        FileFormat:=xlOpenXMLWorkbookMacroEnabled, CreateBackup:=False
+                    Application.EnableEvents = True
+                Else
+                    ActiveWorkbook.SaveAs Filename:=myPath & "\" & Workbooks(myFilename).Sheets("Macro").Range("A" & K).Value & myFileFormat, _
+                        FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+                End If
+                ActiveWorkbook.Close
+                
+                'Ver23:
+                If myFileFormat = ".xlsm" Then
+                    Workbooks.Open Filename:=window_name
+                End If
+                
+                Application.DisplayAlerts = True
+            End If
+        Next K
+    
+    Application.DisplayAlerts = False
+    ActiveWorkbook.Close
+    Application.DisplayAlerts = True
+    
+    'Summary details
+    Range("B1").Value = "In address book?"
+        'Ver11: Check whether send mail to CC or To?
+        'Range("B2:B" & myTotalSupplier).Value = "=IF(IFERROR(VLOOKUP(RC[-1],AddressBook!C[-1]:C[1],3,FALSE),"""")="""","""",""Yes"")"
+        Range("B2:B" & myTotalSupplier).Value = "=IF(IFERROR(VLOOKUP(RC[-1],AddressBook!C[-1]:C[1],3,FALSE),"""")="""","""",IF(IF(VLOOKUP(RC[-1],AddressBook!C[-1]:C[2],4,0)=""x"",""CC"","""")&IF(VLOOKUP(RC[-1],AddressBook!C[-1]:C[3],5,0)=""x"",""BCC"","""")="""","""",""Yes""))"
+    Range("C1").Value = "Send"
+    Range("C2:C" & myTotalSupplier).Value = "=IF(RC[-2]<>"""",RC[-1],"""")"
+    Range("C2:C" & myTotalSupplier).Value = Range("C2:C" & myTotalSupplier).Value
+    Range("D1").Value = "Status"
+    Range("G1").Value = myPath
+    
+    End If
+'
+End Sub
+Sub AddBook()
+'
+'
+    Sheets("AddressBook").Select
+End Sub
+Sub SendMails()
+    'Declare Send Mail Property
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    'Set OutMail = OutApp.CreateItem(0)
+    
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    'Range("H1").Value = "=10000-COUNTIF(R[1]C[-7]:R[10000]C[-7],"""")"
+    'Range("H1").Value = Range("H1").Value
+    myTotalAddress = Sheets("AddressBook").Range("A" & Rows.Count).End(xlUp).Row
+    Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value = "=RC[-1]&COUNTIF(R1C1:R[-1]C[-1],RC[-1])+1"
+    Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value = Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value
+    Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value = "=COUNTIF(C[-5],RC[-5])"
+    Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value = Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value
+    Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value = "=IF(RC[-3]=""x"",1,IF(RC[-2]=""x"",2))"
+    Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value = Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value
+        
+    'Retrieve Email Info
+    'Ver18: Change to HTML mail
+    'mySubject = Range("G4").Value
+    generateHTMLEmail (1)
+    mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+    mySubject = Replace(mySubject, Chr(10), " ")
+    myAttachPath = Range("G1").Value & "\"
+    
+    'Ver18: Change to HTML mail
+    'myBody = Range("F12").Value + vbCr + Range("F47").Value
+    
+    myTotalSend = Range("A" & Rows.Count).End(xlUp).Row
+    Range("U2:U" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-20],AddressBook!C[-20]:C[-15],6,FALSE),"""")"
+    Range("V2:V" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+    Range("W2:W" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-22]&RC[-2],AddressBook!C[-21]:C[-16],6,FALSE),"""")"
+    'Range("A1").Select
+
+    For X = 2 To myTotalSend
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                Set OutMail = OutApp.CreateItem(0)
+                myTo = ""
+                myCc = ""
+                
+                'Ver18: Change to HTML mail
+                If Sheets("Macro").Shapes("txtCC1").TextFrame.Characters.Text <> "" Then
+                    myCc = Sheets("Macro").Shapes("txtCC1").TextFrame.Characters.Text & ";"
+                End If
+                'If Range("G2").Value <> "" Then
+                '    myTo = Range("G2").Value & ";"
+                'End If
+                'If Range("G3").Value Then
+                '    myCC = Range("G3").Value & ";"
+                'End If
+                
+                myTotalReceipient = Cells(X, 21).Value
+                    'Ver1: Error to capture 2 name in To and Cc column
+                    'For y = 1 To myTotalReceipient
+                    '    If Cells(x, 23).Value = 1 Then
+                    '        Cells(x, 22).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+                    '        myTo = myTo & Cells(x, 22).Value & ";"
+                    '    ElseIf Cells(x, 23).Value = 2 Then
+                    '        Cells(x, 22).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+                    '        myCc = myCc & Cells(x, 22).Value & ";"
+                    '
+                    '    End If
+                    'Next y
+                    
+                    'Ver2
+                    For Y = 1 To myTotalReceipient
+                        'Ver7: convert vlookup data to text or integer
+                        Cells(X, 22).Value = "=IFERROR(IFERROR(VLOOKUP(RC[-21] &" & Y & ",AddressBook!C[-20]:C[-16],2,FALSE),VLOOKUP((RC[-21] &" & Y & ")+0,AddressBook!C[-20]:C[-16],2,FALSE)),"""")"
+                        Cells(X, 23).Value = "=IFERROR(IFERROR(VLOOKUP(RC[-22] &" & Y & ",AddressBook!C[-21]:C[-16],6,FALSE),VLOOKUP((RC[-22] &" & Y & ")+0,AddressBook!C[-21]:C[-16],6,FALSE)),"""")"
+                        If Cells(X, 23).Value = 1 Then
+                            myTo = myTo & Cells(X, 22).Value & ";"
+                        ElseIf Cells(X, 23).Value = 2 Then
+                            myCc = myCc & Cells(X, 22).Value & ";"
+                        
+                        End If
+                    Next Y
+                
+                'Ver17: Trim double space with single space
+                myTo = Replace(myTo, ",com", ".com")
+                myCc = Replace(myCc, ",com", ".com")
+                myTo = Replace(myTo, " ", "")
+                myCc = Replace(myCc, "  ", " ")
+                myTo = Replace(myTo, ",", ";")
+                myCc = Replace(myCc, ",", ";")
+                
+                With OutMail
+                .To = myTo
+                .CC = myCc
+                .Subject = mySubject & " (" & Cells(X, 1).Value & ")"
+                '.Body = myBody
+                .HTMLBody = Sheets("Macro").Shapes("txtTest").TextFrame.Characters.Text
+                
+                'Ver18: Change to HTML mail
+                If Sheets("Setting").Range("F7").Value = "Yes" Then
+                    .Attachments.Add myAttachPath & Cells(X, 1).Value & Workbooks(myFilename).Sheets("Setting").Range("C7").Value
+                End If
+                
+                'Ver12: Include common attachment
+                    If Range("G3").Value <> "" Then
+                        .Attachments.Add Range("G3").Value
+                    End If
+                    If Range("G4").Value <> "" Then
+                        .Attachments.Add Range("G4").Value
+                    End If
+                    If Range("G5").Value <> "" Then
+                        .Attachments.Add Range("G5").Value
+                    End If
+                    If Range("G6").Value <> "" Then
+                        .Attachments.Add Range("G6").Value
+                    End If
+                    If Range("G7").Value <> "" Then
+                        .Attachments.Add Range("G7").Value
+                    End If
+                    
+                    If Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send" Then
+                        .Send
+                        Cells(X, 4).Value = "Sent"
+                    Else
+                        .display
+                        Cells(X, 4).Value = "Displayed"
+                    End If
+                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+    MsgBox "Done!!!"
+End Sub
+
+Sub SendGMails()
+
+'    'Show progress bar
+'    myProgressCounter = 0
+'    myProgressBar.Caption = "Loading..."
+'    myProgressBar.Show 0
+'    myProgressBar.ProgressBar1.Min = 0
+    
+    Dim nSize As Long, lpBuffer As String
+    nSize = UNLEN + 1
+    lpBuffer = Space(nSize)
+    'myLogin = IIf(GetUserName(lpBuffer, nSize), Left(lpBuffer, nSize), "ERROR") 'Ver6: Error in Windows 7
+    myLogin = Sheet3.TextBox1.Value
+
+    myGmailAddress = Sheet3.TextBox1.Value
+    myGmailPassword = Sheet3.TextBox2.Value
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    Range("H1").Value = "=10000-COUNTIF(R[1]C[-7]:R[10000]C[-7],"""")"
+    Range("H1").Value = Range("H1").Value
+    myTotalAddress = Sheets("AddressBook").Range("A1").End(xlDown).Row
+    Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value = "=RC[-1]&COUNTIF(R1C1:R[-1]C[-1],RC[-1])+1"
+    Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value = Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value
+    Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value = "=COUNTIF(C[-5],RC[-5])"
+    Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value = Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value
+    Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value = "=IF(RC[-3]=""x"",1,IF(RC[-2]=""x"",2))"
+    Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value = Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value
+        
+    'Retrieve Email Info
+    mySubject = Range("G4").Value
+    myAttachPath = Range("G1").Value & "\"
+    myBody = Range("F6").Value + vbCr + Range("F41").Value
+    myTotalSend = Range("A1").End(xlDown).Row
+    Range("U2:U" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-20],AddressBook!C[-20]:C[-15],6,FALSE),"""")"
+    Range("V2:V" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+    Range("W2:W" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-22]&RC[-2],AddressBook!C[-21]:C[-16],6,FALSE),"""")"
+    'Range("A1").Select
+'    myProgressBar.ProgressBar1.Max = myTotalSend
+    
+    For X = 2 To myTotalSend
+    Set cdomsg = CreateObject("CDO.message")
+    With cdomsg.Configuration.Fields
+            .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "smtp.gmail.com"
+            .Item("http://schemas.microsoft.com/cdo/configuration/sendusername") = myGmailAddress '"SPCOutOfLimit@gmail.com"
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 465 'outlook = 25, gmail= 587 @ 465
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpauthenticate") = 1
+            .Item("http://schemas.microsoft.com/cdo/configuration/sendpassword") = myGmailPassword
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpusessl") = True
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpconnectiontimeout") = 60
+            .Update
+    End With
+    
+    myTo = ""
+    myCc = ""
+'    myProgressBar.ProgressBar1.Value = X
+'    myProgressBar.ProgressBar1.Refresh
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                'Set OutMail = OutApp.CreateItem(0)
+                If Range("G2").Value <> "" Then
+                    myTo = Range("G2").Value & ";"
+                End If
+                
+                If Range("G3").Value <> "" Then
+                    myCc = Range("G3").Value & ";"
+                End If
+                myTotalReceipient = Cells(X, 21).Value
+                    'Ver1: Error to capture 2 name in To and Cc column
+                    'For y = 1 To myTotalReceipient
+                    '    If Cells(x, 23).Value = 1 Then
+                    '        Cells(x, 22).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+                    '        myTo = myTo & Cells(x, 22).Value & ";"
+                    '    ElseIf Cells(x, 23).Value = 2 Then
+                    '        Cells(x, 22).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+                    '        myCc = myCc & Cells(x, 22).Value & ";"
+                   '
+                    '    End If
+                    'Next y
+                    
+                    'Ver2
+                    For Y = 1 To myTotalReceipient
+                        'Ver7: convert vlookup data to text or integer
+                        Cells(X, 22).Value = "=IFERROR(IFERROR(VLOOKUP(RC[-21] &" & Y & ",AddressBook!C[-20]:C[-16],2,FALSE),VLOOKUP((RC[-21] &" & Y & ")+0,AddressBook!C[-20]:C[-16],2,FALSE)),"""")"
+                        Cells(X, 23).Value = "=IFERROR(IFERROR(VLOOKUP(RC[-22] &" & Y & ",AddressBook!C[-21]:C[-16],6,FALSE),VLOOKUP((RC[-22] &" & Y & ")+0,AddressBook!C[-21]:C[-16],6,FALSE)),"""")"
+                        'Cells(x, 22).Value = "=IFERROR(VLOOKUP(RC[-21] &" & y & ",AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+                        'Cells(x, 23).Value = "=IFERROR(VLOOKUP(RC[-22] &" & y & ",AddressBook!C[-21]:C[-16],6,FALSE),"""")"
+                        If Cells(X, 23).Value = 1 Then
+                            myTo = myTo & Cells(X, 22).Value & ";"
+                        ElseIf Cells(X, 23).Value = 2 Then
+                            myCc = myCc & Cells(X, 22).Value & ";"
+                        
+                        End If
+                    Next Y
+                
+            ' build email parts
+            With cdomsg
+            .To = myTo
+            .CC = myCc
+            .From = myLogin
+            .Subject = mySubject & " (" & Cells(X, 1).Value & ")"
+            .TextBody = myBody
+            .AddAttachment myAttachPath & Cells(X, 1).Value & Workbooks(myFilename).Sheets("Setting").Range("C7").Value
+            .Send
+            End With
+            
+                Cells(X, 4).Value = "Sent"
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        Set cdomsg = Nothing
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+        Unload myProgressBar
+        MsgBox ("Done...")
+        Set iConf = Nothing
+        Set iMsg = Nothing
+End Sub
+
+Sub SendGMailsToMe()
+'    'Show progress bar
+'    myProgressCounter = 0
+'    myProgressBar.Caption = "Loading..."
+'    myProgressBar.Show 0
+'    myProgressBar.ProgressBar1.Min = 0
+    
+    Dim nSize As Long, lpBuffer As String
+    nSize = UNLEN + 1
+    lpBuffer = Space(nSize)
+    'myLogin = IIf(GetUserName(lpBuffer, nSize), Left(lpBuffer, nSize), "ERROR") 'Ver6: Error in Windows 7
+    myLogin = Sheet3.TextBox1.Value
+
+    myGmailAddress = Sheet3.TextBox1.Value
+    myGmailPassword = Sheet3.TextBox2.Value
+
+
+        
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    Range("H1").Value = "=10000-COUNTIF(R[1]C[-7]:R[10000]C[-7],"""")"
+    Range("H1").Value = Range("H1").Value
+    myTotalAddress = Sheets("AddressBook").Range("A1").End(xlDown).Row
+    Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value = "=RC[-1]&COUNTIF(R1C1:R[-1]C[-1],RC[-1])+1"
+    Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value = Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value
+    Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value = "=COUNTIF(C[-5],RC[-5])"
+    Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value = Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value
+    Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value = "=IF(RC[-3]=""x"",1,IF(RC[-2]=""x"",2))"
+    Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value = Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value
+        
+    'Retrieve Email Info
+    mySubject = Range("G4").Value
+    myAttachPath = Range("G1").Value & "\"
+    myBody = Range("F6").Value + vbCr + Range("F41").Value
+    myTotalSend = Range("A1").End(xlDown).Row
+    Range("U2:U" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-20],AddressBook!C[-20]:C[-15],6,FALSE),"""")"
+    Range("V2:V" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+    Range("W2:W" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-22]&RC[-2],AddressBook!C[-21]:C[-16],6,FALSE),"""")"
+    'Range("A1").Select
+'    myProgressBar.ProgressBar1.Max = myTotalSend
+    
+    For X = 2 To myTotalSend
+    myTo = ""
+    myCc = ""
+    Set cdomsg = CreateObject("CDO.message")
+    With cdomsg.Configuration.Fields
+            .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "smtp.gmail.com"
+            .Item("http://schemas.microsoft.com/cdo/configuration/sendusername") = myGmailAddress '"SPCOutOfLimit@gmail.com"
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 465 'outlook = 25, gmail= 587 @ 465
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpauthenticate") = 1
+            .Item("http://schemas.microsoft.com/cdo/configuration/sendpassword") = myGmailPassword
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpusessl") = True
+            .Item("http://schemas.microsoft.com/cdo/configuration/smtpconnectiontimeout") = 60
+            .Update
+    End With
+'    myProgressBar.ProgressBar1.Value = X
+'    myProgressBar.ProgressBar1.Refresh
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                'Set OutMail = OutApp.CreateItem(0)
+                If Range("G2").Value <> "" Then
+                    myTo = Range("G2").Value & ";"
+                End If
+                
+                If Range("G3").Value <> "" Then
+                    myCc = Range("G3").Value & ";"
+                End If
+                myTotalReceipient = Cells(X, 21).Value
+                    'Ver1: Error to capture 2 name in To and Cc column
+                    'For y = 1 To myTotalReceipient
+                    '    If Cells(x, 23).Value = 1 Then
+                    '        Cells(x, 22).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+                    '        myTo = myTo & Cells(x, 22).Value & ";"
+                    '    ElseIf Cells(x, 23).Value = 2 Then
+                    '        Cells(x, 22).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+                    '        myCc = myCc & Cells(x, 22).Value & ";"
+                   '
+                    '    End If
+                    'Next y
+                    
+                    'Ver2
+                    For Y = 1 To myTotalReceipient
+                        'Ver7: convert vlookup data to text or integer
+                        Cells(X, 22).Value = "=IFERROR(IFERROR(VLOOKUP(RC[-21] &" & Y & ",AddressBook!C[-20]:C[-16],2,FALSE),VLOOKUP((RC[-21] &" & Y & ")+0,AddressBook!C[-20]:C[-16],2,FALSE)),"""")"
+                        Cells(X, 23).Value = "=IFERROR(IFERROR(VLOOKUP(RC[-22] &" & Y & ",AddressBook!C[-21]:C[-16],6,FALSE),VLOOKUP((RC[-22] &" & Y & ")+0,AddressBook!C[-21]:C[-16],6,FALSE)),"""")"
+                        If Cells(X, 23).Value = 1 Then
+                            myTo = myTo & Cells(X, 22).Value & ";"
+                        ElseIf Cells(X, 23).Value = 2 Then
+                            myCc = myCc & Cells(X, 22).Value & ";"
+                        
+                        End If
+                    Next Y
+                
+            ' build email parts
+            With cdomsg
+            .To = myGmailAddress
+            .From = myLogin
+            .Subject = mySubject & " (" & Cells(X, 1).Value & ")"
+            .TextBody = "To: " & myTo & vbCr & "Cc: " & myCc & vbCr & vbCr & myBody
+            .AddAttachment myAttachPath & Cells(X, 1).Value & Workbooks(myFilename).Sheets("Setting").Range("C7").Value
+            .Send
+            End With
+            
+                Cells(X, 4).Value = "Sent"
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        Set cdomsg = Nothing
+    Cells(X, 1).Select
+    Next X
+        
+        Unload myProgressBar
+        MsgBox ("Done...")
+        Set iConf = Nothing
+        Set iMsg = Nothing
+End Sub
+Sub Login()
+'
+    Range("D2:D" & Rows.Count).ClearContents
+    'Ver17: Change to text box due to control format doesn't work in Excel 2016 64 bits
+    'If Sheets("Macro").Shapes("CheckBoxSend").ControlFormat.Value = 1 Then
+    If Left(Sheets("Macro").Shapes("Rectangle 9").TextFrame.Characters.Text, 1) = "þ" Then
+        frmUserLogin.Show
+        UserName = Range("W1").Value
+        Range("W1").Clear
+    Else
+        Set WSHnet = CreateObject("WScript.Network")
+        UserName = WSHnet.UserName
+    End If
+    
+    FindUserGroupInfo
+    If UCase(Right(Trim(myEmail), 10)) <> "@JABIL.COM" Then
+        MsgBox "Invalid email found: " & myEmail
+    Else
+        myMsg = MsgBox("Do you want to use " & myEmail & " account to send email?", vbYesNo, myEmail)
+        If myMsg = vbYes Then
+          'SendMailO365
+          StatusBarStart
+        Else
+          End
+        End If
+    End If
+'
+End Sub
+Sub FindUserGroupInfo()
+    Dim objRoot, strDomain, objConn, objComm, objRecordset
+    Dim sFilter, sAttribs, sDepth, sBase, sQuery
+    
+    Set objRoot = GetObject("LDAP://RootDSE")
+    strDomain = objRoot.Get("DefaultNamingContext")
+    Set objConn = CreateObject("ADODB.Connection")
+    Set objComm = CreateObject("ADODB.Command")
+    
+    'Set WSHnet = CreateObject("WScript.Network")
+    'UserName = WSHnet.UserName
+    'strMgrID = UserName
+    sFilter = "(&(objectClass=person)(sAMAccountName=" & UserName & "))"
+    
+    'sAttribs = "sn,givenname,sAMAccountName"
+    sAttribs = "sn,givenname,sAMAccountName,mail,EmployeeID,Manager,Division,Department,TelephoneNumber" _
+    
+    sDepth = "SubTree"
+    sBase = "<LDAP://" & strDomain & ">"
+    sQuery = sBase & ";" & sFilter & ";" & sAttribs & ";" & sDepth
+    
+    objConn.Open "Data Source=Active Directory Provider;Provider=ADsDSOObject"
+    Set objComm.ActiveConnection = objConn
+    objComm.Properties("Page Size") = 10000
+    objComm.CommandText = sQuery
+    Set objRecordset = objComm.Execute
+    
+    If Not objRecordset.EOF Then
+        'mySurname = objRecordset("sn")
+        'myGivenname = objRecordset("givenname")
+        'myDisplayName = objRecordset("sAMAccountName")
+        myEmail = objRecordset("mail")
+        'myEmployeeID = objRecordset("EmployeeID")
+        'myManager = objRecordset("Manager")
+        'myDivision = objRecordset("Division")
+        'myDepartment = objRecordset("Department")
+        'myTelephoneNumber = objRecordset("TelephoneNumber")
+        'Range("A12").CopyFromRecordset objRecordset
+    End If
+
+End Sub
+
+Sub StatusBarStart()
+
+    myProgressBar.Label1.Caption = "Composing email..."
+    myProgressBar.Bar.Width = 0
+    myProgressBar.Show
+
+End Sub
+Sub SendMailO365()
+    'Progress bar
+    'myProgressCounter = 0
+    'myProgressBar.Caption = "Loading..."
+    'myProgressBar.Show 0
+    'myProgressBar.ProgressBar1.Min = 0
+    
+
+    
+    'Declare Send Mail Property
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim strbody As String
+    'Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    
+    iConf.Load -1    ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "CORIMC04"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    Range("H1").Value = "=10000-COUNTIF(R[1]C[-7]:R[10000]C[-7],"""")"
+    Range("H1").Value = Range("H1").Value
+    myTotalAddress = Sheets("AddressBook").Range("A1").End(xlDown).Row
+    Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value = "=RC[-1]&COUNTIF(R1C1:R[-1]C[-1],RC[-1])+1"
+    Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value = Sheets("AddressBook").Range("B2:B" & myTotalAddress).Value
+    Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value = "=COUNTIF(C[-5],RC[-5])"
+    Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value = Sheets("AddressBook").Range("F2:F" & myTotalAddress).Value
+    Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value = "=IF(RC[-3]=""x"",1,IF(RC[-2]=""x"",2))"
+    Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value = Sheets("AddressBook").Range("G2:G" & myTotalAddress).Value
+        
+    'Retrieve Email Info
+    ''Ver18: Convert to HTML Body
+    'mySubject = Range("G4").Value
+    myAttachPath = Range("G1").Value & "\"
+        'Ver18: Convert to HTML Body
+        ''Ver12: Include common attachment
+        ''myBody = Range("F6").Value + vbCr + vbCr + vbCr + Range("F41").Value
+        'myBody = Range("F12").Value + vbCr + vbCr + vbCr + Range("F47").Value
+    
+    myTotalSend = Range("A1").End(xlDown).Row
+    Range("U2:U" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-20],AddressBook!C[-20]:C[-15],6,FALSE),"""")"
+    Range("V2:V" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-21]&RC[-1],AddressBook!C[-20]:C[-16],2,FALSE),"""")"
+    Range("W2:W" & myTotalSend).Value = "=IFERROR(VLOOKUP(RC[-22]&RC[-2],AddressBook!C[-21]:C[-16],6,FALSE),"""")"
+    'Range("A1").Select
+    
+    myTotalSendMax = Application.CountIf(Columns("B"), "Yes")
+    '    myProgressBar.ProgressBar1.Max = myTotalSendMax + 1
+    myTotalYes = Application.CountIf(Columns("C"), "Yes")
+    
+    'Convert Body to HTML
+    generateHTMLEmail (1)
+    
+    mySentStatus = 1
+    
+    For X = 2 To myTotalSend
+'        myProgressBar.ProgressBar1.Value = mySentStatus
+'        myProgressBar.ProgressBar1.Refresh
+        
+'        DoEvents
+        
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                
+                myTo = ""
+                myCc = ""
+                'Ver18: Convert to HTML Body
+                'myTo = Range("G2").Value & ";"
+                'myCC = Range("G3").Value & ";"
+                
+                If Sheets("Macro").Shapes("txtCC1").TextFrame.Characters.Text <> "" Then
+                    myCc = Sheets("Macro").Shapes("txtCC1").TextFrame.Characters.Text & ";"
+                End If
+                mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+                
+                'Ver17: CC user
+                If Left(Sheets("Macro").Shapes("Rectangle 11").TextFrame.Characters.Text, 1) = "þ" Then
+                    myCc = myCc & myEmail & ";"
+                End If
+                'myEmail
+                myTotalReceipient = Cells(X, 21).Value
+                    
+                    For Y = 1 To myTotalReceipient
+                        'Ver7: convert vlookup data to text or integer
+                        Cells(X, 22).Value = "=IFERROR(IFERROR(VLOOKUP(RC[-21] &" & Y & ",AddressBook!C[-20]:C[-16],2,FALSE),VLOOKUP((RC[-21] &" & Y & ")+0,AddressBook!C[-20]:C[-16],2,FALSE)),"""")"
+                        Cells(X, 23).Value = "=IFERROR(IFERROR(VLOOKUP(RC[-22] &" & Y & ",AddressBook!C[-21]:C[-16],6,FALSE),VLOOKUP((RC[-22] &" & Y & ")+0,AddressBook!C[-21]:C[-16],6,FALSE)),"""")"
+                        If Cells(X, 23).Value = 1 Then
+                            myTo = myTo & Cells(X, 22).Value & ";"
+                        ElseIf Cells(X, 23).Value = 2 Then
+                            myCc = myCc & Cells(X, 22).Value & ";"
+                        
+                        End If
+                    Next Y
+                
+                'Ver17: Trim double space with single space
+                myTo = Replace(myTo, ",com", ".com")
+                myCc = Replace(myCc, ",com", ".com")
+                myTo = Replace(myTo, " ", "")
+                myCc = Replace(myCc, "  ", " ")
+                myTo = Replace(myTo, ",", ";")
+                myCc = Replace(myCc, ",", ";")
+                
+                Set iMsg = Nothing
+                Set iMsg = CreateObject("CDO.Message")
+                'Set iConf = CreateObject("CDO.Configuration")
+
+                With iMsg
+                    Set .Configuration = iConf
+                    .To = myTo
+                    .CC = myCc
+                    '.BCC = ""
+                    .From = myEmail
+                    .Subject = mySubject & " (" & Cells(X, 1).Value & ")"
+                    
+                    'Ver19: Accept chinese character
+                    .BodyPart.Charset = "utf-8"
+                    
+                    
+'                    Set mainWSD = ThisWorkbook.Sheets("Macro")
+'                    Set testShape = mainWSD.Shapes("txtTest")
+
+                    .HTMLBody = Sheets("Macro").Shapes("txtTest").TextFrame.Characters.Text
+                    '.TextBody = myBody
+                    
+                    'Ver18: Change to HTML mail
+                    '.Attachments.Add myAttachPath & Cells(X, 1).Value & Workbooks(myFilename).Sheets("Setting").Range("C7").Value
+                    If Sheets("Setting").Range("F7").Value = "Yes" Then
+                        .AddAttachment (myAttachPath & Cells(X, 1).Value & Workbooks(myFilename).Sheets("Setting").Range("C7").Value)
+                    End If
+                    
+                    'Ver12: Include common attachment
+                    If Range("G3").Value <> "" Then
+                        .AddAttachment Range("G3").Value
+                    End If
+                    If Range("G4").Value <> "" Then
+                        .AddAttachment Range("G4").Value
+                    End If
+                    If Range("G5").Value <> "" Then
+                        .AddAttachment Range("G5").Value
+                    End If
+                    If Range("G6").Value <> "" Then
+                        .AddAttachment Range("G6").Value
+                    End If
+                    If Range("G7").Value <> "" Then
+                        .AddAttachment Range("G7").Value
+                    End If
+                    .Send
+                End With
+                
+                
+                Cells(X, 4).Value = "Sent"
+                mySentStatus = mySentStatus + 1
+                
+                myProgressBar.Label1.Caption = Format(((mySentStatus - 1) / (myTotalYes)) * 100, "#,##0.00") & "% Completed"
+                myProgressBar.Bar.Width = ((mySentStatus - 1) / myTotalYes) * 204
+                
+'                With OutMail
+'                .To = myTo
+'                .CC = myCc
+'                .Subject = mySubject & " (" & Cells(X, 1).Value & ")"
+'                .Body = myBody
+'                .Attachments.Add myAttachPath & Cells(X, 1).Value & Workbooks(myFilename).Sheets("Setting").Range("C7").Value
+'                    If Sheets("Macro").Shapes("CheckBoxSend").ControlFormat.Value = 1 Then
+'                        .Send
+'                        Cells(X, 4).Value = "Sent"
+'                    Else
+'                        .display
+'                        Cells(X, 4).Value = "Displayed"
+'                    End If
+'                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+    Unload myProgressBar
+End Sub
+Sub FileSelectOne()
+    myGetFile = Application.GetOpenFilename(, , "Please select a file...")
+        If myGetFile = False Then
+            End
+        Else
+            Range("G3").Value = myGetFile
+        End If
+End Sub
+Sub FileSelectTwo()
+    myGetFile = Application.GetOpenFilename(, , "Please select a file...")
+        If myGetFile = False Then
+            End
+        Else
+            Range("G4").Value = myGetFile
+        End If
+End Sub
+Sub FileSelectThr()
+    myGetFile = Application.GetOpenFilename(, , "Please select a file...")
+        If myGetFile = False Then
+            End
+        Else
+            Range("G5").Value = myGetFile
+        End If
+End Sub
+Sub FileSelectFor()
+    myGetFile = Application.GetOpenFilename(, , "Please select a file...")
+        If myGetFile = False Then
+            End
+        Else
+            Range("G6").Value = myGetFile
+        End If
+End Sub
+Sub FileSelectFiv()
+    myGetFile = Application.GetOpenFilename(, , "Please select a file...")
+        If myGetFile = False Then
+            End
+        Else
+            Range("G7").Value = myGetFile
+        End If
+End Sub
+Sub SelectUser()
+    If Left(Sheets("Macro").Shapes("Rectangle 9").TextFrame.Characters.Text, 1) = "þ" Then
+        Sheets("Macro").Shapes("Rectangle 9").TextFrame.Characters.Text = "¨ Send with different email"
+    Else
+        Sheets("Macro").Shapes("Rectangle 9").TextFrame.Characters.Text = "þ Send with different email"
+    End If
+    With ActiveSheet.Shapes("Rectangle 9").TextFrame
+        .Characters(1, 1).Font.Name = "Wingdings"
+        .Characters(2, 27).Font.Name = "Calibri"
+        .Characters(2, 27).Font.Size = 11
+    End With
+End Sub
+Sub CcMyself()
+    If Left(Sheets("Macro").Shapes("Rectangle 11").TextFrame.Characters.Text, 1) = "þ" Then
+        Sheets("Macro").Shapes("Rectangle 11").TextFrame.Characters.Text = "¨ CC Me"
+    Else
+        Sheets("Macro").Shapes("Rectangle 11").TextFrame.Characters.Text = "þ CC Me"
+    End If
+    With ActiveSheet.Shapes("Rectangle 11").TextFrame
+        .Characters(1, 1).Font.Name = "Wingdings"
+        .Characters(2, 6).Font.Name = "Calibri"
+        .Characters(2, 6).Font.Size = 11
+    End With
+End Sub
+Sub MailDisplay()
+    Sheets("Macro").Shapes("Rectangle 16").TextFrame.Characters.Text = "¤ Preview"
+    With ActiveSheet.Shapes("Rectangle 16").TextFrame
+        .Characters(1, 1).Font.Name = "Wingdings"
+        .Characters(2, 9).Font.Name = "Calibri"
+        '.Characters(2, 9).Font.Size = 14
+    End With
+    Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¡ Send"
+    With ActiveSheet.Shapes("Rectangle 17").TextFrame
+        .Characters(1, 1).Font.Name = "Wingdings"
+        .Characters(2, 5).Font.Name = "Calibri"
+        '.Characters(2, 5).Font.Size = 14
+    End With
+End Sub
+Sub MailSend()
+    Sheets("Macro").Shapes("Rectangle 16").TextFrame.Characters.Text = "¡ Preview"
+    With ActiveSheet.Shapes("Rectangle 16").TextFrame
+        .Characters(1, 1).Font.Name = "Wingdings"
+        .Characters(2, 9).Font.Name = "Calibri"
+        '.Characters(2, 9).Font.Size = 14
+    End With
+    Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send"
+    With ActiveSheet.Shapes("Rectangle 17").TextFrame
+        .Characters(1, 1).Font.Name = "Wingdings"
+        .Characters(2, 5).Font.Name = "Calibri"
+        '.Characters(2, 5).Font.Size = 14
+    End With
+End Sub
+Sub CheckSendAll()
+    Range("C2:C" & Rows.Count).ClearContents
+    myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+    If myLastRow > 1 Then
+        Range("C2:C" & myLastRow).Value = "=IF(RC[-1]=""Yes"",""Yes"","""")"
+        Range("C2:C" & myLastRow).Value = Range("C2:C" & myLastRow).Value
+    End If
+End Sub
+Sub ClearStatus()
+    Range("D2:D" & Rows.Count).ClearContents
+    myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+    If myLastRow > 1 Then
+        Range("D2:D" & myLastRow).ClearContents
+    End If
+End Sub
+Sub ValidateEmail()
+    Range("B2:B" & Rows.Count).ClearContents
+    myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+    If myLastRow > 1 Then
+        Range("B2:B" & myLastRow).Value = "=IF(IFERROR(VLOOKUP(RC[-1],AddressBook!C[-1]:C[1],3,FALSE),"""")="""","""",IF(IF(VLOOKUP(RC[-1],AddressBook!C[-1]:C[2],4,0)=""x"",""CC"","""")&IF(VLOOKUP(RC[-1],AddressBook!C[-1]:C[3],5,0)=""x"",""BCC"","""")="""","""",""Yes""))"
+    End If
+End Sub
