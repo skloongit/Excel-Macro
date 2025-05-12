@@ -1,0 +1,320 @@
+Dim myCutInsertCounter As Integer
+Sub FobOpoAnalyzer()
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myStrTime = Time
+    
+    '\\ap\PenaData\Applications\Report_Kinaxis\Material
+    'Open PO Report (FOB).20190603
+    'myOpoFobFile = Range("B4").Value
+    Dim myOpoFobFile As String
+    myYesterdayFile = Format(Date - 1, "YYYYMMDD")
+    myOpoFobFile = Dir("\\ap\PenaData\Applications\Report_Kinaxis\Material\Open PO Report (FOB)." & myYesterdayFile & "*")
+    If myOpoFobFile = "" Then
+        Application.Quit
+    End If
+
+    Dim mySeaFile As String
+    'mySeaFile = Range("B6").Value
+     mySeaFile = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\2019\Quarterly report\FOB\Sea shipment part list*")
+    If mySeaFile = "" Then
+        Application.Quit
+    End If
+        
+    Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\Purchasing\Materials\2019\Quarterly report\FOB\" & mySeaFile, UpdateLinks:=False, ReadOnly:=True
+    mySeaFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+        Workbooks.Open Filename:="\\ap\PenaData\Applications\Report_Kinaxis\Material\" & myOpoFobFile, UpdateLinks:=False, ReadOnly:=True
+        myOpoFobFilename = ActiveWorkbook.Name
+        'ActiveSheet.Name = "Temp"
+        If ActiveSheet.AutoFilterMode = True Then
+           Rows("1:1").AutoFilter
+        End If
+        myTotalFob = Range("A" & Rows.Count).End(xlUp).Row
+        Columns("AH:AH").Insert
+        Range("AH1").Value = "Category"
+        Range("AH2:AH" & myTotalFob).Value = "=IF(IFERROR(VLOOKUP(E2,'[" & mySeaFilename & "]Temp'!$A:$A,1,0),"""")="""",IF(AND(AG2>=43737,AG2<=43743),""1st Week"",IF(AND(AG2>=43744,AG2<=43750),""2nd Week"",IF(AND(AG2>=43751,AG2<=43757),""3rd Week"",""""))),""Sea shipment"")"
+        Range("AH2:AH" & myTotalFob).Value = Range("AH2:AH" & myTotalFob).Value
+        
+        Range("A2").Select
+    Sheets.Add
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="Supply - PO Report!R1C1:R" & myTotalFob & "C35").CreatePivotTable TableDestination:="Sheet1!R3C1", TableName:="PivotTable4"
+    Cells(3, 1).Select
+    With ActiveSheet.PivotTables("PivotTable4").PivotFields("MPF")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    ActiveSheet.PivotTables("PivotTable4").AddDataField ActiveSheet.PivotTables("PivotTable4").PivotFields("PO Ext Value"), "Sum of PO Ext Value", xlSum
+    With ActiveSheet.PivotTables("PivotTable4").PivotFields("Category")
+        .Orientation = xlColumnField
+        .Position = 1
+    End With
+    ActiveSheet.Name = "PV"
+    myLastPv = Range("A" & Rows.Count).End(xlUp).Row
+    myLastCol = Range("AAA4").End(xlToLeft).Column
+    Range(Cells(5, 2), Cells(myLastPv, myLastCol)).NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""_);_(@_)"
+    Range(Cells(3, 1), Cells(myLastPv, myLastCol)).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    
+    Sheets.Add
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Range("A1").PasteSpecial
+    
+    For Each oShape In ActiveSheet.Shapes
+        strImageName = ActiveSheet.Cells(oShape.TopLeftCell.Row, 1).Value
+        oShape.Select
+        'Picture format initialization
+        Selection.ShapeRange.PictureFormat.Contrast = 0.5: Selection.ShapeRange.PictureFormat.Brightness = 0.5: Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic: Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse: Selection.ShapeRange.Fill.Visible = msoFalse: Selection.ShapeRange.Line.Visible = msoFalse: Selection.ShapeRange.Rotation = 0#: Selection.ShapeRange.PictureFormat.CropLeft = 0#: Selection.ShapeRange.PictureFormat.CropRight = 0#: Selection.ShapeRange.PictureFormat.CropTop = 0#: Selection.ShapeRange.PictureFormat.CropBottom = 0#: Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft: Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+        '/Picture format initialization
+        Application.Selection.CopyPicture
+        Set oDia = ActiveSheet.ChartObjects.Add(0, 0, oShape.Width, oShape.Height)
+        Set oChartArea = oDia.Chart
+        oDia.Activate
+        With oChartArea
+            .ChartArea.Select
+            .Paste
+            .Export (myMacroPath & "\1.jpg")
+        End With
+        oDia.Delete 'oChartArea.Delete
+    Next
+    Application.DisplayAlerts = False
+    ActiveSheet.Delete
+    Application.DisplayAlerts = True
+    myFileSave = "Open PO Report (FOB) " & Format(Date, "MMDDYYYY") & Format(Time, "HHMMSS") & ".xlsx"
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & myFileSave, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    
+    
+    ActiveWorkbook.Close False
+    Workbooks(mySeaFilename).Close False
+    
+    MyPath = myMacroPath & "\"
+    MyPicture = "1.jpg"
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = "Purchasing_IslandView_Buyers@plexus.com"
+        .CC = "isl_purch_mtm@plexus.com; Sonia.Chor@plexus.com"
+        .Subject = "Q4F19 FOB Tracking"
+        .Attachments.Add MyPath & MyPicture
+        .HTMLBody = "<html><p>Hi All Buyers, </p>" & _
+                  "<html><p>Below is the summary for Q4F19 FOB including sea shipment." & _
+                  "<html><br>Please control FOB by updating PO ETA after 5 Oct for Oct requirement, if we do not need them in Sep or 1st week Oct. Work on reschedule with supplier now." & _
+                  "<html><br>Please ensure supplier revise their shipping documents if you have obtained their agreement to move out date." & _
+                  "<html><br>Reason being it will still be considered as FOB if the document still indicate ship date in Sep although actual shipment is arranged after quarter end closing." & _
+                  "<html><br>Finance audit is based on documentation date.</p>" & _
+                  "<img src=cid:" & Replace(MyPicture, " ", "%20") & ">" & _
+                  "<p>Best Regards,</p>" & _
+                  "<p>" & UCase(Environ("USERNAME")) & "</p></html>"
+        .Attachments.Add myMacroPath & "\" & myFileSave
+        '.Display
+        .Send
+    End With
+    Application.Quit
+    
+    'myEndTime = Time
+    'MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub SendMails()
+    'Declare Send Mail Property
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    'Set OutMail = OutApp.CreateItem(0)
+    
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    
+    'generateHTMLEmail (1)
+    'mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+    mySubject = "Test" 'Replace(mySubject, Chr(10), " ")
+    'myAttachPath = Range("G1").Value & "\"
+    
+    'Ver18: Change to HTML mail
+    'myBody = Range("F12").Value + vbCr + Range("F47").Value
+    
+    
+    For X = 2 To myTotalSend
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                Set OutMail = OutApp.CreateItem(0)
+                myTo = ""
+                myCc = ""
+                
+                'If Range("G2").Value <> "" Then
+                '    myTo = Range("G2").Value & ";"
+                'End If
+                'If Range("G3").Value Then
+                '    myCC = Range("G3").Value & ";"
+                'End If
+                
+                
+                
+                'imgEmbedComm = "<html><body><img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+                             & "<br><br><br></body></html>"
+                 imgEmbedComm = "<br><B>Embedded Image:</B><br>" _
+& "<img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+& "<br>Best Regards, <br>Sumit</font></span>"
+                htmlBodyCont = imgEmbedComm
+    
+                
+                With OutMail
+                .To = myTo
+                .CC = myCc
+                .Subject = mySubject '& " (" & Cells(X, 1).Value & ")"
+                '.Body = myBody
+
+                .HTMLBody = htmlBodyCont & "1"
+                
+
+                    
+                    If Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send" Then
+                        .Send
+                        Cells(X, 4).Value = "Sent"
+                    Else
+                        .Display
+                        Range("i1").Value = ActiveWorkbook.Path & "\1.jpg"
+                        Cells(X, 4).Value = "Displayed"
+                    End If
+                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+    MsgBox "Done!!!"
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub OpoSelect()
+    myOpoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Open PO Report (FOB) file")
+    If myOpoFile = False Then
+    Else
+        Range("B4").Value = myOpoFile
+    End If
+End Sub
+Sub SeaShipmentSelect()
+    mySeaFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Sea Shipment Part file")
+    If mySeaFile = False Then
+    Else
+        Range("B6").Value = mySeaFile
+    End If
+End Sub
+Sub PriceBookSelect()
+    myPriceBookFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Price Book file")
+    If myPriceBookFile = False Then
+    Else
+        Range("B8").Value = myPriceBookFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+
