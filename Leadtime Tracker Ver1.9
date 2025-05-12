@@ -1,0 +1,285 @@
+Public Declare Function SetCursorPos Lib "user32" (ByVal x As Long, ByVal y As Long) As Long
+Public Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, ByVal dwExtraInfo As Long)
+Public Const MOUSEEVENTF_LEFTDOWN = &H2
+Public Const MOUSEEVENTF_LEFTUP = &H4
+Public Const MOUSEEVENTF_RIGHTDOWN As Long = &H8
+Public Const MOUSEEVENTF_RIGHTUP As Long = &H10
+Declare Function GetCursorPos Lib "user32" (lpPoint As POINTAPI) As Long
+' Create custom variable that holds two integers
+Type POINTAPI
+   Xcoord As Long
+   Ycoord As Long
+End Type
+Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Dim myAttachement() As String
+Sub LeadtimeTracker()
+    ReDim myAttachement(0)
+    Dim mySuccess As String
+    Dim myWarning As String
+    Dim myError As String
+    '
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myToday = Date - 1
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    'Ver1.7: Change Path (\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export)
+    ''Ver1.5: Change RR Path
+    ''myFile = Dir("\\ap\penadata\Applications\Report_Kinaxis\Material\830_16 Buckets Report_Weekly (Buy)." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+    'myFile = Dir("\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\830_16 Buckets Report_Weekly (Buy)." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+    'Ver1.9: RR path change
+    'myFile = Dir("\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\830_16 Buckets Report_Weekly (Buy)." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+    myFile = Dir("\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\830_16 Buckets Report_Weekly (Buy)." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+
+myRetry:
+        If myFile = "" Then
+            'Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Error: Leadtime Master", "830_16 Buckets Report_Weekly (Buy) File not found!")
+            Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sing-yee.ho@plexus.com", _
+                "", _
+                "sk.loon@plexus.com", _
+                ActiveWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_16 Buckets Report_Weekly (Buy) File not found!</html>", _
+                myAttachement(), _
+                0, 0)
+            
+            GoTo myEnd
+        Else
+            'Ver1.7: Change Path
+            ''Ver1.5: Change RR Path
+            ''Workbooks.Open "\\ap\penadata\Applications\Report_Kinaxis\Material\830_16 Buckets Report_Weekly (Buy)." & Format(myToday, "YYYYMMDD") & "*.xlsx", ReadOnly:=True
+            'Workbooks.Open "\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\830_16 Buckets Report_Weekly (Buy)." & Format(myToday, "YYYYMMDD") & "*.xlsx", ReadOnly:=True
+            'Ver1.9: RR path change
+            'Workbooks.Open "\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\830_16 Buckets Report_Weekly (Buy)." & Format(myToday, "YYYYMMDD") & "*.xlsx", ReadOnly:=True
+            Workbooks.Open "\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\830_16 Buckets Report_Weekly (Buy)." & Format(myToday, "YYYYMMDD") & "*.xlsx", ReadOnly:=True
+            
+            myWorkbook = ActiveWorkbook.Name
+            ActiveSheet.Name = "Temp"
+            myFileDate = DateAdd("d", 1, CDate(myToday))
+            myTemp = Range("B" & Rows.Count).End(xlUp).Row
+            Workbooks.Open myMacroPath & "\Leadtime Master RR.xlsx", writeResPassword:="888"
+            'Sheets("Master").Select
+            myUpdateRow = Range("A" & Rows.Count).End(xlUp).Row + 1
+            Workbooks(myWorkbook).Sheets("Temp").Range("E4:E" & myTemp).Copy
+            Range("A" & myUpdateRow).PasteSpecial xlPasteValues
+            myLastColumn = Cells(1, Columns.Count).End(xlToLeft).Column
+            myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+            Range(Cells(4, 1), Cells(myLastRow, myLastColumn)).RemoveDuplicates Columns:=1, Header:=xlYes
+            myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+            Columns("J:K").Insert
+            Range("J4:J" & myLastRow).Value = "=MATCH(A4,'[" & myWorkbook & "]Temp'!$E:$E,0)"
+            Range("J4:J" & myLastRow).Value = Range("J4:J" & myLastRow).Value
+            Range("K4:K" & myLastRow).Value = "=IFERROR(IF(INDEX('[" & myWorkbook & "]Temp'!$F:$F,J4)=0,"""",INDEX('[" & myWorkbook & "]Temp'!$F:$F,J4)),B4)"
+            Range("K4:K" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+            Range("B4:B" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                Range("K4:K" & myLastRow).Value = "=IFERROR(IF(INDEX('[" & myWorkbook & "]Temp'!$O:$O,J4)=0,"""",INDEX('[" & myWorkbook & "]Temp'!$O:$O,J4)),C4)"
+                Range("K4:K" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                Range("C4:C" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                    Range("K4:K" & myLastRow).Value = "=IFERROR(IF(INDEX('[" & myWorkbook & "]Temp'!$DY:$DY,J4)=0,"""",INDEX('[" & myWorkbook & "]Temp'!$DY:$DY,J4)),D4)"
+                    Range("K4:K" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                    'Ver1.6: Prevent Overflow
+                    'Range("D4:D" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                    Range("K4:K" & myLastRow).Copy
+                    Range("D4").PasteSpecial xlPasteAll
+                        Range("K4:K" & myLastRow).Value = "=IFERROR(IF(INDEX('[" & myWorkbook & "]Temp'!$EA:$EA,J4)=0,"""",INDEX('[" & myWorkbook & "]Temp'!$EA:$EA,J4)),E4)"
+                        Range("K4:K" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                        Range("E4:E" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                            'Range("K4:K" & myLastRow).Value = "=IFERROR(IF(INDEX('[" & myWorkbook & "]Temp'!$EB:$EB,J4)=0,"""",INDEX('[" & myWorkbook & "]Temp'!$EB:$EB,J4)),F4)"
+                            'Range("K4:K" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                            'Range("F4:F" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                                Range("K4:K" & myLastRow).Value = "=IFERROR(IF(INDEX('[" & myWorkbook & "]Temp'!$EC:$EC,J4)=0,"""",INDEX('[" & myWorkbook & "]Temp'!$EC:$EC,J4)),G4)"
+                                Range("K4:K" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                                Range("F4:F" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                                    Range("K4:K" & myLastRow).Value = "=IFERROR(IF(INDEX('[" & myWorkbook & "]Temp'!$P:$P,J4)=0,"""",INDEX('[" & myWorkbook & "]Temp'!$P:$P,J4)),I4)"
+                                    Range("K4:K" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                                        'Lead time check
+                                        Columns("L:L").Insert
+                                        Range("L4:L" & myLastRow).Value = "=IFERROR(IF(INDEX('[" & myWorkbook & "]Temp'!$P:$P,J4)=0,"""",INDEX('[" & myWorkbook & "]Temp'!$P:$P,J4)),"""")"
+                                        Range("L4:L" & myLastRow).Value = Range("L4:L" & myLastRow).Value
+                                        myLastOri = myUpdateRow - 1
+                                        Range("J4:J" & myLastRow).Value = "=IF(ROW(I4)>" & myLastOri & ",""" & myFileDate & """,IF(I4=K4,H4,""" & myFileDate & """))"
+                                        Range("J4:J" & myLastRow).Value = Range("J4:J" & myLastRow).Value
+                                        Range("H4:H" & myLastRow).Value = Range("J4:J" & myLastRow).Value
+                                    Range("I4:I" & myLastRow).Value = Range("K4:K" & myLastRow).Value
+                                    Columns("J:K").Delete
+                                    Range("J1:J3").MergeCells = True
+                                    Range("J1").Value = myFileDate
+                                    Range("J1").NumberFormat = "mm/dd/yy"
+                                    Range("J1").Orientation = 90
+            Workbooks(myWorkbook).Close False
+            'Workbooks("Leadtime Master.xlsx").Save
+            myLastColumnAlpha1 = Cells(myLastRow, myLastColumn).Offset(0, 1).Address(1, 0)
+            myLastColumnAlpha1 = Left(myLastColumnAlpha1, InStr(myLastColumnAlpha1, "$") - 1)
+            Range("G4:G" & myLastRow).SparklineGroups.Item(1).Modify Location:=Range("$G$4:$G$" & myLastRow), SourceData:="J4:" & myLastColumnAlpha1 & myLastRow
+            ActiveWorkbook.Close True
+            'Ver1.3: Changing Path
+            'myTotalFolder = Range("B" & Rows.Count).End(xlUp).Row
+            'myFolderPath = Range("B11").Value
+            'For myCountA = 12 To myTotalFolder
+            '    myFolderCheck = Dir(myFolderPath & Range("B" & myCountA).Value, vbDirectory)
+            '    If myFolderCheck = "" Then
+            '        MkDir myFolderPath & Range("B" & myCountA).Value
+            '    End If
+            '    myFolderPath = myFolderPath & Range("B" & myCountA).Value
+            'Next myCountA
+            'Check Folder Availbility
+            myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+            mySavePath = Sheets("SavePath").Range("A2").Value
+            For myCountA = 3 To myTotalFolder
+                myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+                If myFolderCheck = "" Then
+                    MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+                End If
+                mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+            Next myCountA
+            
+            'Ver1.3: Changing Variable
+            'fso.CopyFile myMacroPath & "\Leadtime Master RR.xlsx", myFolderPath & "\Leadtime Master RR " & Format(myToday, "MmDdYyyy") & ".xlsx", True
+            fso.CopyFile myMacroPath & "\Leadtime Master RR.xlsx", mySavePath & "\Leadtime Master RR " & Format(myToday, "MmDdYyyy") & ".xlsx", True
+            
+            fso.CopyFile myMacroPath & "\Leadtime Master RR.xlsx", myMacroPath & "\Leadtime Master RR " & Format(myToday, "MmDdYyyy") & ".xlsx", True
+            'Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Leadtime Master have been save in Share drive", myFolderPath & "Leadtime Master RR.xlsx")
+                'Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Leadtime Master have been save in Share drive", mySavePath & "\Leadtime Master RR " & Format(myToday, "MmDdYyyy") & ".xlsx")
+                Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "", _
+                "", _
+                "sk.loon@plexus.com", _
+                "Leadtime Master have been save in Share drive", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Leadtime Master have been save in Share drive.<br>" & mySavePath & "\Leadtime Master RR " & Format(myToday, "MmDdYyyy") & ".xlsx</html>", _
+                myAttachement(), _
+                0, 0)
+        End If
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub ClearFilter()
+    On Error Resume Next
+    ActiveSheet.ShowAllData
+End Sub
+Sub EmailSending(myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String)
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Cc = myCc
+        .Bcc = myBcc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        '.Display
+        .Send
+    End With
+End Sub
+Sub PasteAll()
+    On Error Resume Next
+    Range("A1").PasteSpecial xlPasteAll
+End Sub
+Sub ReadAllData()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("^a")
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    SendKeys "^{C}"
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Sub GetCursorPosDemo()
+Dim llCoord As POINTAPI
+' Get the cursor positions
+GetCursorPos llCoord
+' Display the cursor position coordinates
+MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+End Sub
+Private Sub MoveSingle(myX, myY)
+    SetCursorPos myX, myY 'x and y position
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub MoveSingleClick(myX, myY)
+  SetCursorPos myX, myY 'x and y position
+  Application.Wait (Now + TimeValue("00:00:01"))
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub SingleClick()
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub DoubleClick()
+  'Double click as a quick series of two clicks
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub RightClick()
+  'Right click
+  SetCursorPos 200, 200 'x and y position
+  mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+Sub TypeInCurrentWindow()
+DoEvents
+Application.EnableEvents = False
+Sleep 5000
+
+SendKeys "a"
+SendKeys "^a", True 'Select All
+Sleep 400 'Wait 0.4 seconds (400 milliseconds)
+SendKeys "^c", True 'Copy
+Sleep 400 'Wait 0.4 seconds
+'SendKeys "abcd", True 'Type abcd
+'Sleep 400 'Wait 0.4 seconds
+Application.EnableEvents = True
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
