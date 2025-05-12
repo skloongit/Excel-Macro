@@ -1,0 +1,573 @@
+Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Private Declare PtrSafe Function FindWindowEx Lib "user32" Alias "FindWindowExA" (ByVal hWnd1 As Long, ByVal hWnd2 As Long, ByVal lpsz1 As String, ByVal lpsz2 As String) As Long
+Private Declare Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As Long
+Sub ForecastReportDownloader()
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Dim oFile As Object
+    Dim o As IUIAutomation
+    Dim e As IUIAutomationElement
+    Dim h As Long
+    Dim iCnd As IUIAutomationCondition
+    Dim Button As IUIAutomationElement
+    Dim InvokePattern As IUIAutomationInvokePattern
+    
+    myForecastDate = Range("B5").Value
+    myMacroPath = ActiveWorkbook.Path
+    
+    'Ver1.5: Get latest forecast file directly from share drive
+    myShare = "\\ap\mfg\PenaData\ISL\ISL_Operations\PM_Commscope\Program Management\Weekly report\Forecast\"
+    For myA = 1 To 100
+        If Dir(myShare & Format(Date - myA, "YYYYMMDD"), vbDirectory) <> "" Then
+            myCheck = Dir(myShare & Format(Date - myA, "YYYYMMDD") & "\Forecast Comparison*", vbNormal)
+            If myCheck <> "" Then
+                myForcaseFile = myShare & Format(Date - myA, "YYYYMMDD") & "\" & myCheck
+             End If
+            Exit For
+        End If
+    Next myA
+    If myForcaseFile = "" Then
+        Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find forecast file from share drive...")
+        GoTo myEnd
+    End If
+    
+    GetDownloadsPath = Environ$("USERPROFILE") & "\Downloads"
+    If Dir(GetDownloadsPath & "\export.csv") <> "" Then
+        Kill GetDownloadsPath & "\export.csv"
+    End If
+        
+        Set IE = CreateObject("InternetExplorer.Application")
+        
+        With IE
+            .Navigate "https://partners-apscp.arrisi.com/OA_HTML/RF.jsp?function_id=29597&resp_id=-1&resp_appl_id=-1&security_group_id=0&lang_code=US&params=VuFLg5HPBKCH.nP49v3h5BoVPjhanSYU8VBTx-RPuCrA-iDbvQxz9UpXrEG.veY8&oas=bsK10pX3RqyUbI2hR74o6Q.."
+            '.Navigate "https://shareext.teradyne.com/SitePages/Home.aspx"
+            '
+            .Visible = True
+            
+            Do Until .ReadyState = 4 And Not .Busy
+                DoEvents
+                Application.Wait (Now + TimeValue("00:00:01"))
+            Loop
+                        
+            Application.Wait (Now + TimeValue("00:00:01"))
+            strDocHTML = .document.body.innerHTML
+            If InStr(1, strDocHTML, "Select a Language", vbBinaryCompare) > 0 Then
+                .document.all("usernameField").Value = "cp.Joe-Lynn.Yin@plexus.com"
+                .document.all("passwordField").Value = "plexus12345"
+                .document.all("passwordField").Select
+                .document.getElementsByName("SubmitButton")(0).Click
+                Application.Wait (Now + TimeValue("00:00:01"))
+                'SubmitButton
+                Do Until .ReadyState = 4 And Not .Busy
+                    DoEvents
+                    Application.Wait (Now + TimeValue("00:00:01"))
+                Loop
+            Else
+                Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find login page...")
+                GoTo myEnd
+            End If
+            
+            .Navigate "https://partners-apscp.arrisi.com/OA_HTML/RF.jsp?function_id=13850&resp_id=50704&resp_appl_id=724&security_group_id=0&lang_code=US&params=r4rPYCZA3oaOAgA6YO1C0rGMWPlKL0bLeFL1ze-JJvk&oas=PwSVQUlPX_ZklagVWfrsNg.."
+            Application.Wait (Now + TimeValue("00:00:01"))
+            Do Until .ReadyState = 4 And Not .Busy
+                DoEvents
+                Application.Wait (Now + TimeValue("00:00:01"))
+            Loop
+            
+            strDocHTML = .document.body.innerHTML
+            myEnd = InStr(1, strDocHTML, "Arris Commit Upload", vbBinaryCompare) - 2
+            If myEnd < 0 Then
+                Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find Arris Commit Upload...")
+                GoTo myEnd
+            End If
+            myStr = InStrRev(strDocHTML, "href=", myEnd, vbBinaryCompare)
+            If myEnd = 0 Then
+                Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find Arris Commit Upload...")
+                GoTo myEnd
+            End If
+            
+            myUrl = Mid(strDocHTML, myStr + 6, myEnd - myStr - 6)
+            myDecUrl = Replace(myUrl, "&amp;", "&")
+            .Navigate "https://partners-apscp.arrisi.com" & myDecUrl
+            Application.Wait (Now + TimeValue("00:00:01"))
+            Do Until .ReadyState = 4 And Not .Busy
+                DoEvents
+                Application.Wait (Now + TimeValue("00:00:01"))
+            Loop
+            
+            strDocHTML = .document.body.innerHTML
+            myStr = InStr(1, strDocHTML, "Download Supplier Commit Upload Template", vbBinaryCompare)
+            myStr = InStr(myStr, strDocHTML, "href=", vbBinaryCompare)
+                If myEnd = 0 Then
+                    Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find Download Supplier Commit Upload Template...")
+                    GoTo myEnd
+                End If
+            myEnd = InStr(myStr, strDocHTML, "Download Supplier", vbBinaryCompare) - 2
+                If myEnd < 0 Then
+                    Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find Download Supplier Commit Upload Template...")
+                    GoTo myEnd
+                End If
+
+            myUrl = Mid(strDocHTML, myStr + 6, myEnd - myStr - 6)
+            myDecUrl = Replace(myUrl, "&amp;", "&")
+            .Navigate "https://partners-apscp.arrisi.com/OA_HTML/" & myDecUrl
+            Application.Wait (Now + TimeValue("00:00:01"))
+            Do Until .ReadyState = 4 And Not .Busy
+                DoEvents
+                Application.Wait (Now + TimeValue("00:00:01"))
+            Loop
+            
+            
+            .document.getElementById("Oc99OrderType").selectedIndex = 1 'All
+            Set HTMLInput = .document.getElementById("Oc99OrderType")
+            'HTMLInput.innerText = "Metrics-1"
+            HTMLInput.Focus
+            HTMLInput.FireEvent "onchange"
+            HTMLInput.Click
+            Application.Wait (Now + TimeValue("00:00:01"))
+            Do Until .ReadyState = 4 And Not .Busy
+                DoEvents
+                Application.Wait (Now + TimeValue("00:00:01"))
+            Loop
+            .document.getElementsByName("SubmitButton")(0).Click 'Click Submit button
+            Application.Wait (Now + TimeValue("00:00:01"))
+            Do Until .ReadyState = 4 And Not .Busy
+                DoEvents
+                Application.Wait (Now + TimeValue("00:00:01"))
+            Loop
+            Application.Wait (Now + TimeValue("00:00:01"))
+            .document.getElementsByName("DownloadAdvTable:ExportButton:0")(0).Click 'Export button
+            Application.Wait (Now + TimeValue("00:00:30"))
+            
+            
+            
+            'DownloadAdvTable:ExportButton:0
+            
+            '.Navigate "https://partners-apscp.arrisi.com/OA_HTML/OAExport.jsp"
+            'Set o = New CUIAutomation
+
+    
+    
+    For myA = 1 To 120
+        Set o = New CUIAutomation
+        h = .Hwnd
+        h = FindWindowEx(h, 0, "Frame Notification Bar", vbNullString)
+        If h = 0 Then
+            Application.Wait (Now + TimeValue("00:00:01"))
+        Else
+            Exit For
+        End If
+    Next myA
+    If myA > 120 Then
+        Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find Save Bar...")
+        GoTo myEnd
+    End If
+    'If h = 0 Then Exit Sub
+    'Application.Wait (Now + TimeValue("00:00:05"))
+    
+    
+    For myA = 1 To 120
+        Set e = o.ElementFromHandle(ByVal h)
+        Set iCnd = o.CreatePropertyCondition(UIA_NamePropertyId, "Save")
+        Set Button = e.FindFirst(TreeScope_Subtree, iCnd)
+        If Button Is Nothing Then
+            Application.Wait (Now + TimeValue("00:00:01"))
+        Else
+            Exit For
+        End If
+    Next myA
+    If myA > 120 Then
+        Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find Save Bar...")
+        GoTo myEnd
+    End If
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set Button = e.FindFirst(TreeScope_Subtree, iCnd)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set InvokePattern = Button.GetCurrentPattern(UIA_InvokePatternId)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    InvokePattern.Invoke
+    Application.Wait (Now + TimeValue("00:00:01"))
+    
+    'Get download file
+    For myA = 1 To 120
+        If Dir(GetDownloadsPath & "\export.csv") = "" Then
+            Application.Wait (Now + TimeValue("00:00:01"))
+        Else
+            Exit For
+        End If
+    Next myA
+    If myA > 120 Then
+        Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find Export.csv file...")
+        GoTo myEnd
+    End If
+    
+    Call Forecast
+    
+    
+    
+    If Dir(myMacroPath & "\Forecast Files\Forecast Comparison " & Format(myForecastDate, "D Mmm Yyyy") & ".xlsx") = "" Then
+        Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to create forecast file...")
+        GoTo myEnd
+    Else
+        With CreateObject("Outlook.Application").CreateItem(0)
+            '.To = "sk.loon@plexus.com"
+            .To = "Wei-Wei.Ong@plexus.com"
+            .cc = "Vincent.Tang@plexus.com; Eddie.Yap@plexus.com"
+            .Bcc = "sk.loon@plexus.com"
+            .Subject = "Commscope Forecast File " & Format(Date, "D Mmm Yyyy")
+            .HTMLBody = "<html><p>Hi all,<p>" & _
+                      "<br>Please find the attachment for Commscope Forecast File.</p></html>" & _
+                      "<br>This is an auto generated email no reply required</p></html>"
+            .attachments.Add myMacroPath & "\Forecast Files\Forecast Comparison " & Format(myForecastDate, "D Mmm Yyyy") & ".xlsx"
+                'Ver1.4: Add export file
+                .attachments.Add myMacroPath & "\Export Files\export-" & Format(myForecastDate, "YYYYMMDD") & ".csv"
+            .display
+            .send
+        End With
+    End If
+    
+    
+    End With
+myEnd:
+'    Application.EnableEvents = False
+'    ActiveWorkbook.Close False
+'    Application.EnableEvents = True
+    'Ver1.3: Retry
+    IE.Quit
+    
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub SheetSelect(mySheet)
+    On Error GoTo Err1
+    Sheets(mySheet).Select
+    Exit Sub
+Err1:
+    Sheets.Add after:=Sheets(Sheets.Count)
+    ActiveSheet.Name = mySheet
+    
+End Sub
+Sub SendEmail(myTo As String, mySubject As String, myBody As String)
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & mySubject & "<p>" & _
+                  "<br>This is an auto generated email no reply required</p></html>"
+        .send
+    End With
+End Sub
+Sub Forecast()
+    'Set fso = New Scripting.FileSystemObject
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+'    myStrTime = Time
+    
+    myLoadingDate = Range("B3").Value
+    myForecastDate = Range("B5").Value
+        
+        
+        'Ver1.5: Get latest forecast file directly from share drive
+        ''myForecastFile = Range("B13").Value
+        'If Dir(myMacroPath & "\Forecast Files\Forecast Comparison " & Format(myLoadingDate, "D Mmm Yyyy") & ".xlsx") <> "" Then
+        '    myForecastFile = myMacroPath & "\Forecast Files\Forecast Comparison " & Format(myLoadingDate, "D Mmm Yyyy") & ".xlsx"
+        'Else
+        '    If Dir(myMacroPath & "\Forecast Files\Forecast Comparison " & Format(myLoadingDate - 7, "D Mmm Yyyy") & ".xlsx") <> "" Then
+        '        myForecastFile = myMacroPath & "\Forecast Files\Forecast Comparison " & Format(myLoadingDate - 7, "D Mmm Yyyy") & ".xlsx"
+        '    Else
+        '        Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find Last week forecast file...")
+        '        Exit Sub
+        '    End If
+        'End If
+        myShare = "\\ap\mfg\PenaData\ISL\ISL_Operations\PM_Commscope\Program Management\Weekly report\Forecast\"
+        For myA = 1 To 100
+            If Dir(myShare & Format(Date - myA, "YYYYMMDD"), vbDirectory) <> "" Then
+                myCheck = Dir(myShare & Format(Date - myA, "YYYYMMDD") & "\Forecast Comparison*", vbNormal)
+                If myCheck <> "" Then
+                    myForecastFile = myShare & Format(Date - myA, "YYYYMMDD") & "\" & myCheck
+                End If
+                Exit For
+            End If
+        Next myA
+
+        
+    
+        'Ver1.2: Wrong path
+        'myCsvFile = Range("B15").Value
+        'If Dir(Range("B15").Value) <> "" Then
+        If Dir("C:\Users\sk.loon\Downloads\export.csv", vbNormal) <> "" Then
+            'myCsvFile = Range("B15").Value
+            'Ver1.2: Wrong path
+            myCsvFile = "C:\Users\sk.loon\Downloads\export.csv"
+'            If Dir(myMacroPath & "\Raw Files\export-" & Format(Date, "YYYYMMDD") & ".csv", vbNormal) <> "" Then
+'
+'            End If
+            Set fso = CreateObject("Scripting.FileSystemObject")
+            fso.CopyFile "C:\Users\sk.loon\Downloads\export.csv", myMacroPath & "\Export Files\export-" & Format(Date, "YYYYMMDD") & ".csv", True
+        Else
+            Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Unable to find Export.csv from Downloads folder...")
+            Exit Sub
+        End If
+    myCpDate = Range("B19").Value
+    myOtherDate = Range("B20").Value
+    myCaDate = Range("B21").Value
+    myCpWeeks = Range("D19").Value
+    myOtherWeeks = Range("D20").Value
+    myCaWeeks = Range("D21").Value
+    
+    Workbooks.Open myCsvFile
+    myCsvFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    myLastDate = Cells(1, Cells(1, Columns.Count).End(xlToLeft).Column - 1).Value
+    myCsvTotal = Range("B" & Rows.Count).End(xlUp).Row
+    Sheets.Add after:=ActiveSheet
+    Range("A1:A" & myCsvTotal).Value = Sheets("Temp").Range("B1:B" & myCsvTotal).Value
+    ActiveSheet.Range("$A$1:$A$" & myCsvTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+    myCsvPivot = Range("A" & Rows.Count).End(xlUp).Row
+    Range("B2:B" & myCsvPivot).Value = myForecastDate
+    Range("C2:C" & myCsvPivot).Value = "Forecast"
+    Range("A2:C" & myCsvPivot).Copy
+    Range("A" & myCsvPivot + 1).PasteSpecial xlPasteAll
+    Range("B2:C" & myCsvPivot).Value = "*"
+    myCsvPivot = Range("A" & Rows.Count).End(xlUp).Row
+    ActiveSheet.Name = "Pivot"
+    Workbooks.Open myForecastFile, False, True, , "E12345" ', , True
+    myForecastFilename = ActiveWorkbook.Name
+    
+    Application.DisplayAlerts = False
+    Sheets("CP8015, CP8018").Delete
+    Sheets("Other CP").Delete
+    Sheets("CA, CC, CX, BP").Delete
+    Application.DisplayAlerts = True
+    Sheets("CP ").Select
+'    Call DeleteSheet("CP8015, CP8018")
+'    Call DeleteSheet("Other CP")
+'    Call DeleteSheet("CA, CC, CX, BP")
+'    Call SheetSelect("CP ")
+'    If ActiveSheet.Name <> "CP " Then
+'        Call SheetSelect("CP")
+'        If ActiveSheet.Name = "CP" Then
+'            ActiveSheet.Name = "CP "
+'        Else
+'            MsgBox "CP sheet not found! The macro will stop here!"
+'            End
+'        End If
+'    End If
+'    Call ClearAllFilter
+    Rows("3:3").AutoFilter
+    Rows("3:3").AutoFilter
+    Cells.EntireColumn.Hidden = False
+    Range("A1").Value = myLoadingDate
+    Range("A2").Value = "=COUNTIFS(B:B,A1,C:C,""Loading"")"
+    If Range("A2").Value = 0 Then
+        MsgBox "Loading date " & myLoadingDate & " not found! The macro will stop here!"
+        End
+    End If
+    
+    Range("A1").Value = myForecastDate
+    Range("A2").ClearContents
+    Range("B1").Value = "=IFERROR(MATCH(A1,2:2,0),""NA"")"
+    If Range("B1").Value = "NA" Then
+        'MsgBox "Forecast date " & myForecastDate & " not found! The macro will stop here!"
+        Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Forecast date " & myForecastDate & " not found")
+        Exit Sub
+    End If
+    myForecastCol = CInt(Range("B1").Value)
+        Range("A1").Value = myCpDate
+        Range("B1").Value = "=IFERROR(MATCH(A1,3:3,0),""NA"")"
+        If Range("B1").Value = "NA" Then
+            'MsgBox "Forecast date " & myForecastDate & " not found for CA8015, CP8018! The macro will stop here!"
+            Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Forecast date " & myForecastDate & " not found for CA8015, CP8018")
+            Exit Sub
+        End If
+        myCpCol = CInt(Range("B1").Value)
+            Range("A1").Value = myOtherDate
+            Range("B1").Value = "=IFERROR(MATCH(A1,3:3,0),""NA"")"
+            If Range("B1").Value = "NA" Then
+                'MsgBox "Forecast date " & myForecastDate & " not found for Other CP! The macro will stop here!"
+                Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Forecast date " & myForecastDate & " not found for Other CP")
+                Exit Sub
+            End If
+            myOtherCol = CInt(Range("B1").Value)
+                Range("A1").Value = myCaDate
+                Range("B1").Value = "=IFERROR(MATCH(A1,3:3,0),""NA"")"
+                If Range("B1").Value = "NA" Then
+                    'MsgBox "Forecast date " & myForecastDate & " not found for CA, CC, CX, BP! The macro will stop here!"
+                    Call SendEmail("sk.loon@plexus.com", "CommScope portal download error", "Forecast date " & myForecastDate & " not found for CA, CC, CX, BP")
+                    Exit Sub
+                End If
+                myCaCol = CInt(Range("B1").Value)
+    Range("B1").ClearContents
+    
+    myCurLastDate = Cells(3, Cells(3, Columns.Count).End(xlToLeft).Column).Value
+    If myLastDate > myCurLastDate Then
+        Do Until myLastDate <= myCurLastDate
+            myTempLastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+            Cells(1, myTempLastCol + 1).EntireColumn.Insert
+            Range(Cells(1, myTempLastCol + 1), Cells(3, myTempLastCol + 1)).Value = Range(Cells(1, myTempLastCol), Cells(3, myTempLastCol)).FormulaR1C1Local
+            myCurLastDate = Cells(3, myTempLastCol + 1).Value
+        Loop
+    End If
+    myTempLastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+    myCpTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Columns("A:A").Insert
+    Range("A4:A" & myCpTotal).Value = "=TRIM(B4)"
+    Range("A4:A" & myCpTotal).Copy
+    Range("B4").PasteSpecial xlPasteValues
+    Application.CutCopyMode = False
+    Columns("A:A").Delete
+    Workbooks(myCsvFilename).Sheets("Pivot").Range("A2:C" & myCsvPivot).Copy
+    Range("A" & myCpTotal + 1).PasteSpecial xlPasteAll
+    Range("A1").Value = myForecastDate
+    Range("A2").Value = "=MATCH(A1,B:B,0)"
+    myStrRow = Range("A2").Value
+    Range("A1:A2").ClearContents
+    myCpTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range(Cells(myStrRow, 4), Cells(myCpTotal, myTempLastCol)).Select
+'    Application.DisplayAlerts = False
+'    Workbooks(myCsvFilename).Sheets("Pivot").Delete
+'    Application.DisplayAlerts = True
+    Range(Cells(myStrRow, 4), Cells(myCpTotal, myTempLastCol)).Value = "=IFERROR(SUMIFS(OFFSET('[" & myCsvFilename & "]Temp'!C18,0,MATCH(R3C,'[" & myCsvFilename & "]Temp'!R1C19:R1C597,0)),'[" & myCsvFilename & "]Temp'!C2,""'""&RC1,'[" & myCsvFilename & "]Temp'!C4,""Order forecast""),"""")"
+    Range(Cells(myStrRow, 4), Cells(myCpTotal, myTempLastCol)).Value = Range(Cells(myStrRow, 4), Cells(myCpTotal, myTempLastCol)).Value
+    
+    'Range(Cells(myStrRow, myTempLastCol + 1), Cells(myCpTotal, myTempLastCol + 1)).Select
+    'Range(Cells(myStrRow, myTempLastCol + 1), Cells(myCpTotal, myTempLastCol + 1)).Value = "=SUM(RC[" & myForecastCol - myTempLastCol & "]:RC[-1])"
+    Range(Cells(myStrRow, myTempLastCol + 1), Cells(myCpTotal, myTempLastCol + 1)).Value = "=SUM(RC[" & 3 - myTempLastCol & "]:RC[-1])" 'Col D
+    
+    ActiveSheet.Range(Cells(3, 1), Cells(myCpTotal, myTempLastCol)).AutoFilter Field:=3, Criteria1:="=Loading", Operator:=xlAnd
+    ActiveSheet.Range(Cells(3, 1), Cells(myCpTotal, myTempLastCol)).AutoFilter Field:=2, Operator:=xlFilterValues, Criteria2:=Array(2, "" & myLoadingDate & "")
+    Rows("4:" & myCpTotal).Copy
+    Range("A" & myCpTotal + 1).PasteSpecial xlPasteAll
+    myStrRow = myCpTotal + 1
+'    Call ClearAllFilter
+    Rows("3:3").AutoFilter
+    Rows("3:3").AutoFilter
+    myCpTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("B" & myStrRow & ":B" & myCpTotal).Value = myForecastDate
+        For myA = myCpTotal To myStrRow Step -1
+            myCheck = Application.WorksheetFunction.CountIf(Workbooks(myCsvFilename).Sheets("Pivot").Columns("A:A"), Range("A" & myA).Value)
+            If myCheck = 0 Then
+                Rows(myA).Delete
+            End If
+        Next myA
+    myTempStr = myStrRow
+    myCpTotal = Range("A" & Rows.Count).End(xlUp).Row
+    
+    'Set SUM formula
+    Range(Cells(myStrRow, myTempLastCol + 1), Cells(myCpTotal, myTempLastCol + 1)).Select
+    Range(Cells(myStrRow, myTempLastCol + 1), Cells(myCpTotal, myTempLastCol + 1)).Value = "=SUM(RC[" & myForecastCol - myTempLastCol & "]:RC[-1])"
+    myTempStrRow = myStrRow
+        
+    Workbooks(myCsvFilename).Activate
+    Sheets("Pivot").Select
+    Selection.Copy
+    Workbooks(myForecastFilename).Activate
+    Range("A" & myCpTotal + 1).PasteSpecial xlPasteAll
+    myStrRow = myCpTotal + 1
+    myCpTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("C" & myStrRow & ":C" & myCpTotal).Value = "Loading"
+    Rows(myStrRow - 1).Copy
+    Rows(myStrRow & ":" & myCpTotal).PasteSpecial xlPasteFormats
+    Range(Cells(4, 1), Cells(myCpTotal, myTempLastCol + 3)).RemoveDuplicates Columns:=Array(1, 2, 3), Header:=xlNo
+    myCpTotal = Range("A" & Rows.Count).End(xlUp).Row
+    
+    'Set SUM formula
+    Range(Cells(myTempStrRow, myTempLastCol + 1), Cells(myCpTotal, myTempLastCol + 1)).Select
+    Range(Cells(myTempStrRow, myTempLastCol + 1), Cells(myCpTotal, myTempLastCol + 1)).Value = "=SUM(RC[" & myForecastCol - myTempLastCol & "]:RC[-1])"
+        
+    ActiveWorkbook.Worksheets("CP ").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("CP ").Sort.SortFields.Add Key:=Range("A3:A" & myCpTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal 'ItemName
+    ActiveWorkbook.Worksheets("CP ").Sort.SortFields.Add Key:=Range("C3:C" & myCpTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal 'Loading/Forecast/*
+    ActiveWorkbook.Worksheets("CP ").Sort.SortFields.Add Key:=Range("B3:B" & myCpTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal 'Forecase
+    ActiveWorkbook.Worksheets("CP ").Sort.SetRange Range(Cells(3, 1), Cells(myCpTotal, myTempLastCol + 3))
+    ActiveWorkbook.Worksheets("CP ").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("CP ").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("CP ").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("CP ").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("CP ").Sort.Apply
+    
+    Columns("B:B").NumberFormat = "[$-en-US]d-mmm-yy;@"
+    Rows("3:3").AutoFilter
+    Rows("3:3").AutoFilter
+    
+    For myA = 1 To 3
+        Sheets("CP ").Copy after:=Sheets(Sheets.Count)
+        Columns("A:A").Insert
+        Range("C1").Value = myForecastDate
+        If myA = 1 Then
+            mySheetname = "CP8015, CP8018"
+            myInsertCol = myCpCol
+            myTotalWeeks = myCpWeeks
+            'Ver1.7: Change formula
+            'Range("A3:A" & myCpTotal).Value = "=IF(OR(LEFT(B3,6)=""CP8015"",LEFT(B3,6)=""CP8018""),IF(D3=""Loading"",""Delete"",IF(OR(C3=$C$1,C3=$C$1-7,C3=""*""),ROW(B3),""Delete"")),""Delete"")"
+            myOriValue = Range("A1").Value
+            Range("A1").Value = myLoadingDate
+            Range("A3:A" & myCpTotal).Value = "=IF(OR(LEFT(B3,6)=""CP8015"",LEFT(B3,6)=""CP8018""),IF(D3=""Loading"",""Delete"",IF(OR(C3=$C$1,C3=$A$1,C3=""*""),ROW(B3),""Delete"")),""Delete"")"
+        
+        ElseIf myA = 2 Then
+            mySheetname = "Other CP"
+            myInsertCol = myOtherCol
+            myTotalWeeks = myOtherWeeks
+            'Ver1.7: Change formula
+            'Range("A3:A" & myCpTotal).Value = "=IF(OR(LEFT(B3,6)=""CP8015"",LEFT(B3,6)=""CP8018"",LEFT(B3,2)=""CA"",LEFT(B3,2)=""CC"",LEFT(B3,2)=""CX"",LEFT(B3,2)=""BP""),""Delete"",IF(D3=""Loading"",""Delete"",IF(OR(C3=$C$1,C3=$C$1-7,C3=""*""),ROW(B3),""Delete"")))"
+            myOriValue = Range("A1").Value
+            Range("A1").Value = myLoadingDate
+            Range("A3:A" & myCpTotal).Value = "=IF(OR(LEFT(B3,6)=""CP8015"",LEFT(B3,6)=""CP8018"",LEFT(B3,2)=""CA"",LEFT(B3,2)=""CC"",LEFT(B3,2)=""CX"",LEFT(B3,2)=""BP""),""Delete"",IF(D3=""Loading"",""Delete"",IF(OR(C3=$C$1,C3=$A$1,C3=""*""),ROW(B3),""Delete"")))"
+        Else
+            mySheetname = "CA, CC, CX, BP"
+            myInsertCol = myCaCol
+            myTotalWeeks = myCaWeeks
+            'Ver1.7: Change formula
+            'Range("A3:A" & myCpTotal).Value = "=IF(OR(LEFT(B3,2)=""CA"",LEFT(B3,2)=""CC"",LEFT(B3,2)=""CX"",LEFT(B3,2)=""BP""),IF(D3=""Loading"",""Delete"",IF(OR(C3=$C$1,C3=$C$1-7,C3=""*""),ROW(B3),""Delete"")),""Delete"")"
+            myOriValue = Range("A1").Value
+            Range("A1").Value = myLoadingDate
+            Range("A3:A" & myCpTotal).Value = "=IF(OR(LEFT(B3,2)=""CA"",LEFT(B3,2)=""CC"",LEFT(B3,2)=""CX"",LEFT(B3,2)=""BP""),IF(D3=""Loading"",""Delete"",IF(OR(C3=$C$1,C3=$A$1,C3=""*""),ROW(B3),""Delete"")),""Delete"")"
+        End If
+        
+        Range("A3:A" & myCpTotal).Value = Range("A3:A" & myCpTotal).Value
+            'Ver1.7: Delete Loading Date
+            Range("A1").Value = myOriValue
+        Range(Cells(3, 1), Cells(myCpTotal + 1, myTempLastCol + 3)).RemoveDuplicates Columns:=1, Header:=xlNo
+        myTemp = Range("A" & Rows.Count).End(xlUp).Row
+            'Ver1.3: Remove 1 line *
+            Range("A4:A" & myTemp).Value = "=IF(AND(COUNTIFS(B:B,B4)=1,D4=""*""),""Delete"",ROW(B4))"
+            Range("A4:A" & myTemp).Value = Range("A4:A" & myTemp).Value
+            Range(Cells(3, 1), Cells(myCpTotal + 1, myTempLastCol + 3)).RemoveDuplicates Columns:=1, Header:=xlNo
+            myTemp = Range("A" & Rows.Count).End(xlUp).Row
+        ActiveSheet.Name = mySheetname
+        If myTemp > 3 Then
+            Range("A4:A" & myTemp).Value = "=IF(C4=""*"",""*"",B4)"
+            'Range("A4:A" & myTemp).Value = Range("A4:A" & myTemp).Value
+            Range("A4:A" & myTemp).Copy
+            Range("B4").PasteSpecial xlPasteValues
+            Range(Cells(1, myInsertCol + 1), Cells(1, myInsertCol + 4)).EntireColumn.Insert
+            Cells(3, myInsertCol + 1).Value = "Total"
+            Cells(3, myInsertCol + 2).Value = "Delta"
+            Cells(3, myInsertCol + 3).Value = "PLEXUS Comment"
+            Cells(3, myInsertCol + 4).Value = "COMMSCOPE Comment"
+                'Ver1.6: Set to dynamic
+                'Range(Cells(4, myInsertCol + 1), Cells(myTemp, myInsertCol + 1)).Value = "=IF(RC[-1]="""","""",SUM(RC[" & 0 - myTotalWeeks & "]:RC[-1]))"
+                Range(Cells(4, myInsertCol + 1), Cells(myTemp, myInsertCol + 1)).Value = "=IF(RC[-1]="""","""",SUM(RC[" & 4 - myInsertCol & "]:RC[-1]))"
+            Range(Cells(4, myInsertCol + 2), Cells(myTemp, myInsertCol + 2)).Value = "=IF(RC[" & 0 - myInsertCol & "]=R[-1]C[" & 0 - myInsertCol & "],RC[-1]-R[-1]C[-1],"""")"
+            Cells(4, myInsertCol + 2).EntireColumn.NumberFormat = "0"
+            'Range(Cells(4, myInsertCol + 3), Cells(myTemp, myInsertCol + 3)).Value = "=IF(RC[" & 0 - myInsertCol - 1 & "]=R[-1]C[" & 0 - myInsertCol - 1 & "],IF(AND(RC[-2]=0,R[-1]C[-1]=0),""No Forecast across horizon"",IF(RC[-1]=0,""Forecast no change"",IF(RC[-1]<0,ABS(RC[-1])&"" units forecast decreased."",ABS(RC[-1])&"" units forecast increased.""))),"""")"
+            Range(Cells(4, myInsertCol + 3), Cells(myTemp, myInsertCol + 3)).Value = "=IF(RC[" & 0 - myInsertCol - 1 & "]=R[-1]C[" & 0 - myInsertCol - 1 & "],IF(AND(RC[-2]=0,R[-1]C[-2]=0),""No Forecast across horizon"",IF(RC[-1]=0,""Forecast no change"",IF(RC[-1]<0,ABS(RC[-1])&"" units forecast decreased."",ABS(RC[-1])&"" units forecast increased.""))),"""")"
+            Range(Cells(4, myInsertCol + 3), Cells(myTemp, myInsertCol + 3)).Value = Range(Cells(4, myInsertCol + 3), Cells(myTemp, myInsertCol + 3)).Value
+            Range(Cells(2, myInsertCol + 1), Cells(myTemp, myInsertCol + 4)).Interior.Color = 65535
+            Range(Cells(2, myInsertCol + 3), Cells(myTemp, myInsertCol + 4)).EntireColumn.ColumnWidth = 41
+        End If
+        Columns("A:A").Delete
+        Range("B1").ClearContents
+    Next myA
+    
+    Sheets("CP ").Select
+    Application.DisplayAlerts = False
+    Workbooks(myCsvFilename).Close False
+    
+    
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Forecast Files\Forecast Comparison " & Format(myForecastDate, "D Mmm Yyyy") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="E12345"
+    ActiveWorkbook.Close False
+    Application.DisplayAlerts = True
+    'myEndTime = Time
+    'MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
