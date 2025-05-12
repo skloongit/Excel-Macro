@@ -1,0 +1,1534 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myAttachement() As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub BakingList()
+    ReDim myAttachement(0)
+    Dim myBody As String
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myTodayFile = Format(Date, "MMDDYYYY")
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    
+    'Ver3.4:
+    ''Ver3.0:
+    'myBucketMakeFile = Dir("\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\830_16 Buckets Report_Weekly (Make)." & Format(Date - 1, "YYYYMMDD") & "*.xlsx", vbNormal)
+    myBucketMakeFile = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\830_16 Buckets Report_Weekly (Make)." & Format(Date - 1, "YYYYMMDD") & "*.xlsx", vbNormal)
+    If myBucketMakeFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Error: Expired Part Report (Baking) - 830_16 Buckets Report_Weekly (Make) " & Format(Date - 1, "YYYYMMDD") & "*.xlsx"
+        '    .HTMLBody = "<html><br><br>830_16 Buckets Report_Monthly (Make) file not found.<br/>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_16 Buckets Report_Monthly (Make) file not found.</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    
+    
+    'Ver2.7: Change RR \\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export
+    ''Ver2.2: Change RR Path
+    ''myBucketFile = Dir("\\ap\penadata\Applications\Report_Kinaxis\Material\830_16 Buckets Report_Weekly (Buy)." & Format(Date - 1, "YYYYMMDD") & "*.xlsx")
+    'myBucketFile = Dir("\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\830_16 Buckets Report_Weekly (Buy)." & Format(Date - 1, "YYYYMMDD") & "*.xlsx")
+    'Ver3.4:
+    'myBucketFile = Dir("\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\830_16 Buckets Report_Weekly (Buy)." & Format(Date - 1, "YYYYMMDD") & "*.xlsx", vbNormal)
+    myBucketFile = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\830_16 Buckets Report_Weekly (Buy)." & Format(Date - 1, "YYYYMMDD") & "*.xlsx", vbNormal)
+    If myBucketFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Error: Expired Part Report (Baking) - 830_16 Buckets Report_Weekly (Buy) " & Format(Date - 1, "YYYYMMDD") & "*.xlsx"
+        '    .HTMLBody = "<html><br><br>830_16 Buckets Report_Monthly (Buy) file not found.<br/>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_16 Buckets Report_Monthly (Buy) file not found.</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    
+    'Ver1.9: Change path
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+
+    myMacroCheck = Dir(myMacroPath & "\" & Year(Date) & "\", vbDirectory)
+        If myMacroCheck = "" Then
+            MkDir myMacroPath & "\" & Year(Date) & "\"
+        End If
+    
+    'Ver1.5: Change to Item Branch with AML
+'    'Item Branch Report
+'    myItemBranchFile = Dir("\\ap\penadata\Applications\JDE\R5541008_PLXS00006*")
+'    Do Until myItemBranchFile = ""
+'        Set F = fso.GetFile("\\ap\penadata\Applications\JDE\" & myItemBranchFile)
+'        'myLastModifiedDate = CDate(Format(f.DateLastModified, "m/d/yyyy"))
+'        If Date - 1 = CDate(Format(F.DateLastModified, "m/d/yyyy")) Then
+'
+'            Exit Do
+'        End If
+'        myItemBranchFile = Dir()
+'    Loop
+    For myX = 0 To 20
+        myDate = Date - myX
+        'myItemBranchFile = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(myDate) & "\Scheduler Report\Item Branch with AML\" & Format(myDate, "MM. MmmYyyy") & "\Item Branch with AML - " & Format(myDate, "MMDDYYYY") & ".xlsx")
+        'myItemBranchFile = Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(myDate) & "\Scheduler Report\Item Branch with AML\" & Format(myDate, "MM. MmmYyyy") & "\Item Branch with AML - " & Format(myDate, "MMDDYYYY") & ".xlsx")
+        myItemBranchFile = Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(myDate) & "\Scheduler Report\Item Branch with AML\" & Format(myDate, "MM. MmmYyyy") & "\Item Branch with AML - " & Format(myDate, "MMDDYYYY") & ".xlsx")
+        If myItemBranchFile <> "" Then
+            'myItemBranchFile = "\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(myDate) & "\Scheduler Report\Item Branch with AML\" & Format(myDate, "MM. MmmYyyy") & "\Item Branch with AML - " & Format(myDate, "MMDDYYYY") & ".xlsx"
+            myItemBranchFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(myDate) & "\Scheduler Report\Item Branch with AML\" & Format(myDate, "MM. MmmYyyy") & "\Item Branch with AML - " & Format(myDate, "MMDDYYYY") & ".xlsx"
+            Exit For
+        End If
+    Next myX
+    
+    If myItemBranchFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Error: Expired Part Report (Baking) - Item Branch File not found!"
+        '    .HTMLBody = "<html><br><br>Item Branch File not found!.<br/>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Item Branch File not found!.</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    
+    
+    
+    'myPlexWhseFile = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (PLEXWHSE) - " & Format(Date, "MMDDYYYY") & ".xlsx")
+    myPlexWhseFile = Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (PLEXWHSE) 49 Days - " & Format(Date, "MMDDYYYY") & ".xlsx")
+    If myPlexWhseFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Expired Part Report (Baking) - WMS Inventory Expiry Report (PLEXWHSE) - " & Format(Date, "MMDDYYYY") & ".xlsx"
+        '    .HTMLBody = "<html><br><br>The following file not found.<br/>" & _
+        '                "<a href=""\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (PLEXWHSE) 49 Days - " & Format(Date, "MMDDYYYY") & ".xlsx"""">\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (PLEXWHSE) 49 Days - " & Format(Date - 1, "MMDDYYYY") & ".xlsx</a>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>The following file not found.<br>\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (PLEXWHSE) 49 Days - " & Format(Date, "MMDDYYYY") & ".xlsx</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    'myPlexWhseFile = "\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (PLEXWHSE) - " & Format(Date, "MMDDYYYY") & ".xlsx"
+    myPlexWhseFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (PLEXWHSE) 49 Days - " & Format(Date, "MMDDYYYY") & ".xlsx"
+    
+    
+    'myLssFile = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (LSS) - " & Format(Date, "MMDDYYYY") & ".xlsx")
+    myLssFile = Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (LSS) 49 Days - " & Format(Date, "MMDDYYYY") & ".xlsx")
+    If myLssFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Expired Part Report (Baking) - WMS Inventory Expiry Report (LSS) - " & Format(Date, "MMDDYYYY") & ".xlsx"
+        '    .HTMLBody = "<html><br><br>The following file not found.<br/>" & _
+        '                "<a href=""\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx"""">\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (LSS) 49 Days - " & Format(Date - 1, "MMDDYYYY") & ".xlsx</a>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>The following file not found.<br>\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    'myLssFile = "\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (LSS) - " & Format(Date, "MMDDYYYY") & ".xlsx"
+    myLssFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Inventory Expiry Report (LSS) 49 Days - " & Format(Date, "MMDDYYYY") & ".xlsx"
+    
+    'Ver1.3: Add in WMS report to obtain the Ext(Days)
+    'myWmsFile = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx")
+    myWmsFile = Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx")
+    If myWmsFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Expired Part Report (Baking) - WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx"
+        '    .HTMLBody = "<html><br><br>The following file not found.<br/>" & _
+        '                "<a href=""\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx"""">\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx</a>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>The following file not found.<br>\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    'myWmsFile = "\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx"
+    myWmsFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx"
+    
+    'Ver2.3: Add in Kitting and RR file
+    myWmsKittingFile = Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Kitting Report\" & myMonthYear & "\WMS Kitting - " & Format(Date, "YYYYMMDD") & ".xlsx")
+    If myWmsKittingFile = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Subject = "Expired Part Report (Baking) - WMS Kitting Report - " & Format(Date, "MMDDYYYY") & ".xlsx"
+        '    .HTMLBody = "<html><br><br>The following file not found.<br/>" & _
+        '                "<a href=""\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Kitting  Report\" & myMonthYear & "\WMS Kitting - " & Format(Date, "YYYYMMDD") & ".xlsx"""">\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Inventory Expiry Report\" & myMonthYear & "\WMS Report - " & Format(Date, "MMDDYYYY") & ".xlsx</a>"
+        '    .Send
+        '    GoTo myEnd
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>The following file not found.<br>\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Weekly Report\WMS Kitting  Report\" & myMonthYear & "\WMS Kitting - " & Format(Date, "YYYYMMDD") & ".xlsx</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    
+    myWoFile = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\ST_830_WO parts lists_Monday_4am.xlsx")
+    Set F = fso.GetFile("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\ST_830_WO parts lists_Monday_4am.xlsx")
+    'myLastModifiedDate = CDate(Format(f.DateLastModified, "m/d/yyyy"))
+    'adsf = CDate(Format(F.DateLastModified, "m/d/yyyy"))
+    If CDate(Format(F.DateLastModified, "m/d/yyyy")) > Date - 3 Then
+        myWoFile = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\ST_830_WO parts lists_Monday_4am.xlsx"
+    Else
+        Set F = fso.GetFile("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\ST_830_WO parts lists_Sunday_4am.xlsx")
+        If CDate(Format(F.DateLastModified, "m/d/yyyy")) > Date - 3 Then
+            myWoFile = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\ST_830_WO parts lists_Sunday_4am.xlsx"
+        Else
+            'With CreateObject("Outlook.Application").CreateItem(0)
+            '    .To = "sk.loon@plexus.com"
+            '    .Subject = "Expired Part Report (Baking) - ST_830_WO parts lists_Monday_4am.xlsx"
+            '    .HTMLBody = "<html><br><br>The following file not found.<br/>" & _
+            '                "<a href=""\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\ST_830_WO parts lists_Monday_4am.xlsx</a>"
+            '    .Send
+            '    GoTo myEnd
+            'End With
+            Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ActiveWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>The following file not found.<br>\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\Material\ST_830_WO parts lists_Monday_4am.xlsx</html>", _
+                myAttachement(), _
+                0, 0)
+            GoTo myEnd
+        End If
+    End If
+    
+    Workbooks.Open myWmsFile, ReadOnly:=True
+    myWmsFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    
+    Workbooks.Open "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Weekly Report\WMS Kitting Report\" & myMonthYear & "\WMS Kitting - " & Format(Date, "YYYYMMDD") & ".xlsx", ReadOnly:=True
+    myWmsKittingFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    ActiveSheet.Range("$A$7:$I$" & Range("C" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=Array(2, 3, 4, 5, 6, 7), Header:=xlYes
+    myWoTotal = Range("C" & Rows.Count).End(xlUp).Row
+    Range("J7").Value = "Date"
+    Range("J8:J" & myWoTotal).Value = Range("B8:B" & myWoTotal).Value
+    Range("K8:K" & myWoTotal).NumberFormat = "m/d/yy"
+    Range("L8:Z" & myWoTotal).NumberFormat = "General"
+    Range("K8:K" & myWoTotal).Value = "=IF(Text(J8,""M/D/YY"")+0<TODAY(),TODAY(),J8)"
+    Range("K8:K" & myWoTotal).Value = Range("K8:K" & myWoTotal).Value
+    Range("L8:L" & myWoTotal).Value = "=YEAR(K8)&TEXT(WEEKNUM(K8,1),""00"")"
+    Range("L8:L" & myWoTotal).Value = Range("L8:L" & myWoTotal).Value
+    Range("P8:P" & myWoTotal).Value = Range("L8:L" & myWoTotal).Value
+    ActiveSheet.Range("$P$8:$P$" & myWoTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTempPivot = Range("P" & Rows.Count).End(xlUp).Row
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("P8"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Temp").Sort.SetRange Range("P8:P" & myTempPivot)
+    ActiveWorkbook.Worksheets("Temp").Sort.Header = xlNo
+    ActiveWorkbook.Worksheets("Temp").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Temp").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Temp").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Temp").Sort.Apply
+    Range("Q8:Q" & myTempPivot).Value = "=ROW(RC[-1])-7"
+    Range("Q8:Q" & myTempPivot).Value = Range("Q8:Q" & myTempPivot).Value
+    Range("M7").Value = "WO Priority"
+    Range("M8:M" & myWoTotal).Value = "=VLOOKUP(L8,P:Q,2,0)"
+    Range("M8:M" & myWoTotal).Value = Range("M8:M" & myWoTotal).Value
+    Range("L7").Value = "YYYYWW"
+    Range("K7").Value = "Converted Date"
+'    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Clear
+'    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("E8"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+'    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("C8"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+'    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("B8"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+'    ActiveWorkbook.Worksheets("Temp").Sort.SetRange Range("A8:M" & myWoTotal)
+'    ActiveWorkbook.Worksheets("Temp").Sort.Header = xlNo
+'    ActiveWorkbook.Worksheets("Temp").Sort.MatchCase = False
+'    ActiveWorkbook.Worksheets("Temp").Sort.Orientation = xlTopToBottom
+'    ActiveWorkbook.Worksheets("Temp").Sort.SortMethod = xlPinYin
+'    ActiveWorkbook.Worksheets("Temp").Sort.Apply
+'    Range("P8:P" & myWoTotal).Value = Range("E8:E" & myWoTotal).Value
+'    Range("Q8:Q" & myWoTotal).Value = Range("M8:M" & myWoTotal).Value
+'    ActiveSheet.Range("$P$8:$Q$" & myWoTotal).RemoveDuplicates Columns:=Array(1, 2), Header:=xlNo
+'    Range("R8:R" & Range("P" & Rows.Count).End(xlUp).Row).Value = "=SUMIFS(F:F,E:E,P8,M:M,Q8)"
+'    Range("R8:R" & Range("P" & Rows.Count).End(xlUp).Row).Value = Range("R8:R" & Range("P" & Rows.Count).End(xlUp).Row).Value
+    
+    Workbooks.Open myWoFile, ReadOnly:=True
+    myWoFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    myTotalWo = Range("A" & Rows.Count).End(xlUp).Row
+    Range("N2:N" & myTotalWo).Value = "=IF(IFERROR(VLOOKUP(A2,'[" & myWmsKittingFilename & "]Temp'!$C:$C,1,0),""NA"")=""NA"",""Delete"",ROW(A2))"
+    Range("N2:N" & myTotalWo).Value = Range("N2:N" & myTotalWo).Value
+    Range("A2:N" & myTotalWo).RemoveDuplicates Columns:=14, Header:=xlNo
+    myTotalWo = Range("A" & Rows.Count).End(xlUp).Row
+    Range("O2").Value = "WO Priority"
+    Range("O3:O" & myTotalWo).Value = "=VLOOKUP(A3,'[" & myWmsKittingFilename & "]Temp'!$C:$M,11,0)"
+    Range("O3:O" & myTotalWo).Value = Range("O3:O" & myTotalWo).Value
+    Sheets.Add
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="Temp!R2C1:R" & myTotalWo & "C15").CreatePivotTable TableDestination:="Sheet1!R3C1", TableName:="PivotTable2"
+    Sheets("Sheet1").Select
+    ActiveSheet.PivotTables("PivotTable2").PivotFields("Component").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable2").PivotFields("WO Priority").Orientation = xlColumnField
+    ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields("Remaining REQ"), "Sum of Remaining REQ", xlSum
+    Cells.Copy
+    Cells.PasteSpecial xlPasteValues
+    ActiveSheet.Name = "Pivot"
+    myPivotCol = Cells(4, Columns.Count).End(xlToLeft).Column - 1
+    
+
+    'Workbooks.Open Filename:="\\ap\penadata\Applications\JDE\" & myItemBranchFile, ReadOnly:=True
+    Workbooks.Open Filename:=myItemBranchFile, ReadOnly:=True
+    myItemBranchFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+        Sheets("Temp").Copy after:=Sheets(Sheets.Count)
+        ActiveSheet.Name = "MPN"
+        myIbTotal = Range("F" & Rows.Count).End(xlUp).Row
+        Range("A4").Value = "Delete"
+        Range("A5:A" & myIbTotal).Value = "=IF(Y5="""",""Delete"",Row(Y5))"
+        Range("A5:A" & myIbTotal).Value = Range("A5:A" & myIbTotal).Value
+        Range("A4:AT" & myIbTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+        myIbTotal = Range("F" & Rows.Count).End(xlUp).Row
+        Range("A4:A" & myIbTotal).Value = Range("AS4:AS" & myIbTotal).Value
+        Sheets("Temp").Select
+    'Columns("AR:AR").Cut
+    'Columns("F:F").Insert
+    myIbAmlTotal = Range("F" & Rows.Count).End(xlUp).Row
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("F5:F" & myIbAmlTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("Y5:Y" & myIbAmlTotal), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    With ActiveWorkbook.Worksheets("Temp").Sort
+        .SetRange Range("A4:AT" & myIbAmlTotal)
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+    'ActiveSheet.Copy Sheets(Sheets.Count)
+    'ActiveSheet.Name = "MPN"
+    myIbAmlTotal = Range("F" & Rows.Count).End(xlUp).Row
+    Range("A4:AT" & myIbAmlTotal).RemoveDuplicates Columns:=Array(6, 44), Header:=xlNo
+    myIbAmlTotal = Range("F" & Rows.Count).End(xlUp).Row
+        'Ver1.6: Get MSL based on MPN
+        Range("A5:A" & myIbAmlTotal).Value = "=IF(Y5="""",IF(F5=F4,A4,IFERROR(VLOOKUP(AR5,MPN!A:Y,25,0),"""")),Y5)"
+        Range("A5:A" & myIbAmlTotal).Value = Range("A5:A" & myIbAmlTotal).Value
+        Range("Y5:Y" & myIbAmlTotal).Value = Range("A5:A" & myIbAmlTotal).Value
+    Range("G5:G" & myIbAmlTotal).Value = "=IF(F5=F6,AR5&CHAR(10)&G6,AR5)"
+    Range("G5:G" & myIbAmlTotal).Value = Range("G5:G" & myIbAmlTotal).Value
+
+    'Check Folder Availbility
+    'Year
+    myYear = Year(Date)
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\"
+'    End If
+'    'Weekly Report
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\"
+'    End If
+'    'WMS Expired Inventory Report
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\WMS Expired Inventory Report\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\WMS Expired Inventory Report\"
+'    End If
+'    'Month Year
+'    myMonthYear = Format(Date, "MM. MmmYYYY")
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\WMS Expired Inventory Report\" & myMonthYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\WMS Expired Inventory Report\" & myMonthYear & "\"
+'    End If
+'    mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\WMS Expired Inventory Report\" & myMonthYear & "\"
+    
+    'PLEXWHSE
+    Workbooks.Open myPlexWhseFile, UpdateLinks:=False, ReadOnly:=True
+    myPlexWhseFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+    Range("P2:P" & myTotalWhse).Value = "PLEXWHSE"
+'    Range("T1").Value = "Delete"
+'    Range("T2:T" & myTotalWhse).Value = "=IF(C2="""",""Delete"",Row(C2))"
+'    Range("T2:T" & myTotalWhse).Value = Range("T2:T" & myTotalWhse).Value
+'    Range("A1:T" & myTotalWhse).RemoveDuplicates Columns:=20, Header:=xlNo
+    myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+    
+    'LSS
+    Workbooks.Open myLssFile, UpdateLinks:=False, ReadOnly:=True
+    myLssFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    myTotalLss = Range("A" & Rows.Count).End(xlUp).Row
+    Range("P2:P" & myTotalLss).Value = "LSS"
+'    Range("T1").Value = "Delete"
+'    Range("T2:T" & myTotalLss).Value = "=IF(C2="""",""Delete"",Row(C2))"
+'    Range("T2:T" & myTotalLss).Value = Range("T2:T" & myTotalLss).Value
+'    Range("A1:T" & myTotalLss).RemoveDuplicates Columns:=20, Header:=xlNo
+    myTotalLss = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A2:Q" & myTotalLss).Copy
+    Workbooks(myPlexWhseFilename).Activate
+    Range("A" & myTotalWhse + 1).PasteSpecial xlPasteValues
+    myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+    Range("T1").Value = "Delete"
+    Range("T2:T" & myTotalWhse).Value = "=IF(C2="""",""Delete"",Row(C2))"
+    Range("T2:T" & myTotalWhse).Value = Range("T2:T" & myTotalWhse).Value
+    Range("A1:T" & myTotalWhse).RemoveDuplicates Columns:=20, Header:=xlNo
+    myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+    
+    'Ver1.6: Baking Library filename change from Baking Library.xlsx to Baking Library_2.0.xlsx
+    ''Ver1.5: Open Baking Library
+    'myBakingLibraryFile = Dir("\\pena-dsk-601\ProcessEngineering\TERADYNE Baking Library\Baking Library.xlsx")
+        'Ver2.6: change path
+        ''Ver25: Change Path
+        ''myBakingLibraryFile = Dir("\\pena-dsk-601\ProcessEngineering\TERADYNE Baking Library\Baking Library_2.0.xlsx")
+        'myBakingLibraryFile = Dir("\\ap\mfg\PenaData\ISL\ISL_Operations\TERADYNE Baking Library\Baking Library_2.0.xlsx")
+        myBakingLibraryFile = Dir("\\ap\mfg\PenaData\ISL\ISL_Operations\TERADYNE_Baking_Library\Baking Library_2.0.xlsx")
+    If myBakingLibraryFile <> "" Then
+        'Ver1.6: Baking Library filename change from Baking Library.xlsx to Baking Library_2.0.xlsx
+        'Workbooks.Open Filename:="\\pena-dsk-601\ProcessEngineering\TERADYNE Baking Library\Baking Library.xlsx", UpdateLinks:=False, ReadOnly:=True
+            'Ver2.4: Add in error handler due to access error
+            ErrorHandler1
+            'Workbooks.Open Filename:="\\pena-dsk-601\ProcessEngineering\TERADYNE Baking Library\Baking Library_2.0.xlsx", UpdateLinks:=False, ReadOnly:=True
+            'myBakingLibraryFilename = ActiveWorkbook.Name
+            If ActiveWorkbook.Name = "Baking Library_2.0.xlsx" Then
+                myBakingLibraryFilename = ActiveWorkbook.Name
+            Else
+                myBakingLibraryFile = ""
+            End If
+        'Ver1.6: File locked. Can't change the sheetname
+        'ActiveSheet.Name = "Temp"
+        myLibrarySheet = ActiveSheet.Name
+    End If
+    'Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\purchasing_II\\Others\MSL\MSL Master List.xlsx", UpdateLinks:=False, ReadOnly:=True
+    Workbooks.Open Filename:="\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\MSL\MSL Master List.xlsx", UpdateLinks:=False, ReadOnly:=True
+    'Ver3.4:
+    ''Ver3.0
+    'Workbooks.Open Filename:="\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\" & myBucketMakeFile, ReadOnly:=True
+    Workbooks.Open Filename:="\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\" & myBucketMakeFile, ReadOnly:=True
+    
+    Range("EG3:EG" & Range("A" & Rows.Count).End(xlUp).Row).Value = "=IF(LEFT(E3,2)=""x-"",ROW(E3),""Delete"")"
+    Range("EG3:EG" & Range("A" & Rows.Count).End(xlUp).Row).Value = Range("EG3:EG" & Range("A" & Rows.Count).End(xlUp).Row).Value
+    Range("A3:EG" & Range("A" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=137, Header:=xlNo
+    If Range("A" & Rows.Count).End(xlUp).Row = 3 Then
+        Range("A4:EG4").Copy
+    Else
+        Range("A4:EG" & Range("A" & Rows.Count).End(xlUp).Row).Copy
+    End If
+
+    '16 Weeks Bucket
+    'Workbooks.Open myBucketFile, UpdateLinks:=False, ReadOnly:=True
+    'Workbooks.Open Filename:="Y:\2021\Weekly Report\16 weeks bucket report\Buy\02. Feb2021\830_16 Buckets Report_Monthly (Buy) 02162021.xlsx", ReadOnly:=True
+        'Ver2.7: Change Path
+        '''Ver2.2: Change RR Path
+        '''Workbooks.Open Filename:="\\ap\penadata\Applications\Report_Kinaxis\Material\" & myBucketFile, ReadOnly:=True
+        'Workbooks.Open Filename:="\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\" & myBucketFile, ReadOnly:=True
+        'Ver3.4:
+        'Workbooks.Open Filename:="\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\" & myBucketFile, ReadOnly:=True
+        Workbooks.Open Filename:="\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\" & myBucketFile, ReadOnly:=True
+        
+    'Ver3.0
+    Range("A" & Range("A" & Rows.Count).End(xlUp).Row + 1).PasteSpecial xlPasteAll
+    Application.CutCopyMode = False
+    Workbooks(myBucketMakeFile).Close False
+    
+    '"Z:\Others\2020\Weekly Report\16 weeks bucket report\Buy\10. Oct2020\830_16 Buckets Report_weekly (Buy) 10192020.xlsx"
+    myBucketFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "16 wks bucket rpt"
+    Range("AF3").Value = "sa"
+    Range("DN3").Value = "sa"
+    myTotalBucket = Range("A" & Rows.Count).End(xlUp).Row
+    Sheets.Add after:=ActiveSheet
+    ActiveSheet.Name = "Demand summary"
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'16 wks bucket rpt'!R3C1:R" & myTotalBucket & "C67").CreatePivotTable TableDestination:="'Demand summary'!R3C1", TableName:="PivotTable1"
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Item No").Orientation = xlRowField
+    'ActiveSheet.PivotTables("PivotTable1").PivotFields("Bucket").Orientation = xlColumnField
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Demand"), "Sum of Demand", xlSum
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Demand2"), "Sum of Demand2", xlSum
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Demand3"), "Sum of Demand3", xlSum
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Demand4"), "Sum of Demand4", xlSum
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Demand5"), "Sum of Demand5", xlSum
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Demand6"), "Sum of Demand6", xlSum
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Demand7"), "Sum of Demand7", xlSum
+'    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Demand8"), "Sum of Demand8", xlSum
+    Range("A4").Value = "Item No"
+    'Range("F4").Value = "Total"
+    Range("I4").Value = "Total"
+    myTotalPivot = Range("A" & Rows.Count).End(xlUp).Row
+    'Range("F5:F" & myTotalPivot).Value = "=SUM(B5:E5)"
+    Range("I5:I" & myTotalPivot).Value = "=SUM(B5:H5)"
+    Sheets.Add before:=Sheets(1)
+    ActiveSheet.Name = "Raw"
+    Workbooks(myPlexWhseFilename).Sheets("Temp").Range("A1:P" & myTotalWhse).Copy Range("A1")
+    ActiveWorkbook.Worksheets("Raw").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Raw").Sort.SortFields.Add Key:=Range("C2:C" & myTotalWhse), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Raw").Sort.SortFields.Add Key:=Range("H2:H" & myTotalWhse), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Raw").Sort.SortFields.Add Key:=Range("A2:A" & myTotalWhse), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Raw").Sort.SetRange Range("A2:P" & myTotalWhse)
+    ActiveWorkbook.Worksheets("Raw").Sort.Header = xlGuess
+    ActiveWorkbook.Worksheets("Raw").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Raw").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Raw").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Raw").Sort.Apply
+
+    'conver to WMS Expired'
+    Sheets.Add after:=Sheets(Sheets.Count)
+    ActiveSheet.Name = "WMS Expired Inventory "
+    Range("A1").Value = "No."
+    Range("B1").Value = "Plate No."
+    Range("C1").Value = "Part No"
+    Range("D1").Value = "Part Desc"
+    Range("E1").Value = "Commodity Class"
+    Range("F1").Value = "Qty"
+    Range("G1").Value = "Loc Type"
+    Range("H1").Value = "Expiry Date"
+    Range("I1").Value = "Mfg Date"
+    Range("J1").Value = "Current wk"
+    Range("K1").Value = "Current wk +1"
+    Range("L1").Value = "Current wk +2"
+    Range("M1").Value = "Current wk +3"
+    Range("N1").Value = "Total"
+    Range("O1").Value = "Bake Yes/No"
+    Range("P1").Value = "Priority"
+    Range("Q1").Value = "Check"
+    Range("R1").Value = "Check 1"
+    Range("S1").Value = "Check 2"
+    Range("T1").Value = "Check 3"
+    Range("U1").Value = "MPF"
+    Range("V1").Value = "Location"
+    
+    'For myA = 1 To 2
+        Range("A2:A" & myTotalWhse).Value = "=Row(B2)-1"
+        Range("A2:A" & myTotalWhse).Value = Range("A2:A" & myTotalWhse).Value
+        Range("B2:D" & myTotalWhse).Value = Sheets("Raw").Range("B2:D" & myTotalWhse).Value
+        Range("E2:E" & myTotalWhse).Value = "=IFERROR(VLOOKUP(C2,'[" & myItemBranchFilename & "]Temp'!$F:$P,11,0),"""")"
+        Range("E2:E" & myTotalWhse).Value = Range("E2:E" & myTotalWhse).Value
+        Range("F2:F" & myTotalWhse).Value = Sheets("Raw").Range("E2:E" & myTotalWhse).Value
+        Range("G2:H" & myTotalWhse).Value = Sheets("Raw").Range("G2:H" & myTotalWhse).Value
+        Range("I2:I" & myTotalWhse).Value = Sheets("Raw").Range("L2:L" & myTotalWhse).Value
+        Range("J2:J" & myTotalWhse).Value = "=IFERROR(VLOOKUP(C2,'Demand summary'!A:F,2,0),0)"
+        Range("J2:J" & myTotalWhse).Value = Range("J2:J" & myTotalWhse).Value
+        Range("K2:K" & myTotalWhse).Value = "=IFERROR(VLOOKUP(C2,'Demand summary'!A:F,3,0),0)"
+        Range("K2:K" & myTotalWhse).Value = Range("K2:K" & myTotalWhse).Value
+        Range("L2:L" & myTotalWhse).Value = "=IFERROR(VLOOKUP(C2,'Demand summary'!A:F,4,0),0)"
+        Range("L2:L" & myTotalWhse).Value = Range("L2:L" & myTotalWhse).Value
+        Range("M2:M" & myTotalWhse).Value = "=IFERROR(VLOOKUP(C2,'Demand summary'!A:F,5,0),0)"
+        Range("M2:M" & myTotalWhse).Value = Range("M2:M" & myTotalWhse).Value
+            Range("AA1").Value = "Current wk +4"
+            Range("AA2:AA" & myTotalWhse).Value = "=IFERROR(VLOOKUP(C2,'Demand summary'!A:H,6,0),0)"
+            Range("AA2:AA" & myTotalWhse).Value = Range("AA2:AA" & myTotalWhse).Value
+            Range("AB1").Value = "Current wk +5"
+            Range("AB2:AB" & myTotalWhse).Value = "=IFERROR(VLOOKUP(C2,'Demand summary'!A:H,7,0),0)"
+            Range("AB2:AB" & myTotalWhse).Value = Range("AB2:AB" & myTotalWhse).Value
+            Range("AC1").Value = "Current wk +6"
+            Range("AC2:AC" & myTotalWhse).Value = "=IFERROR(VLOOKUP(C2,'Demand summary'!A:H,8,0),0)"
+            Range("AC2:AC" & myTotalWhse).Value = Range("AC2:AC" & myTotalWhse).Value
+        'Range("N2:N" & myTotalWhse).Value = "=Sum(J2:M2)"
+        Range("N2:N" & myTotalWhse).Value = "=Sum(J2:M2)+Sum(AA2:AC2)"
+        'Range("N2:N" & myTotalWhse).Value = Range("N2:N" & myTotalWhse).Value
+        
+        Range("O2:O" & myTotalWhse).Value = "=IF(N2=0,""No"",IF(Q2=""remove"",""No"",""Yes""))"
+        'Range("P2:P" & myTotalWhse).Value = "=IF(J2>0,""1"",IF(K2>0,""2"",IF(L2>0,""3"",IF(M2>0,""4"","" ""))))"
+        Range("P2:P" & myTotalWhse).Value = "=IF(J2>0,""1"",IF(K2>0,""2"",IF(L2>0,""3"",IF(M2>0,""4"",IF(AA2>0,""5"",IF(AB2>0,""6"",IF(AC2>0,""7"","" "")))))))"
+'        Range("Q2:Q" & myTotalWhse).Value = "=IF(T2=""yes"",F2-N2,IF(Q1>=0,""remove"",IF(T2=""no-"",F2+Q1,IF(T2=""nono-"",F2-Q1,IF(T2=""noyes-"",F2-Q1,Q1+""D81"")))))"
+'        Range("R2:R" & myTotalWhse).Value = "=IF(C2=C1,""no"",""yes"")"
+'        Range("S2:S" & myTotalWhse).Value = "=IF(Q1<=0,""-"",+"""")"
+'        Range("T2:T" & myTotalWhse).Value = "=IF(R2=""yes"",R2,R2&S2)"
+        Range("U2:U" & myTotalWhse).Value = "=RIGHT(C2,3)"
+        Range("O2:T" & myTotalWhse).Value = Range("O2:T" & myTotalWhse).Value
+        Range("U2:U" & myTotalWhse).Copy
+        Range("U2").PasteSpecial xlPasteValues
+'        If myA = 1 Then
+'            Range("V2:V" & myTotalWhse).Value = "PLEXWHSE"
+'        Else
+'            Range("V2:V" & myTotalWhse).Value = "LSS"
+'        End If
+        'Range("V2:V" & myTotalWhse).Value = Sheets("Raw").Range("P2:P" & myTotalWhse).Value
+        Range("V2:V" & myTotalWhse).Value = "=IFERROR(VLOOKUP(B2&"""",Raw!B:P,15,0),VLOOKUP(B2+0,Raw!B:P,15,0))"
+        Range("V2:V" & myTotalWhse).Value = Range("V2:V" & myTotalWhse).Value
+        
+        Range("Q2:Q" & myTotalWhse).Value = "=IF(OR(O2=""No"",U2=603,U2=875),""Check"",Row(O2))"
+        Range("Q2:Q" & myTotalWhse).Value = Range("Q2:Q" & myTotalWhse).Value
+        'Range("A1:V" & myTotalWhse).RemoveDuplicates Columns:=17, Header:=xlNo
+        Range("A1:AD" & myTotalWhse + 1).RemoveDuplicates Columns:=17, Header:=xlNo
+        myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+            'Re-Sort and remove duplicate again to avoid unclean data
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SortFields.Clear
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SortFields.Add Key:=Range("A2:A" & myTotalWhse), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SetRange Range("A2:AD" & myTotalWhse)
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.Header = xlGuess
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.MatchCase = False
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.Orientation = xlTopToBottom
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SortMethod = xlPinYin
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.Apply
+            myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+            Range("A1:AD" & myTotalWhse + 1).RemoveDuplicates Columns:=17, Header:=xlNo
+            myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+            
+'        If myA = 1 Then
+'            Sheets("WMS Expired Inventory ").Copy after:=ActiveSheet
+'            ActiveSheet.Name = "PLEXWHSE"
+'            Sheets("WMS Expired Inventory ").Select
+'            Rows("2:" & myTotalWhse).ClearContents
+'            myTotalWhse = myTotalLss
+'            Sheets("Raw").Cells.ClearContents
+'            Workbooks(myLssFilename).Sheets("Temp").Range("A1:O" & myTotalWhse).Copy Sheets("Raw").Range("A1")
+'        Else
+'            Sheets("PLEXWHSE").Range("A2:V" & Sheets("PLEXWHSE").Range("A" & Rows.Count).End(xlUp).Row).Copy Range("A" & myTotalWhse + 1)
+'        End If
+    'Next myA
+        'Delete those excess line
+        Sheets("WMS Expired Inventory ").Select
+            'Ver1.4: Remain Liciense Qty
+            Columns("F:F").Copy
+            Columns("W:W").Insert
+        Columns("E:H").Insert
+        Range("E1").Value = "Count"
+        Range("F1").Value = "Cum Short"
+        Range("G1").Value = "Check"
+        Range("H1").Value = "New Qty"
+        Range("E2:E" & myTotalWhse).Value = "=IF(C2=C1,E1+1,1)"
+        Range("E2:E" & myTotalWhse).Value = Range("E2:E" & myTotalWhse).Value
+        Range("F2:F" & myTotalWhse).Value = "=IF(C2=C1,F1+J2,J2)"
+        Range("F2:F" & myTotalWhse).Value = Range("F2:F" & myTotalWhse).Value
+        Range("G2:G" & myTotalWhse).Value = "=IF(C2=C1,IF(F2<=R2,""Remain"",IF(AND(C2=C1,F1<R1),""Remain"",""Delete"")),""Remain"")"
+        Range("G2:G" & myTotalWhse).Value = Range("G2:G" & myTotalWhse).Value
+        Range("H2:H" & myTotalWhse).Value = "=IF(G2=""Delete"","""",IF(F2<=R2,J2,IF(C2=C1,R2-F1,R2)))"
+        Range("H2:H" & myTotalWhse).Value = Range("H2:H" & myTotalWhse).Value
+        Range("E2:E" & myTotalWhse).Value = "=IF(G2=""Delete"",""Count"",Row(G2))"
+        Range("E2:E" & myTotalWhse).Value = Range("E2:E" & myTotalWhse).Value
+        Range("J2:J" & myTotalWhse).Value = Range("H2:H" & myTotalWhse).Value
+        'Ver1.4 New
+        'Range("A1:Z" & myTotalWhse).RemoveDuplicates Columns:=5, Header:=xlNo
+        'Range("A1:AB" & myTotalWhse).RemoveDuplicates Columns:=5, Header:=xlNo
+        Range("A1:AI" & myTotalWhse).RemoveDuplicates Columns:=5, Header:=xlNo
+                'Re-Sort and remove duplicate again to avoid unclean data
+                ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SortFields.Clear
+                ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SortFields.Add Key:=Range("A2:A" & myTotalWhse), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+                ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SetRange Range("A2:AI" & myTotalWhse)
+                ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.Header = xlGuess
+                ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.MatchCase = False
+                ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.Orientation = xlTopToBottom
+                ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SortMethod = xlPinYin
+                ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.Apply
+                myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+                Range("A1:AI" & myTotalWhse + 1).RemoveDuplicates Columns:=5, Header:=xlNo
+        
+            'Ver1.2: Restate sequence
+            myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+                'Ver1.3: Add =
+                'Range("A2:A" & myTotalWhse).Value = "Row(B1)"
+                Range("A2:A" & myTotalWhse).Value = "=Row(B1)"
+            Range("A2:A" & myTotalWhse).Value = Range("A2:A" & myTotalWhse).Value
+            
+        Columns("E:H").Delete
+        Columns("Q:T").Delete
+            Columns("X:Z").Cut
+            Columns("N:N").Insert
+        
+        Range("A1:W" & myTotalWhse).Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Range("A1:W" & myTotalWhse).Borders(xlEdgeTop).LineStyle = xlContinuous
+        Range("A1:W" & myTotalWhse).Borders(xlEdgeBottom).LineStyle = xlContinuous
+        Range("A1:W" & myTotalWhse).Borders(xlEdgeRight).LineStyle = xlContinuous
+        Range("A1:W" & myTotalWhse).Borders(xlInsideVertical).LineStyle = xlContinuous
+        Range("A1:W" & myTotalWhse).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        Columns("H:I").NumberFormat = "m/d/yyyy"
+        Application.DisplayAlerts = False
+        Sheets("Raw").Delete
+        Sheets("16 wks bucket rpt").Delete
+        Sheets("Demand summary").Delete
+        Application.DisplayAlerts = True
+        
+        'Ver1.4: Add in new column
+        Columns("S:T").Insert
+        
+        'Get MSL
+        Range("S1").Value = "MSL"
+        'Range("S2:S" & myTotalWhse).Value = "=IFERROR(IF(VLOOKUP(C2,[" & myItemBranchFilename & "]Temp!$F:$Y,20,0)=0,"""",VLOOKUP(C2,[" & myItemBranchFilename & "]Temp!$F:$Y,20,0)),"""")"
+        Range("S2:S" & myTotalWhse).Value = "=IFERROR(IF(VLOOKUP(C2,'[" & myItemBranchFilename & "]Temp'!$F:$Y,20,0)=0,"""",VLOOKUP(C2,'[" & myItemBranchFilename & "]Temp'!$F:$Y,20,0)),"""")"
+        Range("S2:S" & myTotalWhse).Value = Range("S2:S" & myTotalWhse).Value
+            'Ver1.5: Get MSL from Teradyne Baking Library
+            If myBakingLibraryFile <> "" Then
+                'Ver1.6: Baking Library filename change from Baking Library.xlsx to Baking Library_2.0.xlsx
+                'Range("T2:T" & myTotalWhse).Value = "=IF(S2="""",IFERROR(IF(VLOOKUP(C2,'[Baking Library.xlsx]Temp'!$C:$E,3,0)=0,"""",VLOOKUP(C2,'[Baking Library.xlsx]Temp'!$C:$E,3,0)),""""),S2)"
+                Range("T2:T" & myTotalWhse).Value = "=IF(S2="""",IFERROR(IF(VLOOKUP(C2,'[Baking Library_2.0.xlsx]" & myLibrarySheet & "'!$C:$E,3,0)=0,"""",VLOOKUP(C2,'[Baking Library_2.0.xlsx]" & myLibrarySheet & "'!$C:$E,3,0)),""""),S2)"
+                Range("T2:T" & myTotalWhse).Value = Range("T2:T" & myTotalWhse).Value
+                Range("S2:S" & myTotalWhse).Value = Range("T2:T" & myTotalWhse).Value
+                'Workbooks("Baking Library.xlsx").Close False
+                Workbooks("Baking Library_2.0.xlsx").Close False
+                
+            End If
+            ''Ver1.5: Get MSL Master List
+            'If myBakingLibraryFile <> "" Then
+                Range("T2:T" & myTotalWhse).Value = "=IF(S2="""",IFERROR(IF(VLOOKUP(C2,'[MSL Master List.xlsx]MasterList'!$A:$E,4,0)=0,"""",VLOOKUP(C2,'[MSL Master List.xlsx]MasterList'!$A:$E,4,0)),""""),S2)"
+                Range("T2:T" & myTotalWhse).Value = Range("T2:T" & myTotalWhse).Value
+                Range("S2:S" & myTotalWhse).Value = Range("T2:T" & myTotalWhse).Value
+                Range("T2:T" & myTotalWhse).ClearContents
+                Workbooks("MSL Master List.xlsx").Close False
+            'End If
+        
+        'Ver1.3: Remove Bake Yes/Column
+        'Columns("O:O").Delete
+        Columns("R:R").Delete
+        
+        Range("S1").Value = "Ext(Days)"
+        Range("S2:S" & myTotalWhse).Value = "=VLOOKUP(B2,'[" & myWmsFilename & "]Temp'!$A:$L,12,0)"
+        Range("S2:S" & myTotalWhse).Value = Range("S2:S" & myTotalWhse).Value
+        
+        'Ver3.3: Close file
+        Workbooks(myWmsFilename).Close False
+        
+        'Ver1.4: Remain license plate qty and add in to bake/solder ability test column
+        'Range("T1").Value = "LP Qty"
+        'Range("U1").Value = "To baking/To solder ability test"
+        Range("W1").Value = "LP Qty"
+        Range("X1").Value = "To baking/To solder ability test"
+        
+        
+        'Sheets("PLEXWHSE").Delete
+    myTotalAllWhse = Range("A" & Rows.Count).End(xlUp).Row
+        'Ver1.6: Create a Temp Copy for 318
+        Application.DisplayAlerts = False
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Temp.xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+        Application.DisplayAlerts = True
+        'Range("V1").Value = "Delete"
+        'Range("V2:V" & myTotalAllWhse).Value = "=IF(Right(TRIM(C2),4)=""-318"",""Delete"",Row(C2))"
+        'Range("V2:V" & myTotalAllWhse).Value = Range("V2:V" & myTotalAllWhse).Value
+        'Range("A1:V" & myTotalWhse).RemoveDuplicates Columns:=22, Header:=xlNo
+        'Columns("V:V").ClearContents
+        
+        'Ver3.2: Remain 318 requested by Qi En on 2/26/2024
+        'Range("Z1").Value = "Delete"
+        'Range("Z2:Z" & myTotalAllWhse).Value = "=IF(Right(TRIM(C2),4)=""-318"",""Delete"",Row(C2))"
+        'Range("Z2:Z" & myTotalAllWhse).Value = Range("Z2:Z" & myTotalAllWhse).Value
+        'Range("A1:Z" & myTotalWhse).RemoveDuplicates Columns:=26, Header:=xlNo
+            'Re-Sort and remove duplicate again to avoid unclean data
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SortFields.Clear
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SortFields.Add Key:=Range("A2:A" & myTotalWhse), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SetRange Range("A2:Z" & myTotalWhse)
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.Header = xlGuess
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.MatchCase = False
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.Orientation = xlTopToBottom
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.SortMethod = xlPinYin
+            ActiveWorkbook.Worksheets("WMS Expired Inventory ").Sort.Apply
+            myTotalWhse = Range("A" & Rows.Count).End(xlUp).Row
+            'Ver3.2: Remain 318 requested by Qi En on 2/26/2024
+            'Range("A1:Z" & myTotalWhse + 1).RemoveDuplicates Columns:=26, Header:=xlNo
+        Columns("Z:Z").ClearContents
+        
+        myTotalAllWhse = Range("A" & Rows.Count).End(xlUp).Row
+        Range("A2:A" & myTotalAllWhse).Value = "=Row(B1)"
+        'Range("A2:A" & myTotalAllWhse).Value = Range("A2:A" & myTotalAllWhse).Value
+    Sheets.Add before:=ActiveSheet
+    ActiveSheet.Name = "Summary"
+    
+    'Ver1.3: Remove Bake Yes/Column
+    'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'WMS Expired Inventory '!R1C1:R" & myTotalAllWhse & "C19").CreatePivotTable TableDestination:="'Summary'!R3C1", TableName:="PivotTable1"
+        'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'WMS Expired Inventory '!R1C1:R" & myTotalAllWhse & "C18").CreatePivotTable TableDestination:="'Summary'!R3C1", TableName:="PivotTable1"
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'WMS Expired Inventory '!R1C1:R" & myTotalAllWhse & "C23").CreatePivotTable TableDestination:="'Summary'!R3C1", TableName:="PivotTable1"
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Location").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable1").PivotFields("Priority").Orientation = xlColumnField
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Plate No."), "Count of Plate No.", xlCount
+    ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+    ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+    ActiveSheet.PivotTables("PivotTable1").TableStyle2 = "PivotStyleLight16"
+    Cells.Font.Name = "Calibri"
+    Cells.Font.Size = 11
+    myLastTable = Range("A" & Rows.Count).End(xlUp).Row
+    Columns("B:G").HorizontalAlignment = xlCenter
+    Application.EnableEvents = False
+    
+    'Ver2.3: Add in Kitting and RR file
+    Sheets("WMS Expired Inventory ").Select
+    Range("A1:Y" & myTotalWhse).Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("A1:Y" & myTotalWhse).Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("A1:Y" & myTotalWhse).Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("A1:Y" & myTotalWhse).Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("A1:Y" & myTotalWhse).Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("A1:Y" & myTotalWhse).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    Range("Y1").Value = "WO Priority"
+    Range("Z1").Value = "WO exist?"
+    Range("Z2:Z" & myTotalWhse).Value = "=IF(C2=C1,Z1,COUNTIF('[" & myWoFilename & "]Pivot'!$A:$A,C2))"
+    Range("Z2:Z" & myTotalWhse).Value = Range("Z2:Z" & myTotalWhse).Value
+    Range("AA1").Value = "WO Index"
+    Range("AA2:AA" & myTotalWhse).Value = "=IF(Z2=0,0,IF(C2=C1,AA1,MATCH(C2,'[" & myWoFilename & "]Pivot'!$A:$A,0)))"
+    Range("AA2:AA" & myTotalWhse).Value = Range("AA2:AA" & myTotalWhse).Value
+    For myA = 1 To myPivotCol - 1
+        Cells(1, 27 + myA).Value = "Priority " & myA
+        Range(Cells(2, 27 + myA), Cells(myTotalWhse, 27 + myA)).Value = "=IF(AA2=0,0,INDEX(OFFSET('[" & myWoFilename & "]Pivot'!$A:$A,0," & myA & "),AA2))"
+        Range(Cells(2, 27 + myA), Cells(myTotalWhse, 27 + myA)).Value = Range(Cells(2, 27 + myA), Cells(myTotalWhse, 27 + myA)).Value
+    Next myA
+    Columns("AB:AB").Insert
+    'Range("AB1").Value = "# of Part"
+    'Range("AB2:AB" & myTotalWhse).Value = "=IF(C3=C2,AB3+1,1)"
+    Range("AB1").Value = "Accum Part Qty"
+    Range("AB2:AB" & myTotalWhse).Value = "=IF(C2=C1,AB1+W2,W2)"
+    Range("AB2:AB" & myTotalWhse).Value = Range("AB2:AB" & myTotalWhse).Value
+    For myB = 2 To myTotalWhse
+        'myB = myB - 1
+        myTotalWoQty = 0
+        If Range("AA" & myB).Value > 0 Then
+            Range("AA" & myB).Select
+            If Range("C" & myB).Value = Range("C" & myB - 1).Value Then
+                For myC = 1 To myPivotCol - 1
+                    If Cells(myB, 28 + myC).Value > 0 Then
+                        myTotalWoQty = myTotalWoQty + Cells(myB, 28 + myC).Value
+                    End If
+                    If myTotalWoQty > Range("AB" & myB - 1).Value Then
+                        Range("Y" & myB).Value = myC
+                        Exit For
+                    End If
+                Next myC
+            Else
+                For myC = 1 To myPivotCol - 1
+                    If Cells(myB, 28 + myC).Value > 0 Then
+                        Range("Y" & myB).Value = myC
+                        Exit For
+                    End If
+                Next myC
+            End If
+        End If
+    Next myB
+        Columns("Z:AZ").ClearContents
+    Sheets("Summary").Select
+    
+    'Ver3.3: Set to middle and auto fit
+    Columns("B:Z").HorizontalAlignment = xlCenter
+    Cells(4, (Cells(4, Columns.Count).End(xlToLeft).Column)).EntireColumn.AutoFit
+    
+    'Ver2.9: New requirement from Sally and Size Yen
+    Workbooks(myWoFilename).Close False
+    Workbooks.Open myWoFile, ReadOnly:=True
+    ActiveSheet.Name = "Temp"
+    Workbooks("Temp.xlsx").Activate
+    Sheets("WMS Expired Inventory ").Range("Z1").Value = "WO Release?"
+    Sheets("WMS Expired Inventory ").Range("Z2:Z" & myTotalWhse).Value = "=IF(IFERROR(VLOOKUP(C2,'[" & myWoFilename & "]Temp'!$F:$F,1,0),"""")="""","""",""Yes"")"
+    Sheets("WMS Expired Inventory ").Range("Z2:Z" & myTotalWhse).Value = Sheets("WMS Expired Inventory ").Range("Z2:Z" & myTotalWhse).Value
+    Sheets("WMS Expired Inventory ").Range("Z2:Z" & myTotalWhse).Value = Sheets("WMS Expired Inventory ").Range("Z2:Z" & myTotalWhse).Value
+    Sheets("WMS Expired Inventory ").Range("Z1:Z" & myTotalWhse).Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Sheets("WMS Expired Inventory ").Range("Z1:Z" & myTotalWhse).Borders(xlEdgeTop).LineStyle = xlContinuous
+    Sheets("WMS Expired Inventory ").Range("Z1:Z" & myTotalWhse).Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Sheets("WMS Expired Inventory ").Range("Z1:Z" & myTotalWhse).Borders(xlEdgeRight).LineStyle = xlContinuous
+    Sheets("WMS Expired Inventory ").Range("Z1:Z" & myTotalWhse).Borders(xlInsideVertical).LineStyle = xlContinuous
+    Sheets("WMS Expired Inventory ").Range("Z1:Z" & myTotalWhse).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    
+    
+    ActiveWorkbook.SaveAs Filename:=mySavePath & "49 days_WMS Expired part Report _" & Format(Date, "YYYYMMDD") & "(Baking).xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False ', writeResPassword:="888"
+    'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False ', writeResPassword:="888"
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\49 days_WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False ', writeResPassword:="888"
+
+    Workbooks(myItemBranchFilename).Close False
+    Workbooks(myLssFilename).Close False
+    Workbooks(myPlexWhseFilename).Close False
+    'Ver2.3:
+    Workbooks(myWoFilename).Close False
+    Workbooks(myWmsKittingFilename).Close False
+    
+    Application.EnableEvents = True
+    
+'    With CreateObject("Outlook.Application").CreateItem(0)
+'        '.To = "sk.loon@plexus.com"
+'        .Bcc = "sk.loon@plexus.com"
+'        .To = "PLXS-MFG.Penang.Store.Group.Leader@plexus.com; PLXS-MFG.Islandview.Store.Line.Side@plexus.com; Store_IslandView@plexus.com; Chia-Liang.Lew@plexus.com; Farhanuddin.Anwar@plexus.com; Qayum.Najib@plexus.com; Rusli.Ab-Hamid@plexus.com; abdul-aziz.mohamad@plexus.com; SP.Ooh@plexus.com; pc.choo@plexus.com; Pushphaleela.Modusamy@plexus.com; Kovilla.Karuppiah@plexus.com; Muzaini.Seenimohd@plexus.com; Tc.Lim@plexus.com; Nithia.Anbanathan@plexus.com; ker-vin.sim@plexus.com"
+'        .Cc = "Chun-Hsiung.Lim@plexus.com; PLXS-MFGIslandViewPurchasingDAs@plexus.com; PLXS-MFG.Islandview.Planning@plexus.com; Product_Engineering_IslandView@plexus.com; Program_Mgmt_IslandView@plexus.com; Kai-Chat.Chu@plexus.com; Chin-Chan.Hee@plexus.com; Farhanuddin.Anwar@plexus.com; Chia-Liang.Lew@plexus.com; CV.Chan@plexus.com; Chee-Lee.Low@plexus.com; Cheng-Choon.Soo@plexus.com; Size-Yen.Lim@plexus.com; Size-Yen.Lim@plexus.com; Seng-Chung.Khaw@plexus.com; Chin-Keong.Khaw@plexus.com; Angie.Lee@plexus.com; Boon-Poh.Seah@plexus.com; Jan-Jhin.Ho@plexus.com; Kim-Kee.Ooi@plexus.com; Wee-Wei.Khoh@plexus.com; Aina.Senin@plexus.com; Ervina.Tampubolon@plexus.com; Fadzilah.Saad@plexus.com; Izayati.Ibrahim@plexus.com; Madan-Lal.Rajbanshi@plexus.com; norsazaazree.saaibon@plexus.com; Rushiela.Rusmi@plexus.com; Siti-Norfatin.Rasul@plexus.com; Tarida.Sinaga@plexus.com; Najeb.Noordin@plexus.com; Ikhwan.Azlisham@plexus.com; Albert.Jeffry@plexus.com"
+'        .Subject = "WMS Expired Parts Report - " & Format(Date, "D Mmm Yyyy")
+'        .HTMLBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p><b>****Remove Process Team from this email as per request from TJ Tan****</b>" & _
+'                  "<html><BODY style=font-size:11pt;font-family:Calibri><p><b>To whom it may concern,</b>" & _
+'                  "<html><br><br>Attached WMS Expired Parts Report which consist of <font color=blue>inventory with expired shelf life or expiry date in next 49 days vs 7 weeks demand </font> (refer below priority).<br/>" & _
+'                  "<html><br>Take note that these are the entire inventory in store location. There is no triggering point to DAs on the particular expired license plate when release WOs until store team started for WO kitting." & _
+'                  "<html><br>Thus, DAs will be sending this report on weekly basis, target to reduce/prevent the shelf life issue before WO loading." & _
+'                  "<html><br>Please react according." & _
+'                  "<html><br><br>Refer Column P for Priority." & _
+'                  "<html><br>Current wk demand&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 1" & _
+'                  "<html><br>Current wk demand + 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 2" & _
+'                  "<html><br>Current wk demand + 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 3" & _
+'                  "<html><br>Current wk demand + 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 4" & _
+'                  "<html><br>Current wk demand + 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 5" & _
+'                  "<html><br>Current wk demand + 5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 6" & _
+'                  "<html><br>Current wk demand + 6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 7" & _
+'                  "<html>" & RangetoHTML(Sheets("Summary").Range("A3:J" & myLastTable)) & _
+'                  "<p>" & _
+'                  "<br>NOTE: To those who did not wish to receve this email, please send a seperate email to sk.loon@plexus.com" & _
+'                  "<p>" & _
+'                  "<br>This is an auto generated email no reply required</p></BODY></html>"
+'        'RangetoHTML(Range("A3:D" & myTotalWod))
+'        '.Attachments.Add myMacroPath & "\PO commit date more than 3 days (" & Format(Date, "MMDDYYYY") & ").xlsx"
+'        .Attachments.Add myMacroPath & "\" & Year(Date) & "\49 days_WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx"
+'        '.Display
+'        .Send
+'    End With
+    myBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Hi all," & _
+                  "<html><br>Attached WMS Expired Parts Report which consist of <font color=blue>inventory with expired shelf life or expiry date in next 49 days vs 7 weeks demand </font> (refer below priority).<br/>" & _
+                  "<html><br>Take note that these are the entire inventory in store location. There is no triggering point to DAs on the particular expired license plate when release WOs until store team started for WO kitting." & _
+                  "<html><br>Thus, DAs will be sending this report on weekly basis, target to reduce/prevent the shelf life issue before WO loading." & _
+                  "<html><br>Please react according." & _
+                  "<html><br><br>Refer Column P for Priority." & _
+                  "<html><br>Current wk demand&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 1" & _
+                  "<html><br>Current wk demand + 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 2" & _
+                  "<html><br>Current wk demand + 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 3" & _
+                  "<html><br>Current wk demand + 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 4" & _
+                  "<html><br>Current wk demand + 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 5" & _
+                  "<html><br>Current wk demand + 5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 6" & _
+                  "<html><br>Current wk demand + 6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 7" & _
+                  "<html>" & RangetoHTML(Sheets("Summary").Range("A3:J" & myLastTable))
+    Application.EnableEvents = False
+    Workbooks("49 days_WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx").Close False
+    Application.EnableEvents = True
+    myAttachement(0) = myMacroPath & "\" & Year(Date) & "\49 days_WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx"
+    Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "PLXS-MFG.Penang.Store.Group.Leader@plexus.com; PLXS-MFG.Islandview.Store.Line.Side@plexus.com; Store_IslandView@plexus.com; Chia-Liang.Lew@plexus.com; Farhanuddin.Anwar@plexus.com; Qayum.Najib@plexus.com; Rusli.Ab-Hamid@plexus.com; abdul-aziz.mohamad@plexus.com; pc.choo@plexus.com; Pushphaleela.Modusamy@plexus.com; Kovilla.Karuppiah@plexus.com; Muzaini.Seenimohd@plexus.com; Tc.Lim@plexus.com; program_mgmt_islandview@plexus.com;caroline.choo@plexus.com; lee-leng.yeoh@plexus.com", _
+            "Chun-Hsiung.Lim@plexus.com; PLXS-MFGIslandViewPurchasingDAs@plexus.com; PLXS-MFG.Islandview.Planning@plexus.com; Product_Engineering_IslandView@plexus.com; Program_Mgmt_IslandView@plexus.com; Kai-Chat.Chu@plexus.com; Chin-Chan.Hee@plexus.com; Farhanuddin.Anwar@plexus.com; Chia-Liang.Lew@plexus.com; CV.Chan@plexus.com; Chee-Lee.Low@plexus.com; Cheng-Choon.Soo@plexus.com; Size-Yen.Lim@plexus.com; Size-Yen.Lim@plexus.com; Seng-Chung.Khaw@plexus.com; Chin-Keong.Khaw@plexus.com; Angie.Lee@plexus.com; Boon-Poh.Seah@plexus.com; Jan-Jhin.Ho@plexus.com; Kim-Kee.Ooi@plexus.com; Wee-Wei.Khoh@plexus.com; Aina.Senin@plexus.com; Fadzilah.Saad@plexus.com; Izayati.Ibrahim@plexus.com; norsazaazree.saaibon@plexus.com; Rushiela.Rusmi@plexus.com; Siti-Norfatin.Rasul@plexus.com; Najeb.Noordin@plexus.com; Ikhwan.Azlisham@plexus.com; Albert.Jeffry@plexus.com", _
+            "sk.loon@plexus.com", _
+            "WMS Expired Parts Report - " & Format(Date, "D Mmm Yyyy"), _
+            myBody, _
+            myAttachement(), _
+            1, 0)
+
+    
+'    'Ver1.6: 318 only
+'    myWoFile = Dir("\\ap\penadata\Applications\Report_Kinaxis\Material\318 Part List with Remaining REQ." & Format(Date - 1, "YYYYMMDD") & "*.tab")
+'
+'    If myWoFile = "" Then
+'        With CreateObject("Outlook.Application").CreateItem(0)
+'            .To = "sk.loon@plexus.com; Buan-Khoon.Yeap@plexus.com; Conie.Fan@plexus.com"
+'            .Subject = "Error: Expired Part Report (Baking) for 318"
+'            .HTMLBody = "<html><br><br>318_Part List with Remaining REQ File not found!.<br/>"
+'            .Send
+'        End With
+'    Else
+'        'myWoFile = "\\ap\penadata\Applications\Report_Kinaxis\Material\318_Part List with Remaining REQ." & Format(Date - 7, "YYYYMMDD") & "*.tab"
+'        Workbooks.Open Filename:="\\ap\penadata\Applications\Report_Kinaxis\Material\" & myWoFile
+'        ActiveSheet.Name = "Temp"
+'
+'        Workbooks.Open Filename:=myMacroPath & "\Temp.xlsx"
+'        myTotalAllWhse = Range("A" & Rows.Count).End(xlUp).Row
+'        Range("V1").Value = "Delete"
+'            Range("V2:V" & myTotalAllWhse).Value = "=IF(Right(TRIM(C2),4)<>""-318"",""Delete"",Row(C2))"
+'            Range("V2:V" & myTotalAllWhse).Value = Range("V2:V" & myTotalAllWhse).Value
+'            Range("A1:V" & myTotalWhse).RemoveDuplicates Columns:=22, Header:=xlNo
+'            Columns("V:V").ClearContents
+'            myTotalAllWhse = Range("A" & Rows.Count).End(xlUp).Row
+'            Range("A2:A" & myTotalAllWhse).Value = "=Row(B1)"
+'            Range("A2:A" & myTotalAllWhse).Value = Range("A2:A" & myTotalAllWhse).Value
+'            Range("V1").Value = "WO"
+'            Range("W1").Value = "Library"
+'            Range("X1").Value = "Baking time"
+'            Range("Y1").Value = "Owner"
+'            Range("A1:Y" & myTotalAllWhse).Borders(xlEdgeLeft).LineStyle = xlContinuous
+'            Range("A1:Y" & myTotalAllWhse).Borders(xlEdgeTop).LineStyle = xlContinuous
+'            Range("A1:Y" & myTotalAllWhse).Borders(xlEdgeBottom).LineStyle = xlContinuous
+'            Range("A1:Y" & myTotalAllWhse).Borders(xlEdgeRight).LineStyle = xlContinuous
+'            Range("A1:Y" & myTotalAllWhse).Borders(xlInsideVertical).LineStyle = xlContinuous
+'            Range("A1:Y" & myTotalAllWhse).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+'            Range("V2:V" & myTotalAllWhse).Value = "=IF(COUNTIF('[" & myWoFile & "]Temp'!$F:$F,C2)=0,""No"",""Yes"")"
+'            Range("V2:V" & myTotalAllWhse).Value = Range("V2:V" & myTotalAllWhse).Value
+'            Range("W2:W" & myTotalAllWhse).Value = "=IF(VLOOKUP(C2,'[Baking Library_2.0.xlsx]Baking Library_TER'!$C:$J,8,0)=0,"""",VLOOKUP(C2,'[Baking Library_2.0.xlsx]Baking Library_TER'!$C:$J,8,0))"
+'            Range("W2:W" & myTotalAllWhse).Value = Range("W2:W" & myTotalAllWhse).Value
+'            Range("X2:X" & myTotalAllWhse).Value = "=IF(VLOOKUP(C2,'[Baking Library_2.0.xlsx]Baking Library_TER'!$C:$J,6,0)=0,"""",VLOOKUP(C2,'[Baking Library_2.0.xlsx]Baking Library_TER'!$C:$J,6,0))"
+'            Range("X2:X" & myTotalAllWhse).Value = Range("X2:X" & myTotalAllWhse).Value
+'            'Convert Baking time to day
+'            For myY = 2 To myTotalAllWhse
+'                If IsError(Range("X" & myY).Value) Then
+'                    Range("Z" & myY).Value = "NA"
+'                ElseIf InStr(1, UCase(Range("X" & myY).Value), "HRS", vbBinaryCompare) Then
+'                    Range("Z" & myY).Value = Replace(Replace(UCase(Range("X" & myY).Value), "HRS", ""), " ", "") / 24
+'                ElseIf InStr(1, UCase(Range("X" & myY).Value), "HR", vbBinaryCompare) Then
+'                    Range("Z" & myY).Value = Replace(Replace(UCase(Range("X" & myY).Value), "HR", ""), " ", "") / 24
+'                ElseIf InStr(1, UCase(Range("X" & myY).Value), "HOURS", vbBinaryCompare) Then
+'                    Range("Z" & myY).Value = Replace(Replace(UCase(Range("X" & myY).Value), "HOURS", ""), " ", "") / 24
+'                ElseIf InStr(1, UCase(Range("X" & myY).Value), "HOUR", vbBinaryCompare) Then
+'                    Range("Z" & myY).Value = Replace(Replace(UCase(Range("X" & myY).Value), "HOUR", ""), " ", "") / 24
+'                ElseIf InStr(1, UCase(Range("X" & myY).Value), "DAYS", vbBinaryCompare) Then
+'                    Range("Z" & myY).Value = Replace(Replace(UCase(Range("X" & myY).Value), "DAYS", ""), " ", "")
+'                ElseIf InStr(1, UCase(Range("X" & myY).Value), "DAY", vbBinaryCompare) Then
+'                    Range("Z" & myY).Value = Replace(Replace(UCase(Range("X" & myY).Value), "DAY", ""), " ", "")
+'                Else
+'                    Range("Z" & myY).Value = Range("X" & myY).Value
+'                End If
+'            Next myY
+'            'Getting the owner
+'            For myY = 2 To myTotalAllWhse
+'                If myY = 180 Then
+'                    a = 0
+'                End If
+'                'PCB
+'                If InStr(1, UCase(Range("C" & myY).Value), "PCB", vbBinaryCompare) Then
+'                    Range("Y" & myY).Value = "Production - Internal Baking"
+'                'Error
+'                ElseIf IsError(Range("W" & myY).Value) Then
+'                    Range("Y" & myY).Value = "Process team - Need to adv the status on baking time (no in Library)"
+'                'Bake or Baking
+'                ElseIf InStr(1, UCase(Range("W" & myY).Value), "BAKE", vbBinaryCompare) Or InStr(1, UCase(Range("W" & myY).Value), "BAKING", vbBinaryCompare) Then
+'                    If IsNumeric(Range("Z" & myY).Value) Then
+'                        If Range("Z" & myY).Value > 8 Then
+'                            Range("Y" & myY).Value = "Buyer - need to send out for baking"
+'                        Else
+'                            Range("Y" & myY).Value = "Production - Internal Baking"
+'                        End If
+'                    Else
+'                        Range("Y" & myY).Value = "Process team - Need to adv the status on baking time (no in Library)"
+'                    End If
+'                'Solder Test
+'                ElseIf InStr(1, UCase(Range("W" & myY).Value), "SOLDER", vbBinaryCompare) Then
+'                    Range("Y" & myY).Value = "Only Solder Test"
+'                Else
+'                    Range("Y" & myY).Value = "Process team - Need to adv the status on baking time (no in Library)"
+'                End If
+'
+'
+'            Next myY
+'            Columns("Z:Z").ClearContents
+'            Columns("W:Y").AutoFit
+'        Sheets.Add before:=ActiveSheet
+'        ActiveSheet.Name = "Summary"
+'
+'        'Ver1.3: Remove Bake Yes/Column
+'        'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'WMS Expired Inventory '!R1C1:R" & myTotalAllWhse & "C19").CreatePivotTable TableDestination:="'Summary'!R3C1", TableName:="PivotTable1"
+'        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'WMS Expired Inventory '!R1C1:R" & myTotalAllWhse & "C18").CreatePivotTable TableDestination:="'Summary'!R3C1", TableName:="PivotTable1"
+'        ActiveSheet.PivotTables("PivotTable1").PivotFields("Location").Orientation = xlRowField
+'        ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF").Orientation = xlRowField
+'        ActiveSheet.PivotTables("PivotTable1").PivotFields("Priority").Orientation = xlColumnField
+'        ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Plate No."), "Count of Plate No.", xlCount
+'        ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+'        ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+'        ActiveSheet.PivotTables("PivotTable1").TableStyle2 = "PivotStyleLight16"
+'        Cells.Font.Name = "Calibri"
+'        Cells.Font.Size = 11
+'        myLastTable = Range("A" & Rows.Count).End(xlUp).Row
+'        Columns("B:G").HorizontalAlignment = xlCenter
+'        Application.EnableEvents = False
+'        ActiveWorkbook.SaveAs Filename:=mySavePath & "318 - WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False ', writeResPassword:="888"
+'        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\318 - WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False ', writeResPassword:="888"
+'
+'        With CreateObject("Outlook.Application").CreateItem(0)
+'            '.To = "sk.loon@plexus.com"
+'            .BCC = "sk.loon@plexus.com"
+'            .To = "Process_Engineering_IslandView@plexus.com; jackson.fong@plexus.com; Mohamadnazri.Shafie@plexus.com; Amran.Ahmad@plexus.com; Fairuz.Radzali@plexus.com; Nizamuddin.Aznam@plexus.com; Devi.Sinaga@plexus.com; Kah-Seng.Lim@plexus.com; James.Yee@plexus.com; Afiq.Zolkeflee@plexus.com; Hanand.Muniandy@plexus.com; Adrian.Khaw@plexus.com; PLXS-MFG.Penang.Store.Group.Leader@plexus.com; PLXS-MFG.Islandview.Store.Line.Side@plexus.com; Store_IslandView@plexus.com"
+'            .CC = "Chun-Hsiung.Lim@plexus.com; PLXS-MFG.Islandview.Purchasing.Teradyne.ETS.Team@plexus.com; PLXS-MFGIslandViewPurchasingDAs@plexus.com; PLXS-MFG.Islandview.Planning@plexus.com; Product_Engineering_IslandView@plexus.com; Program_Mgmt_IslandView@plexus.com"
+'            .Subject = "[318 ONLY] WMS Expired Parts Report - " & Format(Date, "D Mmm Yyyy")
+'            .HTMLBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p><b>Hi Process Team,</b>" & _
+'                      "<html><br><br>Attached WMS Expired Parts Report which consist of <font color=blue>inventory with expired shelf life or expiry date in next 30days vs 4weeks demand </font> (refer below priority).<br/>" & _
+'                      "<html><br>Take note that these are the entire inventory in store location. There is no triggering point to DAs on the particular expired license plate when release WOs until store team started for WO kitting." & _
+'                      "<html><br>Thus, DAs will be sending this report on weekly basis, target to reduce/prevent the shelf life issue before WO loading." & _
+'                      "<html><br>Please react according." & _
+'                      "<html><br><br><font color=blue>Action needed from Process Team:" & _
+'                      "<html><br>Ø  Review and define if the inventory needed for baking?" & _
+'                      "<html><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If yes, please arrange for baking and extend shelf life in WMS once done baking." & _
+'                      "<html><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If parts or any commodity class (refer Column E) not required for baking, please advise if can turn off the expiry tracking in WMS? Otherwise, the parts will be repeated in the next report.</font>" & _
+'                      "<html><br><br>Refer Column P for Priority." & _
+'                      "<html><br>Current wk demand&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 1" & _
+'                      "<html><br>Current wk demand + 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 2" & _
+'                      "<html><br>Current wk demand + 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 3" & _
+'                      "<html><br>Current wk demand + 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=>Priority 4" & _
+'                      "<html>" & RangetoHTML(Sheets("Summary").Range("A3:G" & myLastTable)) & _
+'                      "<p>" & _
+'                      "<br>This is an auto generated email no reply required</p></BODY></html>"
+'            'RangetoHTML(Range("A3:D" & myTotalWod))
+'            '.Attachments.Add myMacroPath & "\PO commit date more than 3 days (" & Format(Date, "MMDDYYYY") & ").xlsx"
+'            .Attachments.Add myMacroPath & "\318 - WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx"
+'            '.Display
+'            .Send
+'        End With
+'    Workbooks("318 - WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx").Close False
+'    End If
+    
+'    Application.EnableEvents = False
+'    Workbooks("49 days_WMS Expired part Report_" & Format(Date, "YYYYMMDD") & "(Baking).xlsx").Close False
+'    Application.EnableEvents = True
+myEnd:
+'    Application.EnableEvents = False
+'    Workbooks(myMacrofile).Close False
+'    Application.EnableEvents = True
+    
+    Application.DisplayAlerts = False
+    Application.Quit
+    
+    'myEndTime = Time
+    'MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Function RangetoHTML(rng As Range)
+
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        .Cells(1).PasteSpecial Paste:=8
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        .DrawingObjects.Delete
+        On Error GoTo 0
+    End With
+
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    RangetoHTML = ts.ReadAll
+    ts.Close
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+
+    'Close TempWB
+    Application.EnableEvents = False
+    TempWB.Close savechanges:=False
+    Application.EnableEvents = True
+
+    'Delete the htm file we used in this function
+    Kill TempFile
+
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+Sub CopyRetry(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV").Range("I" & myStr1 & ":L" & myPivotTotal1 - 1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ElseIf mySequence1 = "Last" Then
+        Sheets("PV").Range("I" & myPivotTotal1 & ":L" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Else
+        Sheets("PV").Range("A4:" & mySequence1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub CopyRetry1(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV Aged>2 Weeks").Range("A" & myStr1 & ":C" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub PasteRetry(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        ElseIf mySequence2 = "Last" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        Else
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub PasteRetry1(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub SendMails()
+    'Declare Send Mail Property
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    'Set OutMail = OutApp.CreateItem(0)
+    
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    
+    'generateHTMLEmail (1)
+    'mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+    mySubject = "Test" 'Replace(mySubject, Chr(10), " ")
+    'myAttachPath = Range("G1").Value & "\"
+    
+    'Ver18: Change to HTML mail
+    'myBody = Range("F12").Value + vbCr + Range("F47").Value
+    
+    
+    For x = 2 To myTotalSend
+        If Cells(x, 3).Value = "Yes" Then
+            If Cells(x, 2).Value = "Yes" Then
+                Set OutMail = OutApp.CreateItem(0)
+                myTo = ""
+                myCc = ""
+                
+                'If Range("G2").Value <> "" Then
+                '    myTo = Range("G2").Value & ";"
+                'End If
+                'If Range("G3").Value Then
+                '    myCC = Range("G3").Value & ";"
+                'End If
+                
+                
+                
+                'imgEmbedComm = "<html><body><img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+                             & "<br><br><br></body></html>"
+                 imgEmbedComm = "<br><B>Embedded Image:</B><br>" _
+& "<img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+& "<br>Best Regards, <br>Sumit</font></span>"
+                htmlBodyCont = imgEmbedComm
+    
+                
+                With OutMail
+                .To = myTo
+                .Cc = myCc
+                .Subject = mySubject '& " (" & Cells(X, 1).Value & ")"
+                '.Body = myBody
+
+                .HTMLBody = htmlBodyCont & "1"
+                
+
+                    
+                    If Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send" Then
+                        .Send
+                        Cells(x, 4).Value = "Sent"
+                    Else
+                        .Display
+                        Range("i1").Value = ActiveWorkbook.Path & "\1.jpg"
+                        Cells(x, 4).Value = "Displayed"
+                    End If
+                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(x, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next x
+    MsgBox "Done!!!"
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub OpoSelect()
+    myOpoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Open PO Report (FOB) file")
+    If myOpoFile = False Then
+    Else
+        Range("B4").Value = myOpoFile
+    End If
+End Sub
+Sub SeaShipmentSelect()
+    mySeaFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Sea Shipment Part file")
+    If mySeaFile = False Then
+    Else
+        Range("B6").Value = mySeaFile
+    End If
+End Sub
+Sub PriceBookSelect()
+    myPriceBookFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Price Book file")
+    If myPriceBookFile = False Then
+    Else
+        Range("B8").Value = myPriceBookFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    'Ver2.5: Change Path
+    'Workbooks.Open Filename:="\\pena-dsk-601\ProcessEngineering\TERADYNE Baking Library\Baking Library_2.0.xlsx", UpdateLinks:=False, ReadOnly:=True
+        'Ver3.1:
+        'Workbooks.Open Filename:="\\ap\mfg\PenaData\ISL\ISL_Operations\TERADYNE Baking Library\Baking Library_2.0.xlsx", UpdateLinks:=False, ReadOnly:=True
+        Workbooks.Open Filename:="\\ap\mfg\PenaData\ISL\ISL_Operations\TERADYNE_Baking_Library\Baking Library_2.0.xlsx", UpdateLinks:=False, ReadOnly:=True
+        
+    Application.DisplayAlerts = True
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+'Function RangetoHTML(rng As Range)
+'
+'    Dim fso As Object
+'    Dim ts As Object
+'    Dim TempFile As String
+'    Dim TempWB As Workbook
+'
+'    On Error GoTo myQuit
+'    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+'
+'    'Copy the range and create a new workbook to past the data in
+'    rng.Copy
+'    Set TempWB = Workbooks.Add(1)
+'    With TempWB.Sheets(1)
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial Paste:=8
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteValues, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).Select
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        Application.CutCopyMode = False
+'        On Error Resume Next
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Visible = True
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Delete
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        On Error GoTo 0
+'    End With
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Publish the sheet to a htm file
+'    With TempWB.PublishObjects.Add( _
+'         SourceType:=xlSourceRange, _
+'         Filename:=TempFile, _
+'         Sheet:=TempWB.Sheets(1).Name, _
+'         Source:=TempWB.Sheets(1).UsedRange.Address, _
+'         HtmlType:=xlHtmlStatic)
+'        .Publish (True)
+'    End With
+'
+'    'Read all data from the htm file into RangetoHTML
+'    Set fso = CreateObject("Scripting.FileSystemObject")
+'    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = ts.ReadAll
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    ts.Close
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Close TempWB
+'    TempWB.Close savechanges:=False
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Delete the htm file we used in this function
+'    Kill TempFile
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    Set ts = Nothing
+'    Set fso = Nothing
+'    Set TempWB = Nothing
+'myQuit:
+'End Function
