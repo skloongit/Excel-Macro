@@ -1,0 +1,697 @@
+Dim myAttachement() As String
+Dim mySuccess As String
+Sub Dashboard()
+    ReDim myAttachement(0)
+    Set WSHnet = CreateObject("WScript.Network")
+    UserName = WSHnet.UserName
+    UserDomain = WSHnet.UserDomain
+    UserComputer = Environ$("computername")
+    'Set TheUser = GetObject("WinNT://" & UserDomain & "/" & UserName & ",user")
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    Sheets("Dashboard1").Select
+    myTodayRow = Application.WorksheetFunction.Match(CDbl(Date), Sheets("Data").Columns("B:B"), 1)
+    
+    'V1: Get Remark  Ww'Yy
+    myRemarkWwYy = Right(Sheets("Data").Range("A" & myTodayRow - 1).Value, 2) & "'" & Mid(Sheets("Data").Range("A" & myTodayRow - 1).Value, 3, 2)
+            
+    'Legacy & ETS800 shared path-->\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneProgram\ETS\PO_Masterfile\OTD
+    myLegacyEtsPath = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneProgram\ETS\PO_Masterfile\OTD"
+    If Dir(myLegacyEtsPath, vbDirectory) = "" Then
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Error: Legacy & ETS800 Shared path not found! <br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                myAttachement(), _
+                0, 0)
+        MsgBox "Error: Legacy & ETS800 Shared path not found!"
+        End
+    End If
+    '********* Legacy **********************************************************************************************************
+    myFileCheck = Dir(myLegacyEtsPath & "\ETS Legacy System OTD*", vbNormal)
+    If myFileCheck = "" Then
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>ETS Legacy System OTD file not found! <br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                myAttachement(), _
+                0, 0)
+        MsgBox "ETS Legacy System OTD file not found!"
+        End
+    End If
+    myYyWw = Left(Right(myFileCheck, 7), 2) & Left(Right(myFileCheck, 10), 2)
+    myLegacyFile = myFileCheck
+    Do Until myFileCheck = ""
+        myFileCheck = Dir()
+        If myFileCheck <> "" Then
+            myNewYYWW = Left(Right(myFileCheck, 7), 2) & Left(Right(myFileCheck, 10), 2)
+            If CInt(myNewYYWW) > CInt(myYyWw) Then
+                myLegacyFile = myFileCheck
+            End If
+        End If
+    Loop
+    Application.DisplayAlerts = False
+    Workbooks.Open myLegacyEtsPath & "\" & myLegacyFile, False, True
+    Application.DisplayAlerts = True
+    SheetSelect ("Raw Data")
+    If ActiveSheet.Name <> "Raw Data" Then
+        Workbooks(myLegacyFile).Close False
+        MsgBox "Raw Data sheet not found in ETS 800 System OTD file!"
+        If myFileCheck = "" Then
+            Call SendSmtpEmail( _
+                    "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                    "sk.loon@plexus.com", _
+                    "", _
+                    "", _
+                    ThisWorkbook.Name & " Error!", _
+                    "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>ETS Legacy System OTD file not found! <br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                    myAttachement(), _
+                    0, 0)
+            MsgBox "ETS Legacy System OTD file not found!"
+            End
+        End If
+    End If
+        'V1: Change logic
+        'Change to Lask Week
+        'Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow - 1 & ":C" & myTodayRow + 1).Value = "=COUNTIF('[" & Replace(myLegacyFile, "'", "''") & "]Raw Data'!$B:$B,A" & myTodayRow - 1 & ")"
+        Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow - 1 & ":C" & myTodayRow - 1).Value = "=COUNTIF('[" & Replace(myLegacyFile, "'", "''") & "]Raw Data'!$I:$I,""*" & myRemarkWwYy & "*"")"
+        Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow & ":C" & myTodayRow + 1).Value = "=COUNTIFS('[" & Replace(myLegacyFile, "'", "''") & "]Raw Data'!$E:$E,A" & myTodayRow & ",'[" & Replace(myLegacyFile, "'", "''") & "]Raw Data'!$I:$I,"""")"
+        Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow - 1 & ":C" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow - 1 & ":C" & myTodayRow + 1).Value
+    Workbooks(myLegacyFile).Close False
+    
+    'V2: Add in projection
+    myFileCheck = Dir(myLegacyEtsPath & "\OTD Projection Template\ETS Legacy System OTD*", vbNormal)
+    If myFileCheck <> "" Then
+        Workbooks.Open myLegacyEtsPath & "\OTD Projection Template\" & myFileCheck, False, True
+        Application.DisplayAlerts = True
+        SheetSelect ("Raw Data")
+        If ActiveSheet.Name <> "Raw Data" Then
+            Workbooks(myFileCheck).Close False
+            Call SendSmtpEmail( _
+                    "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                    "sk.loon@plexus.com", _
+                    "", _
+                    "", _
+                    ThisWorkbook.Name & " Error!", _
+                    "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Raw Data sheet not found in ETS 800 System OTD file!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                    myAttachement(), _
+                    0, 0)
+            'MsgBox "Raw Data sheet not found in ETS 800 System OTD file!"
+            End
+        End If
+            'V3: Add in current week
+            'Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow & ":C" & myTodayRow + 1).Value = "=COUNTIF('[" & Replace(myFileCheck, "'", "''") & "]Raw Data'!$I:$I,""*" & myRemarkWwYy & "*"")"
+            'Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow + 1 & ":C" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow + 1 & ":C" & myTodayRow + 1).Value
+            Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow & ":C" & myTodayRow + 1).Value = "=COUNTIFS('[" & Replace(myFileCheck, "'", "''") & "]Raw Data'!$E:$E,A" & myTodayRow & ",'[" & Replace(myFileCheck, "'", "''") & "]Raw Data'!$I:$I,"""")"
+            Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow & ":C" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow & ":C" & myTodayRow + 1).Value
+            
+        Workbooks(myFileCheck).Close False
+    End If
+    
+    
+    '********* ETS 800 **********************************************************************************************************
+    myFileCheck = Dir(myLegacyEtsPath & "\ETS 800 System OTD*", vbNormal)
+    If myFileCheck = "" Then
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>ETS Legacy System OTD file not found! <br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                myAttachement(), _
+                0, 0)
+        MsgBox "ETS 800 System OTD file not found!"
+        End
+    End If
+    myYyWw = Left(Right(myFileCheck, 7), 2) & Left(Right(myFileCheck, 10), 2)
+    myEtsFile = myFileCheck
+    Do Until myFileCheck = ""
+        myFileCheck = Dir()
+        If myFileCheck <> "" Then
+            myNewYYWW = Left(Right(myFileCheck, 7), 2) & Left(Right(myFileCheck, 10), 2)
+            If CInt(myNewYYWW) > CInt(myYyWw) Then
+                myEtsFile = myFileCheck
+            End If
+        End If
+    Loop
+    Application.DisplayAlerts = False
+    Workbooks.Open myLegacyEtsPath & "\" & myEtsFile, False, True
+    Application.DisplayAlerts = True
+    SheetSelect ("Raw Data")
+    If ActiveSheet.Name <> "Raw Data" Then
+        Workbooks(myEtsFile).Close False
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Raw Data sheet not found in ETS 800 System OTD file!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                myAttachement(), _
+                0, 0)
+        MsgBox "Raw Data sheet not found in ETS 800 System OTD file!"
+        End
+    End If
+        'V1: Change logic
+        'Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow - 1 & ":D" & myTodayRow + 1).Value = "=COUNTIF('[" & Replace(myEtsFile, "'", "''") & "]Raw Data'!$B:$B,A" & myTodayRow - 1 & ")"
+        Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow - 1 & ":D" & myTodayRow - 1).Value = "=COUNTIF('[" & Replace(myEtsFile, "'", "''") & "]Raw Data'!$I:$I,""*" & myRemarkWwYy & "*"")"
+        Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow & ":D" & myTodayRow + 1).Value = "=COUNTIFS('[" & Replace(myEtsFile, "'", "''") & "]Raw Data'!$E:$E,A" & myTodayRow & ",'[" & Replace(myEtsFile, "'", "''") & "]Raw Data'!$I:$I,"""")"
+    Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow - 1 & ":D" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow - 1 & ":D" & myTodayRow + 1).Value
+    Workbooks(myEtsFile).Close False
+    
+    'V2: Add in projection
+    myFileCheck = Dir(myLegacyEtsPath & "\OTD Projection Template\ETS 800 System OTD*", vbNormal)
+    If myFileCheck <> "" Then
+        Workbooks.Open myLegacyEtsPath & "\OTD Projection Template\" & myFileCheck, False, True
+        Application.DisplayAlerts = True
+        SheetSelect ("Raw Data")
+        If ActiveSheet.Name <> "Raw Data" Then
+            Workbooks(myFileCheck).Close False
+            Call SendSmtpEmail( _
+                    "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                    "sk.loon@plexus.com", _
+                    "", _
+                    "", _
+                    ThisWorkbook.Name & " Error!", _
+                    "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Raw Data sheet not found in ETS 800 System OTD file!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                    myAttachement(), _
+                    0, 0)
+            'MsgBox "Raw Data sheet not found in ETS 800 System OTD file!"
+            End
+        End If
+            'V3: Add in current week
+            'Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow + 1 & ":D" & myTodayRow + 1).Value = "=COUNTIF('[" & Replace(myFileCheck, "'", "''") & "]Raw Data'!$I:$I,""*" & myRemarkWwYy & "*"")"
+            'Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow + 1 & ":D" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow + 1 & ":D" & myTodayRow + 1).Value
+            Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow & ":D" & myTodayRow + 1).Value = "=COUNTIFS('[" & Replace(myFileCheck, "'", "''") & "]Raw Data'!$E:$E,A" & myTodayRow & ",'[" & Replace(myFileCheck, "'", "''") & "]Raw Data'!$I:$I,"""")"
+            Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow & ":D" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow & ":D" & myTodayRow + 1).Value
+        Workbooks(myFileCheck).Close False
+    End If
+    
+    '********* Magnum **********************************************************************************************************
+    '\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneOperations\Magnum\General\Commit_LB
+    'myMagnumPath = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneProgram\Magnum\OTD_Tracking\" & Year(Date)
+    myMagnumPath = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneOperations\Magnum\General\Commit_LB"
+    myFolderCheck = Dir(myMagnumPath, vbDirectory)
+    If myFolderCheck = "" Then
+        myMagnumPath = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneProgram\Magnum\OTD_Tracking\" & Year(Date) - 1
+        If myFolderCheck = "" Then
+            Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>ETS 800 System OTD file not found!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                myAttachement(), _
+                0, 0)
+            MsgBox "ETS 800 System OTD file not found!"
+            End
+        End If
+    End If
+    
+    'myFileCheck = Dir(myMagnumPath & "\NXT MAG System OTD*", vbNormal)
+    myYyWw = Right(Sheets("Data").Range("A" & myTodayRow - 1).Value, 4)
+    'myFileCheck = Dir(myMagnumPath & "\NXT MAG System OTD*", vbNormal)
+    myFileCheck = Dir(myMagnumPath & "\Plexus Commit week" & myYyWw & ".xlsx", vbNormal)
+    
+    If myFileCheck = "" Then
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Plexus Commit week" & myYyWw & ".xlsx file not found!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                myAttachement(), _
+                0, 0)
+        'MsgBox "NXT MAG System OTD file not found!"
+        MsgBox "Plexus Commit week" & myYyWw & ".xlsx file not found!"
+        End
+    End If
+    myMagnumFile = myFileCheck
+'    myWk = InStr(1, UCase(myFileCheck), "WK", vbBinaryCompare)
+'    If myWk = 0 Then
+'        Call SendSmtpEmail( _
+'                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+'                "sk.loon@plexus.com", _
+'                "", _
+'                "", _
+'                ThisWorkbook.Name & " Error!", _
+'                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to find WK in the NEXT MAG System OTD file name!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+'                myAttachement(), _
+'                0, 0)
+'        MsgBox "Unable to find WK in the NEXT MAG System OTD file name!"
+'        End
+'    End If
+'
+'    myOriWwYy = Mid(myFileCheck, myWk + 2, 5)
+'    myYyWw = Mid(myFileCheck, myWk + 2, 5)
+'    myYyWw = Right(myYyWw, 2) & Left(myYyWw, 2)
+'    myMagnumFile = myFileCheck
+'    Do Until myFileCheck = ""
+'        myFileCheck = Dir()
+'        If myFileCheck <> "" Then
+'            myWk = InStr(1, UCase(myFileCheck), "WK", vbBinaryCompare)
+'            myNewYYWW = Mid(myFileCheck, myWk + 2, 5)
+'            myNewYYWW = Right(myNewYYWW, 2) & Left(myNewYYWW, 2)
+'            If CInt(myNewYYWW) > CInt(myYyWw) Then
+'                myMagnumFile = myFileCheck
+'                myOriWwYy = Mid(myFileCheck, myWk + 2, 5)
+'            End If
+'        End If
+'    Loop
+'    'Check if latest Wk more than 1 file
+'    myFileCheck = Dir(myMagnumPath & "\NXT MAG System OTD*" & myOriWwYy & "*", vbNormal)
+'    mySurfix = InStr(1, myFileCheck, myOriWwYy, vbBinaryCompare)
+'    mySurfix = Mid(myFileCheck, 25 + Len(myOriWwYy))
+'    mySurfix = Replace(mySurfix, "_", "")
+'    mySurfix = Replace(mySurfix, "(", "")
+'    mySurfix = Replace(mySurfix, ")", "")
+'    mySurfix = Replace(mySurfix, "r", "")
+'    mySurfix = Replace(mySurfix, "R", "")
+'    mySurfix = Replace(mySurfix, "-", "")
+'    mySurfix = Replace(mySurfix, ".xlsx", "")
+'    mySurfix = Replace(mySurfix, ".xls", "")
+'    mySurfix = Replace(mySurfix, " ", "")
+'    mySurfix = Replace(mySurfix, "Copy", "")
+'    myNewSurfix = mySurfix
+'    myMagnumFile = myFileCheck
+'    Do Until myFileCheck = ""
+'        myFileCheck = Dir()
+'        If myFileCheck <> "" Then
+'            mySurfix = InStr(1, myFileCheck, myOriWwYy, vbBinaryCompare)
+'            mySurfix = Mid(myFileCheck, 25 + Len(myOriWwYy))
+'            mySurfix = Replace(mySurfix, "_", "")
+'            mySurfix = Replace(mySurfix, "(", "")
+'            mySurfix = Replace(mySurfix, ")", "")
+'            mySurfix = Replace(mySurfix, "r", "")
+'            mySurfix = Replace(mySurfix, "R", "")
+'            mySurfix = Replace(mySurfix, "-", "")
+'            mySurfix = Replace(mySurfix, ".xlsx", "")
+'            mySurfix = Replace(mySurfix, ".xls", "")
+'            mySurfix = Replace(mySurfix, " ", "")
+'            mySurfix = Replace(mySurfix, "Copy", "")
+'            If CInt(mySurfix) > CInt(myNewSurfix) Then
+'                myMagnumFile = myFileCheck
+'                myNewSurfix = mySurfix
+'            End If
+'        End If
+'    Loop
+'
+    Application.DisplayAlerts = False
+    Workbooks.Open myMagnumPath & "\" & myMagnumFile, False, True
+    Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1 & ":E" & myTodayRow + 1).Value = 0
+    For Each mySheet In Worksheets
+        If UCase(Left(mySheet.Name, 1)) = "Q" And mySheet.Visible = -1 Then
+            Workbooks(myMacroFile).Sheets("Data").Range("K" & myTodayRow - 1 & ":K" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1 & ":E" & myTodayRow + 1).Value
+            mySheetname = mySheet.Name
+            'V3: Select sheet only find
+            Sheets(mySheetname).Select
+            Set mySearchValue = Cells.Find(What:="Build Location", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+            If mySearchValue Is Nothing Then
+            
+            Else
+                myLocation = Cells.Find(What:="Build Location", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+            End If
+                Set mySearchValue = Cells.Find(What:="Qty", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                
+                Else
+                    myQty = Cells.Find(What:="Qty", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                End If
+                    Set mySearchValue = Cells.Find(What:="Part Description", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                    If mySearchValue Is Nothing Then
+                    
+                    Else
+                        myDes = Cells.Find(What:="Part Description", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                    End If
+                        Set mySearchValue = Cells.Find(What:="Promise Date", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                        If mySearchValue Is Nothing Then
+                        
+                        Else
+                            myPromiseDateCol = Cells.Find(What:="Promise Date", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                            myPromiseDateRow = Cells.Find(What:="Promise Date", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+                            If Left(Cells(myPromiseDateRow, myPromiseDateCol + 1).Value, 12) = "Promise Date" Then
+                                myPromiseDateCol = myPromiseDateCol + 1
+                            End If
+                        End If
+            'Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1 & ":E" & myTodayRow + 1).Value = "=COUNTIF(OFFSET('[" & Replace(myMagnumFile, "'", "''") & "]" & mySheetname & "'!$A:$A,0," & myCol - 1 & "),A" & myTodayRow - 1 & ")"
+            Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1 & ":E" & myTodayRow + 1).Value = "=COUNTIFS(OFFSET('[" & Replace(myMagnumFile, "'", "''") & "]" & mySheetname & "'!$A:$A,0," & myPromiseDateCol - 1 & "),"">="" & B" & myTodayRow - 1 & ",OFFSET('[" & Replace(myMagnumFile, "'", "''") & "]" & mySheetname & "'!$A:$A,0," & myPromiseDateCol - 1 & "),""<"" & B" & myTodayRow & ",OFFSET('[" & Replace(myMagnumFile, "'", "''") & "]" & mySheetname & "'!$A:$A,0," & myLocation - 1 & "),""PNG"",OFFSET('[" & Replace(myMagnumFile, "'", "''") & "]" & mySheetname & "'!$A:$A,0," & myDes - 1 & "),""*sys*"") + K" & myTodayRow - 1
+            Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1 & ":E" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1 & ":E" & myTodayRow + 1).Value
+        End If
+    Next
+    Workbooks(myMacroFile).Sheets("Data").Range("K" & myTodayRow - 1 & ":K" & myTodayRow + 1).ClearContents
+    
+    Application.DisplayAlerts = True
+'    SheetSelect ("Raw Data")
+'    If ActiveSheet.Name <> "Raw Data" Then
+'        Workbooks(myMagnumFile).Close False
+'        Call SendSmtpEmail( _
+'                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+'                "sk.loon@plexus.com", _
+'                "", _
+'                "", _
+'                ThisWorkbook.Name & " Error!", _
+'                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Raw Data sheet not found in myLegacyFile file!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+'                myAttachement(), _
+'                0, 0)
+'        MsgBox "Raw Data sheet not found in myLegacyFile file!"
+'        End
+'    End If
+'
+'    Set mySearchValue = Cells.Find(What:="Plexus Commit Date (YYYYWW)", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+'    If mySearchValue Is Nothing Then
+'        Call SendSmtpEmail( _
+'                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+'                "sk.loon@plexus.com", _
+'                "", _
+'                "", _
+'                ThisWorkbook.Name & " Error!", _
+'                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Plexus Commit Date (YYYYWW) column not found!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+'                myAttachement(), _
+'                0, 0)
+'        MsgBox "Plexus Commit Date (YYYYWW) column not found! The Macro will stop here!"
+'        End
+'    Else
+'        myCol = Cells.Find(What:="Plexus Commit Date (YYYYWW)", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+'    End If
+'    Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1 & ":E" & myTodayRow + 1).Value = "=COUNTIF(OFFSET('[" & Replace(myMagnumFile, "'", "''") & "]Raw Data'!$A:$A,0," & myCol - 1 & "),A" & myTodayRow - 1 & ")"
+'    Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1 & ":E" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1 & ":E" & myTodayRow + 1).Value
+    Workbooks(myMagnumFile).Close False
+    
+    'Change to RR
+    ''SRS file -->/\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_ETS_Opr\02 Users Folder\SK Loon
+    'mySrsPath = "\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_ETS_Opr\02 Users Folder\SK Loon"
+    'V4
+    'mySrsPath = "\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export"
+    mySrsPath = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830"
+    'myFileCheck = Dir(mySrsPath & "\SRS TER Master.xlsx", vbNormal)
+    myFileCheck = Dir(mySrsPath & "\ISL_BGK Teradyne Shipment Report.xlsx", vbNormal)
+    '
+    
+    If myFolderCheck = "" Then
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>SRS file not found!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                myAttachement(), _
+                0, 0)
+        MsgBox "SRS file not found!"
+        End
+    End If
+    Application.DisplayAlerts = False
+    'Workbooks.Open mySrsPath & "\SRS TER Master.xlsx", False, True
+    Workbooks.Open mySrsPath & "\ISL_BGK Teradyne Shipment Report.xlsx", False, True
+    Application.DisplayAlerts = True
+    'SheetSelect ("Sheet1")
+    SheetSelect ("Shipment History")
+    ' If ActiveSheet.Name <> "Sheet1" Then
+    If ActiveSheet.Name <> "Shipment History" Then
+        Workbooks(myMagnumFile).Close False
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Sheet1 not found in ETS 800 System OTD file!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                myAttachement(), _
+                0, 0)
+        MsgBox "Sheet1 not found in ETS 800 System OTD file!"
+        End
+    End If
+    mySrsTotal = Range("A" & Rows.Count).End(xlUp).Row
+    'Range("A2:A" & mySrsTotal).Value = "=IFERROR(VLOOKUP(B2,'[" & myMacroFile & "]System PN'!$A:$B,2,0),IF(AND(H2=198,IF(COUNTIF(D2,""*system*"")>0,TRUE,FALSE)),""Nextest""))"
+    'Range("A2:A" & mySrsTotal).Value = Range("A2:A" & mySrsTotal).Value
+        'V1: Change System to sys
+        'Range("B2:B" & mySrsTotal).Value = "=IFERROR(IF(A2=""830"",VLOOKUP(E2,'[" & myMacroFile & "]System PN'!$A:$B,2,0),""""),IF(AND(D2=""198"",IF(COUNTIF(F2,""*system*"")>0,TRUE,FALSE)),""Nextest"",""""))"
+        Range("B2:B" & mySrsTotal).Value = "=IFERROR(IF(A2=""830"",VLOOKUP(E2,'[" & myMacroFile & "]System PN'!$A:$B,2,0),""""),IF(AND(D2=""198"",IF(COUNTIF(F2,""*sys*"")>0,TRUE,FALSE)),""Nextest"",""""))"
+    Range("B2:B" & mySrsTotal).Value = Range("B2:B" & mySrsTotal).Value
+    
+    
+    ''Workbooks(myMacroFile).Sheets("Data").Range("I" & myTodayRow - 1 & ":I" & myTodayRow + 1).Value = "=COUNTIFS('[SRS TER Master.xlsx]Sheet1'!$H:$H,198,'[SRS TER Master.xlsx]Sheet1'!$Y:$Y,"">=""&$B37,'[SRS TER Master.xlsx]Sheet1'!$Y:$Y,""<""&$B38,'[SRS TER Master.xlsx]Sheet1'!$D:$D,""*system*"")"
+    'Workbooks(myMacroFile).Sheets("Data").Range("I" & myTodayRow - 1 & ":I" & myTodayRow + 1).Value = "=COUNTIFS('[SRS TER Master.xlsx]Sheet1'!$H:$H,198,'[SRS TER Master.xlsx]Sheet1'!$Y:$Y,"">=""&$B" & myTodayRow - 1 & ",'[SRS TER Master.xlsx]Sheet1'!$Y:$Y,""<""&$B" & myTodayRow & ",'[SRS TER Master.xlsx]Sheet1'!$D:$D,""*system*"")"
+    'Workbooks(myMacroFile).Sheets("Data").Range("I" & myTodayRow - 1 & ":I" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("I" & myTodayRow - 1 & ":I" & myTodayRow + 1).Value
+    
+    'Workbooks(myMacroFile).Sheets("Data").Range("G" & myTodayRow - 1 & ":I" & myTodayRow + 1).Value = "=COUNTIFS('[SRS TER Master.xlsx]Sheet1'!$A:$A,G$7,'[SRS TER Master.xlsx]Sheet1'!$Y:$Y,"">=""&$B" & myTodayRow - 1 & ",'[SRS TER Master.xlsx]Sheet1'!$Y:$Y,""<""&$B" & myTodayRow & ")"
+    'Workbooks(myMacroFile).Sheets("Data").Range("G" & myTodayRow - 1 & ":I" & myTodayRow + 1).Value = Workbooks(myMacroFile).Sheets("Data").Range("G" & myTodayRow - 1 & ":I" & myTodayRow + 1).Value
+    Workbooks(myMacroFile).Sheets("Data").Range("G" & myTodayRow - 1 & ":I" & myTodayRow).Value = "=COUNTIFS('[ISL_BGK Teradyne Shipment Report.xlsx]Shipment History'!$B:$B,G$7,'[ISL_BGK Teradyne Shipment Report.xlsx]Shipment History'!$S:$S,"">=""&$B" & myTodayRow - 1 & ",'[ISL_BGK Teradyne Shipment Report.xlsx]Shipment History'!$S:$S,""<""&$B" & myTodayRow & ",'[ISL_BGK Teradyne Shipment Report.xlsx]Shipment History'!$T:$T,"">0"")"
+    Workbooks(myMacroFile).Sheets("Data").Range("G" & myTodayRow - 1 & ":I" & myTodayRow).Value = Workbooks(myMacroFile).Sheets("Data").Range("G" & myTodayRow - 1 & ":I" & myTodayRow).Value
+    
+    'Workbooks("SRS TER Master.xlsx").Close False
+    Workbooks("ISL_BGK Teradyne Shipment Report.xlsx").Close False
+    
+    Sheets("Dashboard1").Select
+        
+    'New Logic: Get unshipped qty be added in currect week
+    'Legacy
+    myPlannedQty = Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow - 1).Value
+    myShippedQty = Workbooks(myMacroFile).Sheets("Data").Range("G" & myTodayRow - 1).Value
+    If myPlannedQty > myShippedQty Then
+        myThisWkPlannedQty = Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow).Value
+        Workbooks(myMacroFile).Sheets("Data").Range("C" & myTodayRow).Value = myThisWkPlannedQty + myPlannedQty - myShippedQty
+    End If
+        'ETS 800
+        myPlannedQty = Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow - 1).Value
+        myShippedQty = Workbooks(myMacroFile).Sheets("Data").Range("H" & myTodayRow - 1).Value
+        If myPlannedQty > myShippedQty Then
+            myThisWkPlannedQty = Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow).Value
+            Workbooks(myMacroFile).Sheets("Data").Range("D" & myTodayRow).Value = myThisWkPlannedQty + myPlannedQty - myShippedQty
+        End If
+            'NEXTEST
+            myPlannedQty = Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow - 1).Value
+            myShippedQty = Workbooks(myMacroFile).Sheets("Data").Range("I" & myTodayRow - 1).Value
+            If myPlannedQty > myShippedQty Then
+                myThisWkPlannedQty = Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow).Value
+                Workbooks(myMacroFile).Sheets("Data").Range("E" & myTodayRow).Value = myThisWkPlannedQty + myPlannedQty - myShippedQty
+            End If
+    Range("A1:AI60").Select
+    For myA = 1 To 20
+        ErrorHandler1
+        If mySuccess = "Yes" Then Exit For
+    Next myA
+    If mySuccess = "" Then
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Sheet1 not found in ETS 800 System OTD file!<br>User: " & UserName & "<br>Computer: " & UserComputer & "</html>", _
+                myAttachement(), _
+                0, 0)
+    Else
+        Sheets.Add
+        Application.Wait (Now + TimeValue("00:00:01"))
+        ActiveSheet.Range("I1").PasteSpecial
+        Application.Wait (Now + TimeValue("00:00:01"))
+        
+        myObject = Selection.Name
+        Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+        Selection.ShapeRange.PictureFormat.Brightness = 0.5:
+        Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+        Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+        Selection.ShapeRange.Fill.Visible = msoFalse:
+        Selection.ShapeRange.Line.Visible = msoFalse:
+        Selection.ShapeRange.Rotation = 0#:
+        Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+        Selection.ShapeRange.PictureFormat.CropRight = 0#:
+        Selection.ShapeRange.PictureFormat.CropTop = 0#:
+        Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+        'Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+        'Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+        Application.Wait (Now + TimeValue("00:00:01"))
+            Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+            Set oDia = ActiveSheet.ChartObjects.Add(0, 0, (ActiveSheet.Shapes(1).Width) / 2, (ActiveSheet.Shapes(1).Height) / 2)
+            ActiveSheet.Shapes("Chart 1").Line.Visible = msoFalse
+            Set oChartArea = oDia.Chart
+        oDia.Activate
+        oChartArea.ChartArea.Select
+        oChartArea.Paste
+        oChartArea.Export (myMacroPath & "\Image1.jpg")
+        Application.DisplayAlerts = False
+        ActiveSheet.Delete
+        Application.DisplayAlerts = True
+        Sheets("Dashboard1").Select
+        Range("A1").Select
+        myAttachement(0) = myMacroPath & "\Image1.jpg"
+        '"sk.loon@plexus.com;jia-ying.chan@plexus.com;kit-seen.chong@plexus.com;chia-liang.lew@plexus.com"
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "jia-ying.chan@plexus.com;kit-seen.chong@plexus.com;chia-liang.lew@plexus.com;sk.loon@plexus.com;chee-lee.low@plexus.com; hang-soon.teh@plexus.com; hazrina.mahadzir@plexus.com", _
+                "", _
+                "", _
+                "Teradyne Shipment Dashboard", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br><img src=cid:Image1></img></html>", _
+                myAttachement(), _
+                1, 1)
+    'Worksheet_Activate
+        Range("K2").Select
+        ActiveWorkbook.Save
+    Application.Quit
+    'Range("A61").Value = "Upcoming Refresh : " & Now + TimeValue("00:10:00")
+        'Application.OnTime Now + TimeValue("23:59:35"), "Dashboard"
+    'Application.OnTime Now + TimeValue("00:10:00"), "Dashboard"
+    End If
+End Sub
+Sub SheetSelect(mySheet)
+    On Error Resume Next
+    Sheets(mySheet).Select
+End Sub
+Sub ErrorHandler1()
+    On Error GoTo myFail
+    Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture 'Need error handler
+    mySuccess = "Yes"
+    Exit Sub
+myFail:
+End Sub
+Sub Worksheet_Activate()
+    Application.ScreenUpdating = False
+    Application.ExecuteExcel4Macro "SHOW.TOOLBAR(""Ribbon"",False)"
+    Application.DisplayFormulaBar = False
+    ActiveWindow.DisplayHeadings = False
+    Application.DisplayStatusBar = False
+    ActiveWindow.DisplayWorkbookTabs = False
+    ActiveWindow.DisplayHorizontalScrollBar = False
+    ActiveWindow.DisplayVerticalScrollBar = False
+    Application.ScreenUpdating = True
+End Sub
+Sub Worksheet_Deactivate()
+    Range("A1").Select
+    On Error Resume Next
+    myNextRun = CDate(Mid(Range("A61").Value, 20))
+    Application.OnTime Earliesttime:=myNextRun, Procedure:="Dashboard", Schedule:=False
+    Application.ScreenUpdating = False
+    Application.ExecuteExcel4Macro "SHOW.TOOLBAR(""Ribbon"",True)"
+    Application.DisplayFormulaBar = True
+    ActiveWindow.DisplayHeadings = True
+    Application.DisplayStatusBar = True
+    ActiveWindow.DisplayWorkbookTabs = True
+    ActiveWindow.DisplayHorizontalScrollBar = True
+    ActiveWindow.DisplayVerticalScrollBar = True
+    Application.ScreenUpdating = True
+    Range("A61").Value = "Upcoming Refresh : -"
+    Range("K2").Select
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+
