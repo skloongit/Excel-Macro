@@ -1,0 +1,697 @@
+Public Declare Function SetCursorPos Lib "user32" (ByVal x As Long, ByVal y As Long) As Long
+Public Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, ByVal dwExtraInfo As Long)
+Public Const MOUSEEVENTF_LEFTDOWN = &H2
+Public Const MOUSEEVENTF_LEFTUP = &H4
+Public Const MOUSEEVENTF_RIGHTDOWN As Long = &H8
+Public Const MOUSEEVENTF_RIGHTUP As Long = &H10
+Declare Function GetCursorPos Lib "user32" (lpPoint As POINTAPI) As Long
+' Create custom variable that holds two integers
+Type POINTAPI
+   Xcoord As Long
+   Ycoord As Long
+End Type
+Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Dim myAttachement() As String
+Sub MaterialMaster()
+    ReDim myAttachement(0)
+    Dim mySuccess As String
+    Dim myWarning As String
+    Dim myError As String
+    
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path & "\"
+        'Ver1.5: Change RR Location
+        'myPath1 = "\\ap\penadata\Applications\Report_Kinaxis\Material\"
+        'Ver2.0: Change RR Location
+        'myPath1 = "\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\"
+        myPath1 = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\"
+        
+        'Ver2.0: Change RR Location
+        ''Ver1.6:: Path 2
+        'myPath2 = "\\NA\NeenData\Corporate\Applications\Kinaxis Rapid Response All Users Export\"
+        myPath2 = "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\"
+        
+    myToday = Date - 1
+    'myMonthYear = Format(Date, "MM. MmmYYYY")
+    myMonthYear = Format(myToday, "MM. MmmYYYY")
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    ''830_16 Buckets Report_Weekly (Buy)
+    'myBucketWeeklyBuyFile = Dir(myPath1 & "830_16 Buckets Report_Weekly (Buy)." & Format(myToday, "YyyyMmDd") & "*")
+    'If myBucketWeeklyBuyFile = "" Then
+    '    myError = myError & "830_16 Buckets Report_Weekly (Buy) Report Kinaxis share drive not found!<br>"
+    'End If
+    '830_16 Buckets Report_Monthly (Buy)
+    'Ver1.6:
+    'myBucketMonthBuyFile = Dir(myPath1 & "830_16 Buckets Report_Monthly (Buy)." & Format(myToday, "YyyyMmDd") & "*")
+    myBucketMonthBuyFile = Dir(myPath2 & "830_16 Buckets Report_Monthly (Buy)." & Format(myToday, "YyyyMmDd") & "*")
+    
+    If myBucketMonthBuyFile = "" Then
+        'Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Error: Material Master", "830_16 Buckets Report_Monthly (Buy) File not found!")
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_16 Buckets Report_Monthly (Buy) File not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    ''830_16 Buckets Report_Weekly (Make)
+    'myBucketWeeklyMakeFile = Dir(myPath1 & "830_16 Buckets Report_Weekly (Make)." & Format(myToday, "YyyyMmDd") & "*")
+    'If myBucketWeeklyMakeFile = "" Then
+    '    myError = myError & "830_16 Buckets Report_Weekly (Make) Report Kinaxis share drive not found!<br>"
+    'End If
+    '830_16 Buckets Report_Monthly (Make)
+    'Ver1.6:
+    'myBucketMonthMakeFile = Dir(myPath1 & "830_16 Buckets Report_Monthly (Make)." & Format(myToday, "YyyyMmDd") & "*")
+    myBucketMonthMakeFile = Dir(myPath2 & "830_16 Buckets Report_Monthly (Make)." & Format(myToday, "YyyyMmDd") & "*")
+    
+    If myBucketMonthMakeFile = "" Then
+        'Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Error: Material Master", "830_16 Buckets Report_Monthly (Make) File not found!")
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_16 Buckets Report_Monthly (Make) File not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    '830_16 Buckets Report_Weekly (Buy)_Planner Code
+    'Ver1.6:
+    'myBucketWeeklyBuyPlannerFile = Dir(myPath1 & "830_16 Buckets Report_Weekly (Buy)_Planner Code." & Format(myToday, "YyyyMmDd") & "*")
+    myBucketWeeklyBuyPlannerFile = Dir(myPath2 & "830_16 Buckets Report_Weekly (Buy)_Planner Code." & Format(myToday, "YyyyMmDd") & "*")
+    
+    If myBucketWeeklyBuyPlannerFile = "" Then
+        'Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Error: Material Master", "830_16 Buckets Report_Weekly (Buy)_Planner Code File not found!")
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_16 Buckets Report_Weekly (Buy)_Planner Code File not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    'Item Branch with AML
+    'Ver1.4: Change path
+    'myIbAmlFile = Dir("\\ap\PenaData\Site\Islandview\Purchasing\Others\" & Year(myToday) & "\Scheduler Report\Item Branch with AML\" & myMonthYear & "\Item Branch with AML - " & Format(myToday + 1, "MMDDYYYY") & ".xlsx")
+    myIbAmlFile = Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(myToday) & "\Scheduler Report\Item Branch with AML\" & myMonthYear & "\Item Branch with AML - " & Format(myToday + 1, "MMDDYYYY") & ".xlsx")
+    If myIbAmlFile = "" Then
+        'myIbAmlFile = Dir("\\ap\PenaData\Site\Islandview\Purchasing\Others\" & Year(myToday) & "\Scheduler Report\Item Branch with AML\" & myMonthYear & "\Item Branch with AML - " & Format(myToday, "MMDDYYYY") & ".xlsx")
+        myIbAmlFile = Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(myToday) & "\Scheduler Report\Item Branch with AML\" & myMonthYear & "\Item Branch with AML - " & Format(myToday, "MMDDYYYY") & ".xlsx")
+        If myIbAmlFile = "" Then
+            'Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Error: Material Master", "Item Branch with AML File not found!")
+            Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Item Branch with AML File not found!</html>", _
+            myAttachement(), _
+            0, 0)
+            
+            GoTo myEnd
+        End If
+    End If
+    '830_Part Source
+    'Ver1.5:Change RR Path
+    'mySoleSource = Dir("\\ap\penadata\Applications\Report_Kinaxis\Material\830_Part Source." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+    'Ver2.0:
+    'mySoleSource = Dir("\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\830_Part Source." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+    mySoleSource = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\830_Part Source." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+    
+    If mySoleSource = "" Then
+        'Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Error: Material Master", "Sole Source File not found!")
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Sole Source File not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    '830_Market_Transit LT
+    'Ver1.5:Change RR Path
+    'myMarketTransit = Dir("\\ap\penadata\Applications\Report_Kinaxis\Material\830_Market_Transit LT." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+    'Ver2.0:
+    'myMarketTransit = Dir("\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\830_Market_Transit LT." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+    myMarketTransit = Dir("\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\830_Market_Transit LT." & Format(myToday, "YYYYMMDD") & "*.xlsx")
+    If myMarketTransit = "" Then
+        'Call EmailSending("sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Error: Material Master", "Market_Transit LT not found!")
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Market_Transit LT not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    'Check Folder Availbility
+    myTotalFolder = Range("B" & Rows.Count).End(xlUp).Row
+    myFolderPath = Range("B11").Value
+    For myCountA = 12 To myTotalFolder
+        myFolderCheck = Dir(myFolderPath & Range("B" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir myFolderPath & Range("B" & myCountA).Value
+        End If
+        myFolderPath = myFolderPath & Range("B" & myCountA).Value
+    Next myCountA
+    'Change path
+    'Workbooks.Open "\\ap\PenaData\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Scheduler Report\Item Branch with AML\" & myMonthYear & "\" & myIbAmlFile, UpdateLinks:=False, ReadOnly:=True
+    Workbooks.Open "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Others\" & Year(Date) & "\Scheduler Report\Item Branch with AML\" & myMonthYear & "\" & myIbAmlFile, UpdateLinks:=False, ReadOnly:=True
+    
+    ClearFilter
+    ActiveSheet.Name = "Temp"
+        'Ver1.3: Cater for multiple MPN that only consider A, I, P AML type
+        Sheets("Temp").Copy after:=ActiveSheet
+        ActiveSheet.Name = "AIP"
+        myIbTotal = Range("F" & Rows.Count).End(xlUp).Row
+        ActiveSheet.Range("$A$4:$AU$" & myIbTotal).RemoveDuplicates Columns:=Array(6, 45, 47), Header:=xlYes
+        myIbTotal = Range("F" & Rows.Count).End(xlUp).Row
+        Range("A4:A" & myIbTotal).Value = "=IF(OR(TRIM(AQ4)=""A"",TRIM(AQ4)=""I"",TRIM(AQ4)=""P""),Row(AQ4),""Delete"")"
+        Range("A4:A" & myIbTotal).Value = Range("A4:A" & myIbTotal).Value
+        ActiveSheet.Range("$A$4:$AU$" & myIbTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+        myIbTotal = Range("F" & Rows.Count).End(xlUp).Row
+        ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("F4:F" & myIbTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("AU4:AU" & myIbTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("AS4:AS" & myIbTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("Temp").Sort.SetRange Range("A4:AU" & myIbTotal)
+        ActiveWorkbook.Worksheets("Temp").Sort.Header = xlYes
+        ActiveWorkbook.Worksheets("Temp").Sort.MatchCase = False
+        ActiveWorkbook.Worksheets("Temp").Sort.Orientation = xlTopToBottom
+        ActiveWorkbook.Worksheets("Temp").Sort.SortMethod = xlPinYin
+        ActiveWorkbook.Worksheets("Temp").Sort.Apply
+        Range("A5:A" & myIbTotal).Value = "=IF(F5=F4,A4+1,1)"
+        Range("A5:A" & myIbTotal).Value = Range("A5:A" & myIbTotal).Value
+        'Range("B5:B" & myIbTotal).Value = "=F5&A5"
+        'Range("B5:B" & myIbTotal).Value = Range("B5:B" & myIbTotal).Value
+        'Range("A5:A" & myIbTotal).Value = Range("B5:B" & myIbTotal).Value
+        Range("B5:B" & myIbTotal).Value = "=IF(F5=F6,AU5&"" (""&AS5&"")""&CHAR(10)&B6,AU5&"" (""&AS5&"")"")"
+        Range("B5:B" & myIbTotal).Value = Range("B5:B" & myIbTotal).Value
+        Sheets("Temp").Select
+    myIbTotal = Range("F" & Rows.Count).End(xlUp).Row
+    ActiveSheet.Range("$A$4:$AU$" & myIbTotal).RemoveDuplicates Columns:=Array(6, 45, 47), Header:=xlYes
+    myIbTotal = Range("F" & Rows.Count).End(xlUp).Row
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("F4:F" & myIbTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("AU4:AU" & myIbTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("AS4:AS" & myIbTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Temp").Sort.SetRange Range("A4:AU" & myIbTotal)
+    ActiveWorkbook.Worksheets("Temp").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Temp").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Temp").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Temp").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Temp").Sort.Apply
+    Range("A5:A" & myIbTotal).Value = "=IF(F5=F4,A4+1,1)"
+    Range("A5:A" & myIbTotal).Value = Range("A5:A" & myIbTotal).Value
+    'Range("B5:B" & myIbTotal).Value = "=F5&A5"
+    'Range("B5:B" & myIbTotal).Value = Range("B5:B" & myIbTotal).Value
+    'Range("A5:A" & myIbTotal).Value = Range("B5:B" & myIbTotal).Value
+    Range("B5:B" & myIbTotal).Value = "=IF(F5=F6,AU5&"" (""&AS5&"")""&CHAR(10)&B6,AU5&"" (""&AS5&"")"")"
+    Range("B5:B" & myIbTotal).Value = Range("B5:B" & myIbTotal).Value
+    'Range("A5:A" & myIbTotal).Value = Range("F5:F" & myIbTotal).Value
+    
+    'Ver1.6:
+    'Workbooks.Open myPath1 & myBucketWeeklyBuyPlannerFile, UpdateLinks:=False, ReadOnly:=True
+    Workbooks.Open myPath2 & myBucketWeeklyBuyPlannerFile, UpdateLinks:=False, ReadOnly:=True
+    
+    ClearFilter
+    ActiveSheet.Name = "Temp"
+    'Ver1.6:
+    'Workbooks.Open myPath1 & myBucketMonthMakeFile, UpdateLinks:=False, ReadOnly:=True
+    Workbooks.Open myPath2 & myBucketMonthMakeFile, UpdateLinks:=False, ReadOnly:=True
+    ClearFilter
+    ActiveSheet.Name = "Temp"
+    myMonthMakeTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("EG4:EG" & myMonthMakeTotal).Value = "Make"
+    'Ver1.6:
+    'Workbooks.Open myPath1 & myBucketMonthBuyFile, UpdateLinks:=False, ReadOnly:=True
+    Workbooks.Open myPath2 & myBucketMonthBuyFile, UpdateLinks:=False, ReadOnly:=True
+    ClearFilter
+    ActiveSheet.Name = "Material Master"
+    myAllTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Columns("EG:FA").Insert
+    Range("EG3").Value = "Buy/Make"
+    Range("EG4:EG" & myAllTotal).Value = "Buy"
+    Workbooks(myBucketMonthMakeFile).Sheets("Temp").Range("A4:EG" & myMonthMakeTotal).Copy
+    Range("A" & myAllTotal + 1).PasteSpecial xlPasteAll
+    myAllTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Application.CutCopyMode = False
+    Workbooks(myBucketMonthMakeFile).Close False
+    Range("EH2").Value = "Planner"
+    Range("EH3").Value = "Code"
+    Range("EH4:EH" & myAllTotal).Value = "=IFERROR(VLOOKUP(E4,'[" & myBucketWeeklyBuyPlannerFile & "]Temp'!$E:$H,4,0),"""")"
+    Range("EH4:EH" & myAllTotal).Value = Range("EH4:EH" & myAllTotal).Value
+    Workbooks(myBucketWeeklyBuyPlannerFile).Close False
+    Range("EI3").Value = "Index"
+    Range("EI4:EI" & myAllTotal).Value = "=MATCH(E4,'[" & myIbAmlFile & "]Temp'!$F:$F,0)"
+    Range("EI4:EI" & myAllTotal).Value = Range("EI4:EI" & myAllTotal).Value
+    Range("EJ2").Value = "Lead"
+    Range("EJ3").Value = "Time"
+    Range("EJ4:EJ" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$H:$H,EI4),"""")"
+    Range("EJ4:EJ" & myAllTotal).Value = Range("EJ4:EJ" & myAllTotal).Value
+    Range("EK2").Value = "Primary"
+    Range("EK3").Value = "UM"
+    Range("EK4:EK" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$I:$I,EI4),"""")"
+    Range("EK4:EK" & myAllTotal).Value = Range("EK4:EK" & myAllTotal).Value
+    Range("EL2").Value = "Purchasing"
+    Range("EL3").Value = "UM"
+    Range("EL4:EL" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$J:$J,EI4),"""")"
+    Range("EL4:EL" & myAllTotal).Value = Range("EL4:EL" & myAllTotal).Value
+    Range("EM1").Value = "Order"
+    Range("EM2").Value = "Policy"
+    Range("EM3").Value = "Code"
+    Range("EM4:EM" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$K:$K,EI4),"""")"
+    Range("EM4:EM" & myAllTotal).Value = Range("EM4:EM" & myAllTotal).Value
+    Range("EN2").Value = "Planning"
+    Range("EN3").Value = "Code"
+    Range("EN4:EN" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$M:$M,EI4),"""")"
+    Range("EN4:EN" & myAllTotal).Value = Range("EN4:EN" & myAllTotal).Value
+    Range("EO2").Value = "Liab"
+    Range("EO3").Value = "Code"
+    Range("EO4:EO" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$Q:$Q,EI4),"""")"
+    Range("EO4:EO" & myAllTotal).Value = Range("EO4:EO" & myAllTotal).Value
+    Range("EP2").Value = "Print"
+    Range("EP3").Value = "Message"
+    Range("EP4:EP" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$Y:$Y,EI4),"""")"
+    Range("EP4:EP" & myAllTotal).Value = Range("EP4:EP" & myAllTotal).Value
+    Range("EQ1").Value = "''EC'"
+    Range("EQ2").Value = "Expected"
+    Range("EQ3").Value = "Cost"
+    Range("EQ4:EQ" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AC:$AC,EI4),"""")"
+    Range("EQ4:EQ" & myAllTotal).Value = Range("EQ4:EQ" & myAllTotal).Value
+    Range("ER2").Value = "''07'"
+    Range("ER3").Value = "Standard"
+    Range("ER4:ER" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AE:$AE,EI4),"""")"
+    Range("ER4:ER" & myAllTotal).Value = Range("ER4:ER" & myAllTotal).Value
+    Range("ES1").Value = "''WA'"
+    Range("ES2").Value = "Weighted"
+    Range("ES3").Value = "Average"
+    Range("ES4:ES" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AK:$AK,EI4),"""")"
+    Range("ES4:ES" & myAllTotal).Value = Range("ES4:ES" & myAllTotal).Value
+    Range("ET1").Value = "EDI"
+    Range("ET2").Value = "Sent"
+    Range("ET3").Value = "Method"
+    Range("ET4:ET" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AN:$AN,EI4),"""")"
+    Range("ET4:ET" & myAllTotal).Value = Range("ET4:ET" & myAllTotal).Value
+    Range("EU2").Value = "Payment"
+    Range("EU3").Value = "Term"
+    Range("EU4:EU" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AO:$AO,EI4),"""")"
+    Range("EU4:EU" & myAllTotal).Copy
+    Range("EU4:EU" & myAllTotal).PasteSpecial xlPasteValues
+    Application.CutCopyMode = False
+    Range("EV2").Value = "Freight"
+    Range("EV3").Value = "Term"
+    Range("EV4:EV" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AP:$AP,EI4),"""")"
+    Range("EV4:EV" & myAllTotal).Value = Range("EV4:EV" & myAllTotal).Value
+    Range("EW2").Value = "AML"
+    Range("EW3").Value = "Type"
+    Range("EW4:EW" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AQ:$AQ,EI4),"""")"
+    Range("EW4:EW" & myAllTotal).Value = Range("EW4:EW" & myAllTotal).Value
+    Range("EX2").Value = "Mfg"
+    Range("EX3").Value = "ID"
+    Range("EX4:EX" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AR:$AR,EI4),"""")"
+    Range("EX4:EX" & myAllTotal).Value = Range("EX4:EX" & myAllTotal).Value
+    Range("EY1").Value = "Mfg"
+    Range("EY2").Value = "Part"
+    Range("EY3").Value = "Number"
+    Range("EY4:EY" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AS:$AS,EI4),"""")"
+    Range("EY4:EY" & myAllTotal).Value = Range("EY4:EY" & myAllTotal).Value
+    Range("EZ2").Value = "Mfg"
+    Range("EZ3").Value = "Name"
+    Range("EZ4:EZ" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$AU:$AU,EI4),"""")"
+    Range("EZ4:EZ" & myAllTotal).Value = Range("EZ4:EZ" & myAllTotal).Value
+    Range("FA2").Value = "Multiple"
+    Range("FA3").Value = "MFG&MPN"
+        'Ver1.3: Cater for multiple MPN that only consider A, I, P AML type
+        'Range("FA4:FA" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]Temp'!$B:$B,EI4),"""")"
+        Range("FA4:FA" & myAllTotal).Value = "=IFERROR(INDEX('[" & myIbAmlFile & "]AIP'!$B:$B,MATCH(E4,'[" & myIbAmlFile & "]AIP'!$F:$F,0)),"""")"
+    Range("FA4:FA" & myAllTotal).Value = Range("FA4:FA" & myAllTotal).Value
+    Range("FA4:FA" & myAllTotal).WrapText = False
+    Columns("DX:DX").Copy Columns("EI:EI")
+    Columns("EJ:EP").Replace What:="0", Replacement:="", LookAt:=xlWhole, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("ET:FA").Replace What:="0", Replacement:="", LookAt:=xlWhole, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("EG:EZ").AutoFit
+    Workbooks(myIbAmlFile).Close False
+    
+    'Sole Source
+    Columns("W:Z").Insert
+    Range("X2").Value = "Code"
+    Range("X3").Value = "Description"
+    Range("Y3").Value = "Group"
+    Range("Z3").Value = "Subgroup"
+        'Ver1.1: Add in Sole/Multiple Source
+        Columns("FF:FF").Insert
+        Range("FF2").Value = "Sole/Multiple"
+        Range("FF3").Value = "Source"
+    
+    'Ver1.5:Change RR Path
+    'Workbooks.Open "\\ap\penadata\Applications\Report_Kinaxis\Material\830_Part Source." & Format(myToday, "YYYYMMDD") & "*.xlsx"
+    'Ver2.0:
+    'Workbooks.Open "\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\830_Part Source." & Format(myToday, "YYYYMMDD") & "*.xlsx"
+    Workbooks.Open "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\830_Part Source." & Format(myToday, "YYYYMMDD") & "*.xlsx"
+    ClearFilter
+    ActiveSheet.Name = "Temp"
+        Set mySearchValue = Rows("3:3").Find(What:="Code", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+        If mySearchValue Is Nothing Then
+            
+        Else
+            mySearchValue = Rows("3:3").Find(What:="Code", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+            
+            'myTempPartSource = Range("A" & Rows.Count).End(xlUp).Row
+            myTempPartSource = Range("A" & Rows.Count).End(xlUp).Row
+                'Ver1.1: Check # of part
+                myMfgPartCol = Application.CountIf(Rows("3:3"), "Mfg Part")
+                If myMfgPartCol = 0 Then
+
+                Else
+                    myMfgPartCol = Application.Match("Mfg Part", Rows("3:3"), 0)
+                    myMfgPartNumber = myMfgPartCol
+                    myMfgPartCol = Split(Cells(1, myMfgPartCol).Address, "$")(1)
+                End If
+                Range("C4:C" & myTempPartSource).Value = "=B4&" & myMfgPartCol & "4"
+                Range("C4:C" & myTempPartSource).Value = Range("C4:C" & myTempPartSource).Value
+                Range("C3").Value = "Concat"
+                Sheets.Add after:=ActiveSheet
+                ActiveSheet.Name = "No. of Source"
+                Range("A3").Select
+                ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'Temp'!R3C1:R" & myTempPartSource & "C3").CreatePivotTable TableDestination:="'No. of Source'!R3C1", TableName:="PivotTable1"
+                ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+                ActiveSheet.PivotTables("PivotTable1").ShowDrillIndicators = False
+                ActiveSheet.PivotTables("PivotTable1").RowAxisLayout xlTabularRow
+                ActiveSheet.PivotTables("PivotTable1").PivotFields("Number").Orientation = xlRowField
+                ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Concat"), "Count of Concat", xlCount
+                Columns("A:B").Copy
+                Range("A1").PasteSpecial xlValues
+                
+                Sheets("Temp").Select
+                Range("D4:D" & myTempPartSource).Value = "=VLOOKUP(B4,'No. of Source'!A:B,2,0)"
+                Range("D4:D" & myTempPartSource).Value = Range("D4:D" & myTempPartSource).Value
+                Range("E4:E" & myTempPartSource).Value = "=IF(D4>1,""Multiple"",""Sole"")"
+                Range("E4:E" & myTempPartSource).Value = Range("E4:E" & myTempPartSource).Value
+                'Range("A3:AZ" & myTempPartSource).RemoveDuplicates Columns:=mySearchValue, Header:=xlNo
+                Range("A3:BK" & myTempPartSource).RemoveDuplicates Columns:=Array(2, mySearchValue), Header:=xlNo
+                myTempPartSource = Range("A" & Rows.Count).End(xlUp).Row
+                
+            'Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("W4:W" & myAllTotal).Value = "=MATCH(V4,'[" & mySoleSource & "]Temp'!$AI:$AI,0)"
+            Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("W4:W" & myAllTotal).Value = "=MATCH(V4,OFFSET('[" & mySoleSource & "]Temp'!$A:$A,0," & mySearchValue - 1 & "),0)"
+            Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("W4:W" & myAllTotal).Value = Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("W4:W" & myAllTotal).Value
+            mySearchValue = Rows("3:3").Find(What:="Code Description", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+            'Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("X4:X" & myAllTotal).Value = "=IFERROR(INDEX('[" & mySoleSource & "]Temp'!$AJ:$AJ,W4),"""")"
+            Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("X4:X" & myAllTotal).Value = "=IFERROR(INDEX(OFFSET('[" & mySoleSource & "]Temp'!$A:$A,0," & mySearchValue - 1 & "),W4),"""")"
+            Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("X4:X" & myAllTotal).Value = Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("X4:X" & myAllTotal).Value
+            mySearchValue = Rows("3:3").Find(What:="Group", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+            'Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("Y4:Y" & myAllTotal).Value = "=IFERROR(INDEX('[" & mySoleSource & "]Temp'!$AG:$AG,W4),"""")"
+            Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("Y4:Y" & myAllTotal).Value = "=IFERROR(INDEX(OFFSET('[" & mySoleSource & "]Temp'!$A:$A,0," & mySearchValue - 1 & "),W4),"""")"
+            Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("Y4:Y" & myAllTotal).Value = Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("Y4:Y" & myAllTotal).Value
+            mySearchValue = Rows("3:3").Find(What:="Subgroup", after:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+            'Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("Z4:Z" & myAllTotal).Value = "=IFERROR(INDEX('[" & mySoleSource & "]Temp'!$AH:$AH,W4),"""")"
+            Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("Z4:Z" & myAllTotal).Value = "=IFERROR(INDEX(OFFSET('[" & mySoleSource & "]Temp'!$A:$A,0," & mySearchValue - 1 & "),W4),"""")"
+            Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("Z4:Z" & myAllTotal).Value = Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("Z4:Z" & myAllTotal).Value
+                'Ver1.1: Add in Muliple/Sole Source
+                Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("FF4:FF" & myTempPartSource).Value = "=IFERROR(VLOOKUP(E4,'[" & mySoleSource & "]Temp'!$B:$E,4,0),"""")"
+                Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("FF4:FF" & myTempPartSource).Value = Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("FF4:FF" & myTempPartSource).Value
+                
+        End If
+    ActiveWorkbook.Close False
+    Columns("W:W").Delete
+    Columns("W:Y").AutoFit
+    
+    '830_Market_Transit LT
+    Columns("EN:EP").Insert
+    Range("EN2").Value = "Market"
+    Range("EN3").Value = "LT"
+    Range("EO2").Value = "Transit"
+    Range("EO3").Value = "Mode"
+    Range("EP2").Value = "Transit"
+    Range("EP3").Value = "Time"
+    Columns("EN:EP").AutoFit
+    'Ver1.5:Change RR Path
+    'Workbooks.Open "\\ap\penadata\Applications\Report_Kinaxis\Material\830_Market_Transit LT." & Format(myToday, "YYYYMMDD") & "*.xlsx"
+    
+    'Ver2.0:
+    'Workbooks.Open "\\ap\mfg\penadata\Apps_Integration\Report_Kinaxis\Material\830_Market_Transit LT." & Format(myToday, "YYYYMMDD") & "*.xlsx"
+    Workbooks.Open "\\ap\mfg\PenaData\Apps_Integration\Report_Kinaxis\RR-Alert File drop-Site 830\830_Market_Transit LT." & Format(myToday, "YYYYMMDD") & "*.xlsx"
+    ClearFilter
+    ActiveSheet.Name = "Temp"
+    myMarketTotal = Range("A" & Rows.Count).End(xlUp).Row
+        'Ver1.8: Handle additional column
+        'Range("A1:A" & myMarketTotal).Value = "=B1&C1"
+            'Ver1.9: Concate Supplier ID instead of ID
+            'Range("A1:A" & myMarketTotal).Value = "=B1&D1"
+            Range("A1:A" & myMarketTotal).Value = "=B1&E1"
+    Range("A1:A" & myMarketTotal).Value = Range("A1:A" & myMarketTotal).Value
+        'Ver1.8: Handle additional column
+        'Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EN4:EN" & myAllTotal).Value = "=IFERROR(VLOOKUP(E4&N4,'[" & myMarketTransit & "]Temp'!$A:$G,7,0),"""")"
+        Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EN4:EN" & myAllTotal).Value = "=IFERROR(VLOOKUP(E4&N4,'[" & myMarketTransit & "]Temp'!$A:$I,9,0),"""")"
+    Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EN4:EN" & myAllTotal).Value = Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EN4:EN" & myAllTotal).Value
+        'Ver1.8: Handle additional column
+        'Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EO4:EO" & myAllTotal).Value = "=IFERROR(VLOOKUP(E4&N4,'[" & myMarketTransit & "]Temp'!$A:$G,5,0),"""")"
+        Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EO4:EO" & myAllTotal).Value = "=IFERROR(VLOOKUP(E4&N4,'[" & myMarketTransit & "]Temp'!$A:$I,7,0),"""")"
+    Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EO4:EO" & myAllTotal).Value = Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EO4:EO" & myAllTotal).Value
+        'Ver1.8: Handle additional column
+        'Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EP4:EP" & myAllTotal).Value = "=IFERROR(VLOOKUP(E4&N4,'[" & myMarketTransit & "]Temp'!$A:$G,6,0),"""")"
+        Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EP4:EP" & myAllTotal).Value = "=IFERROR(VLOOKUP(E4&N4,'[" & myMarketTransit & "]Temp'!$A:$I,8,0),"""")"
+    Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EP4:EP" & myAllTotal).Value = Workbooks(myBucketMonthBuyFile).Sheets("Material Master").Range("EP4:EP" & myAllTotal).Value
+    ActiveWorkbook.Close False
+    Workbooks(myMacrofile).Sheets("Source").Copy after:=ActiveWorkbook.Sheets(Sheets.Count)
+    Sheets("Material Master").Select
+    Range("A4").Select
+    ActiveWorkbook.SaveAs Filename:=myFolderPath & "Material Master " & Format(myToday, "MMDDYY") & ".xlsb", FileFormat:=xlExcel12, CreateBackup:=False, writeResPassword:="888"
+        'ActiveWorkbook.SaveAs Filename:=myMacroPath & "Material Master " & Format(myToday, "MMDDYY") & ".xlsb", FileFormat:=xlExcel12, CreateBackup:=False, writeResPassword:="888"
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & Year(Date) & "\Material Master " & Format(myToday, "MMDDYY") & ".xlsb", FileFormat:=xlExcel12, CreateBackup:=False, writeResPassword:="888"
+    ActiveWorkbook.Close False
+
+    'Call EmailSending("se-hui.tan@plexus.com; sk.loon@plexus.com;sing-yee.ho@plexus.com", "", "", "Material Master file have been save in Share drive", "Material already save in " & myFolderPath)
+    Call SendSmtpEmail( _
+        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+        "se-hui.tan@plexus.com;sing-yee.ho@plexus.com", _
+        "", _
+        "sk.loon@plexus.com", _
+        "Material Master file have been save in Share drive", _
+        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Material already save in " & myFolderPath & "</html>", _
+        myAttachement(), _
+        0, 0)
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub ClearFilter()
+    On Error Resume Next
+    ActiveSheet.ShowAllData
+End Sub
+Sub EmailSending(myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String)
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Cc = myCc
+        .Bcc = myBcc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        '.Display
+        .Send
+    End With
+End Sub
+Sub PasteAll()
+    On Error Resume Next
+    Range("A1").PasteSpecial xlPasteAll
+End Sub
+Sub ReadAllData()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("^a")
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    SendKeys "^{C}"
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Sub GetCursorPosDemo()
+Dim llCoord As POINTAPI
+' Get the cursor positions
+GetCursorPos llCoord
+' Display the cursor position coordinates
+MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+End Sub
+Private Sub MoveSingle(myX, myY)
+    SetCursorPos myX, myY 'x and y position
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub MoveSingleClick(myX, myY)
+  SetCursorPos myX, myY 'x and y position
+  Application.Wait (Now + TimeValue("00:00:01"))
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub SingleClick()
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub DoubleClick()
+  'Double click as a quick series of two clicks
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub RightClick()
+  'Right click
+  SetCursorPos 200, 200 'x and y position
+  mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+Sub TypeInCurrentWindow()
+DoEvents
+Application.EnableEvents = False
+Sleep 5000
+
+SendKeys "a"
+SendKeys "^a", True 'Select All
+Sleep 400 'Wait 0.4 seconds (400 milliseconds)
+SendKeys "^c", True 'Copy
+Sleep 400 'Wait 0.4 seconds
+'SendKeys "abcd", True 'Type abcd
+'Sleep 400 'Wait 0.4 seconds
+Application.EnableEvents = True
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+
