@@ -1,0 +1,580 @@
+Dim oHTML As MSHTML.HTMLDocument
+Dim oElColl As MSHTML.IHTMLElementCollection
+
+Sub TrainingRecordDownloader()
+    Dim Folder As Outlook.MAPIFolder
+    Dim sFolders As Outlook.MAPIFolder
+    Dim oApp As Outlook.Application
+    
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySharePath = Sheets("Automation").Range("C6").Value
+    
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+        
+    MailBoxName = Sheets("Automation").Range("D6").Value
+    Pst_Folder_Name = "Inbox"
+    'Sender_Name = Sheets("Automation").Range("E6").Value
+    Set Folder = Outlook.Session.Folders(MailBoxName).Folders(Pst_Folder_Name)
+    
+    If Len(Dir(myMacroPath & "\" & Year(Date), vbDirectory)) = 0 Then
+       MkDir myMacroPath & "\" & Year(Date)
+    End If
+    
+    On Error Resume Next
+    Set oApp = GetObject(, "OUTLOOK.APPLICATION")
+    If (oApp Is Nothing) Then Set oApp = CreateObject("OUTLOOK.APPLICATION")
+    On Error GoTo 0
+    
+        For iRow = 1 To Outlook.Session.Folders(MailBoxName).Folders(Pst_Folder_Name).Items.Count
+        'mySubject = Folder.Items.Item(iRow).Subject
+        If Left(Folder.Items.Item(iRow).Subject, 13) <> "Undeliverable" Then
+            'Sender_Name = Folder.Items.Item(iRow).SenderName
+            'If Application.WorksheetFunction.CountIf(Sheets("Automation").Columns("E:E"), Folder.Items.Item(iRow).SenderName) > 0 Then
+                Mail_Received = Folder.Items.Item(iRow).ReceivedTime
+
+                If Mail_Received > Now - 3 Then
+                    mySender = Folder.Items.Item(iRow).Sender
+                    If LCase(mySender) = "delivery@csod.com" Then
+                        Set objAttachments = Folder.Items.Item(iRow).Attachments
+                        StrFile = objAttachments.Item(1).FileName
+                        objAttachments.Item(1).SaveAsFile mySavePath & StrFile
+                        objAttachments.Item(1).SaveAsFile myMacroPath & "\" & Year(Date) & "\" & StrFile
+                    End
+'                    Email_Content = Folder.Items.Item(iRow).Body
+'                    myContentCheck = InStr(1, Email_Content, "Attached is the Excess for CM report.", vbBinaryCompare)
+'                    'Folder.Items.Item(iRow).Display
+'                    If myContentCheck > 0 Then
+'                        ' Combine with the path to the Temp folder.
+'                        StrFile = StrFolderPath & StrFile
+'                        Set objAttachments = Folder.Items.Item(iRow).Attachments
+'
+'                        lngCount = objAttachments.Count
+'                        If lngCount > 0 Then
+'                            StrFile = objAttachments.Item(1).FileName
+'                            myMonth = Mid(StrFile, 19, 2)
+'                            myMmm = Format(DateValue(myMonth & "-01-2022"), "Mmm")
+'
+'                            mySavePath = Left(mySavePath, Len(mySavePath) - 4)
+'                            ' Save the attachment as a file.
+'                            objAttachments.Item(1).SaveAsFile mySavePath & "\" & myMmm & "\" & StrFile
+'                            objAttachments.Item(1).SaveAsFile myMacroPath & "\" & Year(Date) & "\" & StrFile
+'
+'                            With CreateObject("Outlook.Application").CreateItem(0)
+'                                .To = "sk.loon@plexus.com"
+'                                .Subject = "[Art Asst] Excess For CM"
+'                                .HTMLBody = "<html><p>Hi," & _
+'                                          "<html><br>Excess For CM file have been save in the following path: <br>" & mySavePath & "\" & myMmm & "\" & StrFile & "<br/>" & _
+'                                          "<p>" & _
+'                                          "<p>Best Regards," & _
+'                                          "<br>A<sup>2</sup> on behalf of " & UCase(Environ("USERNAME")) & "</p></html>"
+'
+'                                '.Display
+'                                'Application.Wait (Now + TimeValue("00:00:01"))
+'                                .Send
+'                                Application.Wait (Now + TimeValue("00:00:01"))
+'                            End With
+'
+'                        End If
+
+
+                    End If
+                End If
+            'End If
+        End If
+    Next iRow
+    
+
+Label_Folder_Found:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Function RangetoHTML(rng As Range)
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         FileName:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    Application.EnableEvents = False
+    TempWB.Close savechanges:=False
+    Application.EnableEvents = True
+
+    
+    'Delete the htm file we used in this function
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+Sub ErrHndReadTable()
+    On Error GoTo ErrTable
+    For x = 0 To oElColl(0).Rows.Length - 1
+        For y = 0 To oElColl(0).Rows(x).Cells.Length - 1
+            Range("A1").Offset(x, y).Value = oElColl(0).Rows(x).Cells(y).innerText
+        Next y
+    Next x
+ErrTable:
+End Sub
+Sub EmailSending(myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String)
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .CC = myCc
+        .BCC = myBcc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        '.Display
+        .Send
+    End With
+End Sub
+Sub VBA_Export_Outlook_Emails_To_Excel()
+    'Add Tools->References->"Microsoft Outlook nn.n Object Library"
+    'nn.n varies as per our Outlook Installation
+    Dim Folder As Outlook.MAPIFolder
+    Dim sFolders As Outlook.MAPIFolder
+    Dim iRow As Integer, oRow As Integer
+    Dim MailBoxName As String, Pst_Folder_Name  As String
+    
+    'Mailbox or PST Main Folder Name (As how it is displayed in your Outlook Session)
+    MailBoxName = "Sk.Loon@plexus.com"
+ 
+    'Mailbox Folder or PST Folder Name (As how it is displayed in your Outlook Session)
+    Pst_Folder_Name = "Inbox" 'Sample "Inbox" or "Sent Items"
+ 
+    'To directly a Folder at a high level
+    'Set Folder = Outlook.Session.Folders(MailBoxName).Folders(Pst_Folder_Name)
+    
+    'To access a main folder or a subfolder (level-1)
+    For Each Folder In Outlook.Session.Folders(MailBoxName).Folders
+        If VBA.UCase(Folder.Name) = VBA.UCase(Pst_Folder_Name) Then GoTo Label_Folder_Found
+        For Each sFolders In Folder.Folders
+            If VBA.UCase(sFolders.Name) = VBA.UCase(Pst_Folder_Name) Then
+                Set Folder = sFolders
+                GoTo Label_Folder_Found
+            End If
+        Next sFolders
+    Next Folder
+
+Label_Folder_Found:
+     If Folder.Name = "" Then
+        MsgBox "Invalid Data in Input"
+        GoTo End_Lbl1:
+    End If
+ 
+    'Read Through each Mail and export the details to Excel for Email Archival
+    'ThisWorkbook.Sheets(1).Activate
+    Sheets("Temp").Select
+    Cells.ClearContents
+    'Folder.Items.Sort "Received"
+    
+    'Insert Column Headers
+    Cells(1, 1) = "Sender"
+    Cells(1, 2) = "Subject"
+    Cells(1, 3) = "Date"
+    Cells(1, 4) = "Size"
+    Cells(1, 5) = "EmailID"
+    'ThisWorkbook.Sheets(1).Cells(1, 6) = "Body"
+    
+    'Export eMail Data from PST Folder to Excel with date and time
+    oRow = 1
+    For iRow = 1 To Folder.Items.Count
+        'If condition to import mails received in last 60 days
+        'To import all emails, comment or remove this IF condition
+        If VBA.DateValue(VBA.Now) - VBA.DateValue(Folder.Items.Item(iRow).ReceivedTime) <= 60 Then
+           oRow = oRow + 1
+           Cells(oRow, 1).Select
+           Cells(oRow, 1) = Folder.Items.Item(iRow).SenderName
+           Cells(oRow, 2) = Folder.Items.Item(iRow).Subject
+           Cells(oRow, 3) = Folder.Items.Item(iRow).ReceivedTime
+           Cells(oRow, 4) = Folder.Items.Item(iRow).Size
+           Cells(oRow, 5) = Folder.Items.Item(iRow).SenderEmailAddress
+           Cells(oRow, 6) = Folder.Items.Item(iRow).Body
+           asdf = InStr(1, Folder.Items.Item(iRow).Body, "PO signed and approved", vbBinaryCompare)
+           Folder.Items.Item(iRow).SaveAs "C:\SK Loon\Macro\A2\ShuTing Lim\PO Approval\test.msg", olMSG
+
+'           Folder.Items.Item(iRow).Display
+'           Folder.Items.Item(iRow).Copy
+'           Folder.Items.Item(iRow).Close olDiscard 'olSave
+           
+           If dsaf = 1 Then
+                Dim wkb As Workbook
+                Set wkb = Workbooks.Add
+                
+                Sheets("Sheet1").Cells.ClearContents
+                
+                ' point to the desired email
+                'Const strMail AsString="first.last@outlook.com"
+                Const strMail As String = "Sk.Loon@plexus.com"
+                
+                Dim oApp As Outlook.Application
+                Dim oMapi As Outlook.MAPIFolder
+                Dim oMail As Outlook.MailItem
+                
+                On Error Resume Next
+                Set oApp = GetObject(, "OUTLOOK.APPLICATION")
+                If (oApp Is Nothing) Then Set oApp = CreateObject("OUTLOOK.APPLICATION")
+                
+                On Error GoTo 0
+                
+                Set oMapi = oApp.GetNamespace("MAPI").Folders(strMail).Folders("inbox")
+                Set oMail = oMapi.Items(oMapi.Items.Count)
+                
+                ' get html table from email object
+                Dim oHTML As MSHTML.HTMLDocument: Set oHTML = New MSHTML.HTMLDocument
+                Dim oElColl As MSHTML.IHTMLElementCollection
+                With oHTML
+                    .Body.innerHTML = oMail.HTMLBody
+                    Set oElColl = .getElementsByTagName("table")
+                End With
+                
+                'import in Excel
+                Dim x As Long, y As Long
+                For x = 0 To oElColl(0).Rows.Length - 1
+                    For y = 0 To oElColl(0).Rows(x).Cells.Length - 1
+                        Range("A1").Offset(x, y).Value = oElColl(0).Rows(x).Cells(y).innerText
+                    Next y
+                Next x
+                
+                Set oApp = Nothing
+                Set oMapi = Nothing
+                Set oMail = Nothing
+                Set oHTML = Nothing
+                Set oElColl = Nothing
+                
+                'wkb.SaveAs "C:\Users\user\.spyder-py3\Outlook\tables.xlsx"
+           End If
+           
+           'ThisWorkbook.Sheets(1).Cells(oRow, 6) = Folder.Items.Item(iRow).Body
+        End If
+    Next iRow
+    'MsgBox "Outlook Mails Extracted to Excel"
+    Set Folder = Nothing
+    Set sFolders = Nothing
+    
+End_Lbl1:
+End Sub
+Private Sub GetAllFolders()
+    Dim objFolders As Outlook.Folders
+    Dim objFolder As Outlook.Folder
+    Dim objItem As Object
+    'Get all the folders in a specific PST file
+    Set objFolders = Outlook.Application.Session.Folders("Sk.loon@plexus.com").Folders("Inbox").Folders
+    'Set objTargetFolder = Outlook.Application.Session.Folders("sk.loon@plexus.com").Folders("Inbox")
+    
+    For Each objItem In objFolders.Items
+        a = 0
+        'Call MoveEmails(objFolder)
+    Next
+End Sub
+
+Private Sub ReadAllItems()
+    Dim objFolder As Outlook.Folder
+    Dim strPath As String
+ 
+    'Specify the root local folder
+    'Change it as per your needs
+    strPath = Range("C6").Value
+ 
+    Set objFileSystem = CreateObject("Scripting.FileSystemObject")
+ 
+    'Select a Outlook PST file or Outlook folder
+    'Set objFolder = Outlook.Application.Session.PickFolder
+    'Call MailProcessFolders(objFolder, strPath)
+    
+    Set NS = Application.GetNamespace("MAPI")
+    Set objFolder = NS.CreateRecipient("Inbox")
+    
+    
+    'Call MailProcessFolders("Inbox", strPath)
+ 
+    MsgBox "Complete", vbExclamation
+End Sub
+Private Sub MailProcessFolders(objCurrentFolder As Outlook.Folder, strCurrentPath As String)
+    Dim objItem As Object
+    Dim strSubject, strFileName, strFilePath As String
+    Dim objSubfolder As Outlook.Folder
+ 
+    'Create the local folder based on the Outlook folder
+    strCurrentPath = strCurrentPath & objCurrentFolder.Name
+    objFileSystem.CreateFolder strCurrentPath
+ 
+    For Each objItem In objCurrentFolder.Items
+ 
+        strSubject = objItem.Subject
+ 
+        'Remove unsupported characters in the subject
+        strSubject = Replace(strSubject, "/", " ")
+        strSubject = Replace(strSubject, "\", " ")
+        strSubject = Replace(strSubject, ":", "")
+        strSubject = Replace(strSubject, "?", " ")
+        strSubject = Replace(strSubject, Chr(34), " ")
+        strSubject = Replace(strSubject, "'", " ")
+        strSubject = Replace(strSubject, "*", " ")
+        strSubject = Replace(strSubject, "<", " ")
+        strSubject = Replace(strSubject, ">", " ")
+        strSubject = Replace(strSubject, "|", " ")
+        
+
+        strFileName = strSubject & ".msg"
+ 
+        i = 0
+        Do Until False
+           strFilePath = strCurrentPath & "\" & strFileName
+           'Check if there exist a file in the same name
+           If objFileSystem.FileExists(strFilePath) Then
+              'Add a sequence order to the file name
+              i = i + 1
+              strFileName = strSubject & " (" & i & ").msg"
+           Else
+              Exit Do
+          End If
+        Loop
+ 
+        'Save as MSG file
+        objItem.SaveAs strFilePath, olMSG
+    Next
+ 
+    'Process subfolders recursively
+    If objCurrentFolder.Folders.Count > 0 Then
+       For Each objSubfolder In objCurrentFolder.Folders
+           Call MailProcessFolders(objSubfolder, strCurrentPath & "\")
+       Next
+    End If
+End Sub
+Sub FindMail()
+    
+    Dim MyOutlook As Outlook.Application
+    Dim msg As Outlook.MailItem
+    Dim x As Namespace
+    Dim oFSO As Object
+    Dim oFolder As Object
+    Dim oFile As Object, sF
+    Dim i As Integer, colFolders As New Collection, ws As Worksheet
+    
+    Set MyOutlook = New Outlook.Application
+    Set x = MyOutlook.GetNamespace("MAPI")
+    Set oFSO = CreateObject("Scripting.FileSystemObject")
+    Set oFolder = oFSO.GetFolder(Range("D2").Value)
+    
+   Range("A12:G" & Rows.Count).ClearContents
+    Range("A11").Value = "|Path"
+    Range("B11").Value = "|Name"
+    Range("C11").Value = "|From"
+    Range("D11").Value = "|Subject"
+    Range("E11").Value = "|Received Time"
+    Range("F11").Value = "|Size"
+    Range("G11").Value = "|To"
+    myFind = Range("D4").Value
+    Application.ScreenUpdating = False
+    colFolders.Add oFolder          'start with this folder
+    Do While colFolders.Count > 0      'process all folders
+        Set oFolder = colFolders(1)    'get a folder to process
+        colFolders.Remove 1            'remove item at index 1
+        
+        myRow = Range("A" & Rows.Count).End(xlUp).Row + 1
+        For Each oFile In oFolder.Files
+            'myPath = oFolder.Path
+            Set msg = x.OpenSharedItem(oFile)
+            If InStr(1, UCase(msg.Body), UCase(myFind), vbBinaryCompare) > 0 Then
+            
+                Range("A" & myRow).Value = oFolder.Path
+                Range("B" & myRow).Value = oFile.Name
+                Range("C" & myRow).Value = msg.Sender
+                Range("D" & myRow).Value = msg.Subject
+                Range("E" & myRow).Value = msg.SentOn
+                Select Case oFile.Size
+                    Case 0 To 1023
+                        Range("F" & myRow).Value = Format(oFile.Size, "0") & " B"
+                    Case 1024 To 1048576
+                        Range("F" & myRow).Value = Format(oFile.Size / 1024, "0") & " KB"
+                    Case 104876 To 1073741823
+                        Range("F" & myRow).Value = Format(oFile.Size / 1048576, "0") & " MB"
+                End Select
+                Range("G" & myRow).Value = msg.To
+                'Cells(Row + 11, 3) = msg.CC
+                'Cells(Row + 11, 4) = msg.To
+                'Cells(Row + 11, 5) = msg.SentOn
+                myRow = myRow + 1
+            End If
+        Next oFile
+
+        'add any subfolders to the collection for processing
+        For Each sF In oFolder.SubFolders
+            colFolders.Add sF 'add to collection for processing
+        Next sF
+    Loop
+    Application.ScreenUpdating = True
+
+End Sub
+Sub GetAllMail()
+    
+    Dim MyOutlook As Outlook.Application
+    Dim msg As Outlook.MailItem
+    Dim x As Namespace
+    Dim oFSO As Object
+    Dim oFolder As Object
+    Dim oFile As Object, sF
+    Dim i As Integer, colFolders As New Collection, ws As Worksheet
+    
+    Set MyOutlook = New Outlook.Application
+    Set x = MyOutlook.GetNamespace("MAPI")
+    Set oFSO = CreateObject("Scripting.FileSystemObject")
+    Set oFolder = oFSO.GetFolder(Range("D2").Value)
+    
+    Range("A12:G" & Rows.Count).ClearContents
+    Range("A11").Value = "|Path"
+    Range("B11").Value = "|Name"
+    Range("C11").Value = "|From"
+    Range("D11").Value = "|Subject"
+    Range("E11").Value = "|Received Time"
+    Range("F11").Value = "|Size"
+    Range("G11").Value = "|To"
+    
+    Application.ScreenUpdating = False
+    colFolders.Add oFolder          'start with this folder
+    Do While colFolders.Count > 0      'process all folders
+        Set oFolder = colFolders(1)    'get a folder to process
+        colFolders.Remove 1            'remove item at index 1
+        
+        myRow = Range("A" & Rows.Count).End(xlUp).Row + 1
+        For Each oFile In oFolder.Files
+            myPath = oFolder.Path
+            Set msg = x.OpenSharedItem(oFile)
+            'If oFile.DateLastModified > Now - 7 Then
+                Range("A" & myRow).Value = oFolder.Path
+                Range("B" & myRow).Value = oFile.Name
+                Range("C" & myRow).Value = msg.Sender
+                Range("D" & myRow).Value = msg.Subject
+                Range("E" & myRow).Value = msg.SentOn
+                Select Case oFile.Size
+                    Case 0 To 1023
+                        Range("F" & myRow).Value = Format(oFile.Size, "0") & " B"
+                    Case 1024 To 1048576
+                        Range("F" & myRow).Value = Format(oFile.Size / 1024, "0") & " KB"
+                    Case 104876 To 1073741823
+                        Range("F" & myRow).Value = Format(oFile.Size / 1048576, "0") & " MB"
+                End Select
+                Range("G" & myRow).Value = msg.To
+                'Cells(Row + 11, 3) = msg.CC
+                'Cells(Row + 11, 4) = msg.To
+                'Cells(Row + 11, 5) = msg.SentOn
+                myRow = myRow + 1
+            'End If
+        Next oFile
+
+        'add any subfolders to the collection for processing
+        For Each sF In oFolder.SubFolders
+            colFolders.Add sF 'add to collection for processing
+        Next sF
+    Loop
+    Application.ScreenUpdating = True
+
+End Sub
+Function GetFileList(FileSpec As String) As Variant
+'   Taken from http://spreadsheetpage.com/index.php/tip/getting_a_list_of_file_names_using_vba/
+'   Returns an array of filenames that match FileSpec
+'   If no matching files are found, it returns False
+
+    Dim FileArray() As Variant
+    Dim FileCount As Integer
+    Dim FileName As String
+
+    On Error GoTo NoFilesFound
+
+    FileCount = 0
+    FileName = Dir(FileSpec)
+    If FileName = "" Then GoTo NoFilesFound
+
+'   Loop until no more matching files are found
+    Do While FileName <> ""
+        FileCount = FileCount + 1
+        ReDim Preserve FileArray(1 To FileCount)
+        FileArray(FileCount) = FileName
+        FileName = Dir()
+    Loop
+    GetFileList = FileArray
+    Exit Function
+
+'   Error handler
+NoFilesFound:
+        GetFileList = False
+End Function
+
+Sub DisplayMsg()
+    Dim x As Namespace
+    Set MyOutlook = New Outlook.Application
+    Set x = MyOutlook.GetNamespace("MAPI")
+    myRow = ActiveCell.Row
+    If myRow > 11 Then
+        Set msg1 = x.OpenSharedItem(Range("A" & myRow).Value & "\" & Range("B" & myRow).Value)
+        msg1.Display
+    End If
+End Sub
+Sub SelectFolder()
+    Set xShell = CreateObject("Shell.Application")
+    Set xFolder = xShell.BrowseForFolder(0, "Select a folder:", 0, strStartingFolder)
+    If Not TypeName(xFolder) = "Nothing" Then
+        Set xFolderItem = xFolder.self
+        Range("D2").Value = xFolderItem.Path & "\"
+    Else
+        Range("D2").ClearContents
+        Exit Sub
+    End If
+End Sub
