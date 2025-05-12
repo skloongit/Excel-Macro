@@ -1,0 +1,443 @@
+Public Declare Function SetCursorPos Lib "user32" (ByVal x As Long, ByVal y As Long) As Long
+Public Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, ByVal dwExtraInfo As Long)
+Public Const MOUSEEVENTF_LEFTDOWN = &H2
+Public Const MOUSEEVENTF_LEFTUP = &H4
+Public Const MOUSEEVENTF_RIGHTDOWN As Long = &H8
+Public Const MOUSEEVENTF_RIGHTUP As Long = &H10
+Declare Function GetCursorPos Lib "user32" (lpPoint As POINTAPI) As Long
+' Create custom variable that holds two integers
+Type POINTAPI
+   Xcoord As Long
+   Ycoord As Long
+End Type
+Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Sub JdeReportDownloader()
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+    
+    myTotalFolder = Sheets("SavePath").Range("C" & Rows.Count).End(xlUp).Row
+    mySavePath1 = Sheets("SavePath").Range("C2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath1 & Sheets("SavePath").Range("C" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath1 & Sheets("SavePath").Range("C" & myCountA).Value
+        End If
+        mySavePath1 = mySavePath1 & Sheets("SavePath").Range("C" & myCountA).Value
+    Next myCountA
+    
+    
+    mySuffix = Range("B8").Value
+    myPath1 = Range("B4").Value
+        If Right(Trim(myPath1), 1) <> "\" Then
+            Range("B4").Value = myPath1 & "\"
+            myPath1 = Range("B4").Value
+        End If
+    myPath2 = Range("B6").Value
+        If Right(Trim(myPath2), 1) <> "\" Then
+            Range("B6").Value = myPath2 & "\"
+            myPath2 = Range("B6").Value
+        End If
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    '***************************Open SO Report Download (Report will be ready: 7.00am)***********************************************************************************
+    myOpenSoFile = Dir(myPath1 & "R42620_PLXS0007*")
+    Do Until myOpenSoFile = ""
+        Set F = fso.GetFile(myPath1 & myOpenSoFile)
+        'myLastModifiedDate = CDate(Format(f.DateLastModified, "m/d/yyyy"))
+        If Date = CDate(Format(F.DateLastModified, "m/d/yyyy")) Then
+            
+            Workbooks.Open Filename:=myPath1 & myOpenSoFile, ReadOnly:=True
+            Exit Do
+        End If
+        myOpenSoFile = Dir()
+    Loop
+    
+    
+    If myOpenSoFile = "" Then
+        myOpenSoFile = Dir(Trim(myPath2) & Format(Date - 1, "d-Mmm-Yyyy") & "\R5541008_PLXS00006 *")
+        If myOpenSoFile = "" Then
+            Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus.com", "", "Open SO Report file in JDE share drive not found!", "Item Branch file in JDE share drive not found!")
+            GoTo myNext3
+        Else
+            Workbooks.Open Filename:=Trim(myPath2) & Format(Date - 1, "d-Mmm-Yyyy") & "\" & myOpenSoFile, ReadOnly:=True
+        End If
+    End If
+    
+    myOpenSoFilename = ActiveWorkbook.Name
+    
+'    'Check Folder Availbility
+'    'Year
+'    myYear = Year(Date)
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\"
+'    End If
+'    'Scheduler Report
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\"
+'    End If
+'    'SOSF Report
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SOSF Report\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SOSF Report\"
+'    End If
+'
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SOSF Report\" & myMonthYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SOSF Report\" & myMonthYear & "\"
+'    End If
+'    mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SOSF Report\" & myMonthYear & "\"
+
+    Columns("K:K").Insert
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("K4:K" & myTempTotal).Value = "=TRIM(J4)"
+    Range("K4:K" & myTempTotal).Value = Range("K4:K" & myTempTotal).Value
+    Range("J4:J" & myTempTotal).Value = Range("K4:K" & myTempTotal).Value
+    Columns("K:K").Delete
+    Rows("3:3").AutoFilter
+    Rows("3:3").WrapText = True
+    'fso.MoveFile Source:=myHomePath & myCsvFiles, Destination:=mySavePath & "\Open PO report - " & myCsvFiles
+    myFileDate = Range("Q1").Value
+    If Date = myFileDate Then
+        ActiveSheet.Name = "Open SO " & Format(Date, "MMDDYYYY")
+        Application.EnableEvents = False
+        ActiveWorkbook.SaveAs Filename:=mySavePath & "Open Sales Order - " & Format(Date, "MMDDYYYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+        'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Open Sales Order - " & Format(Date, "MMDDYYYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Open Sales Order - " & Format(Date, "MMDDYYYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+        Application.EnableEvents = True
+    Else
+        Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus", "", "Open Sales Order - Date file error!", "Open Sales Order Date file error!")
+        GoTo myNext3
+    End If
+    'ActiveWorkbook.Close False
+    Application.EnableEvents = False
+    Workbooks("Open Sales Order - " & Format(Date, "MMDDYYYY") & mySuffix & ".xlsx").Close False
+    Application.EnableEvents = True
+    Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus.com", "", "Open Sales Order Report have been save in Share drive", "Open Sales Order Report have been save in Share drive")
+myNext3:
+
+    '******SRS Report Download (Report will be ready: 7.00am)------Shipped Not Yet Bill (Report will be ready: 7.00am)***********************************************************************************
+    'SRS Report Download
+    mySrsFile = Dir(myPath1 & "R5542049_PLXS0002*")
+    Do Until mySrsFile = ""
+        Set F = fso.GetFile(myPath1 & mySrsFile)
+        'myLastModifiedDate = CDate(Format(f.DateLastModified, "m/d/yyyy"))
+        If Date = CDate(Format(F.DateLastModified, "m/d/yyyy")) Then
+            Workbooks.Open Filename:=myPath1 & mySrsFile, ReadOnly:=True
+            Exit Do
+        End If
+        mySrsFile = Dir()
+    Loop
+    
+    If mySrsFile = "" Then
+        mySrsFile = Dir(Trim(myPath2) & Format(Date - 1, "d-Mmm-Yyyy") & "\R5542049_PLXS0002*")
+        If mySrsFile = "" Then
+            Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus", "", "SRS Report file in JDE share drive not found!", "SRS Report file in JDE share drive not found!")
+            GoTo myNext4
+        Else
+            Workbooks.Open Filename:=Trim(myPath2) & Format(Date - 1, "d-Mmm-Yyyy") & "\" & mySrsFile, ReadOnly:=True
+        End If
+    End If
+    
+    mySrsFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "SRS"
+    mySrsTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Columns("C:C").Insert
+    Range("C4:C" & mySrsTotal).Value = "=TRIM(B4)"
+    Range("C4:C" & mySrsTotal).Value = Range("C4:C" & mySrsTotal).Value
+    Range("B4:B" & mySrsTotal).Value = Range("C4:C" & mySrsTotal).Value
+    Columns("C:C").Delete
+    Rows("3:3").AutoFilter
+    Rows("3:3").WrapText = True
+    'fso.MoveFile Source:=myHomePath & myCsvFiles, Destination:=mySavePath & "\Open PO report - " & myCsvFiles
+    myFileDate = Range("J1").Value
+    If Date <> myFileDate Then
+        Application.EnableEvents = False
+        Workbooks(mySrsFilename).Close
+        Application.EnableEvents = True
+        Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus", "", "SRS Report - Date file error!", "SRS Report Date file error!")
+        GoTo myNext4
+    End If
+    
+    'Shipped Not Yet Bill
+    'Ver1.1: Change filename
+    'mySnybFile = Dir(myPath1 & "R5542001_PLXS0019*")
+    mySnybFile = Dir(myPath1 & "R5542001_PLXS0043*")
+    Do Until mySnybFile = ""
+        Set F = fso.GetFile(myPath1 & mySnybFile)
+        'myLastModifiedDate = CDate(Format(f.DateLastModified, "m/d/yyyy"))
+        If Date = CDate(Format(F.DateLastModified, "m/d/yyyy")) Then
+            Workbooks.Open Filename:=myPath1 & mySnybFile, ReadOnly:=True
+            Exit Do
+        End If
+        mySnybFile = Dir()
+    Loop
+    
+    
+    If mySnybFile = "" Then
+        'Ver1.1: Change filename
+        'mySnybFile = Dir(Trim(myPath2) & Format(Date - 1, "d-Mmm-Yyyy") & "\R5542001_PLXS0019*")'
+        mySnybFile = Dir(Trim(myPath2) & Format(Date - 1, "d-Mmm-Yyyy") & "\R5542001_PLXS0043*")
+        If mySnybFile = "" Then
+            Application.EnableEvents = False
+            Workbooks(mySrsFilename).Close False
+            Application.EnableEvents = True
+            Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus.com", "", "Shipped Not Yet Bill file in JDE share drive not found!", "Shipped Not Yet Bill file in JDE share drive not found!")
+            GoTo myNext4
+        Else
+            Workbooks.Open Filename:=Trim(myPath2) & Format(Date - 1, "d-Mmm-Yyyy") & "\" & mySnybFile, ReadOnly:=True
+        End If
+    End If
+    mySnybFile = ActiveWorkbook.Name
+    ActiveSheet.Name = "Shipped Not Yet Billed Report"
+    mySnybTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Sheets("Shipped Not Yet Billed Report").Copy After:=Workbooks(mySrsFilename).Sheets("SRS")
+    Application.EnableEvents = False
+    Workbooks(mySnybFile).Close False
+    Application.EnableEvents = True
+    
+'    'Check Folder Availbility
+'    'Year
+'    myYear = Year(Date)
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\"
+'    End If
+'    'Scheduler Report
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\"
+'    End If
+'    'SRS Report
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SRS Report\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SRS Report\"
+'    End If
+'
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SRS Report\" & myMonthYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SRS Report\" & myMonthYear & "\"
+'    End If
+'    mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Scheduler Report\SRS Report\" & myMonthYear & "\"
+    
+    
+    Columns("L:L").Insert
+    Range("L5:L" & mySnybTotal).Value = "=TRIM(K5)"
+    Range("L5:L" & mySnybTotal).Value = Range("L5:L" & mySnybTotal).Value
+    Range("K5:K" & mySnybTotal).Value = Range("L5:L" & mySnybTotal).Value
+    Columns("L:L").Delete
+    Rows("4:4").AutoFilter
+    Rows("4:4").WrapText = True
+    
+    Sheets.Add Before:=Sheets("SRS")
+    ActiveSheet.Name = "Summary"
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="SRS!R3C1:R" & mySrsTotal & "C61").CreatePivotTable TableDestination:="Summary!R7C1", TableName:="PivotTable2"
+    Range("A7").Select
+    ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields("Invoice Amount -USD"), "Sum of Invoice Amount -USD", xlSum
+    ActiveSheet.PivotTables("PivotTable2").PivotFields("Order Type").Orientation = xlPageField
+    ActiveSheet.PivotTables("PivotTable2").PivotFields("Order Type").Position = 1
+    ActiveSheet.PivotTables("PivotTable2").PivotFields("SO Ln Ty").Orientation = xlPageField
+    ActiveSheet.PivotTables("PivotTable2").PivotFields("SO Ln Ty").Position = 1
+    'ActiveSheet.PivotTables("PivotTable2").PivotFields("Order Type").EnableMultiplePageItems = True
+    For Each myA In ActiveSheet.PivotTables("PivotTable2").PivotFields("Order Type").PivotItems
+        'Ver1.9:Add in S2 requested by Sing Yee on 12/19/2023
+        'If myA.Name = "CO" Or myA.Name = "S1" Or myA.Name = "SO" Then
+        If myA.Name = "CO" Or myA.Name = "S1" Or myA.Name = "S2" Or myA.Name = "SO" Then
+        
+        Else
+            'ActiveSheet.PivotTables("PivotTable2").PivotFields("Order Type").PivotItems(myA.Name).Visible = False
+            Call ErrHnd("PivotTable2", "Order Type", myA.Name)
+        End If
+    Next
+    'ActiveSheet.PivotTables("PivotTable2").PivotFields("SO Ln Ty").CurrentPage = "(All)"
+    For Each myA In ActiveSheet.PivotTables("PivotTable2").PivotFields("SO Ln Ty").PivotItems
+        If myA.Name = "C" Or myA.Name = "MF" Or myA.Name = "S" Or myA.Name = "SW" Or myA.Name = "W" Then
+        Else
+            'ActiveSheet.PivotTables("PivotTable2").PivotFields("SO Ln Ty").PivotItems(myA.Name).Visible = False
+            Call ErrHnd("PivotTable2", "SO Ln Ty", myA.Name)
+        End If
+    Next
+    'ActiveSheet.PivotTables("PivotTable2").PivotFields("SO Ln Ty").EnableMultiplePageItems = True
+    Columns("B:B").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+    
+    Sheets.Add Before:=Sheets("Shipped Not Yet Billed Report")
+    ActiveSheet.Name = "PV"
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="'Shipped Not Yet Billed Report'!R4C1:R" & mySnybTotal & "C27").CreatePivotTable TableDestination:="PV!R4C1", TableName:="PivotTable3"
+    Range("A4").Select
+    'ActiveSheet.PivotTables("PivotTable3").PivotFields("Master Planning Family").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable3").PivotFields("Mpf").Orientation = xlRowField
+    ActiveSheet.PivotTables("PivotTable3").AddDataField ActiveSheet.PivotTables("PivotTable3").PivotFields("Extended Price"), "Sum of Extended Price", xlSum
+    ActiveSheet.PivotTables("PivotTable3").PivotFields("Type").Orientation = xlPageField
+    ActiveSheet.PivotTables("PivotTable3").PivotFields("Ship Date").Orientation = xlPageField
+        'Ver1.2: New requirement requested by Sing Yee on 6/25/2020
+        ActiveSheet.PivotTables("PivotTable3").PivotFields("Line Type").Orientation = xlPageField
+        For Each myLineType In ActiveSheet.PivotTables("PivotTable3").PivotFields("Line Type").PivotItems
+            myValue = myLineType.Name
+            If myLineType.Name = "C" Or myLineType.Name = "MF" Or myLineType.Name = "S" Or myLineType.Name = "SW" Or myLineType.Name = "W" Then
+            Else
+                ActiveSheet.PivotTables("PivotTable3").PivotFields("Line Type").PivotItems(myLineType.Name).Visible = False
+            End If
+        Next
+    ActiveSheet.PivotTables("PivotTable3").PivotFields("Ship Date").Position = 1
+    'ActiveSheet.PivotTables("PivotTable3").PivotFields("Order Type").EnableMultiplePageItems = True
+    For Each myA In ActiveSheet.PivotTables("PivotTable3").PivotFields("Type").PivotItems
+        'VEr2.0: Add in S2
+        'If myA.Name = "CO" Or myA.Name = "S1" Or myA.Name = "SO" Then
+        If myA.Name = "CO" Or myA.Name = "S1" Or myA.Name = "SO" Or myA.Name = "S2" Then
+        Else
+            'ActiveSheet.PivotTables("PivotTable3").PivotFields("Type").PivotItems(myA.Name).Visible = False
+            Call ErrHnd("PivotTable3", "Type", myA.Name)
+        End If
+    Next
+        'ActiveSheet.PivotTables("PivotTable3").PivotFields("Master Planning Family").PivotItems("(blank)").Visible = False
+        'Call ErrHnd("PivotTable3", "Master Planning Family", "(blank)")
+        Call ErrHnd("PivotTable3", "Mpf", "(blank)")
+    Columns("B:B").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+    Sheets("Summary").Select
+    
+    
+    myTempPivot = Range("A" & Rows.Count).End(xlUp).Row - 1
+    Range("D7:D" & myTempPivot).Value = Range("A7:A" & myTempPivot).Value
+    Range("D7").Value = "MPF"
+        'Add MPF
+        myTempCopy = Sheets("PV").Range("A" & Rows.Count).End(xlUp).Row - 1
+            'Ver1.3: change due to Ver1.2: New requirement requested by Sing Yee on 6/25/2020 that need to add Line Type
+            'Sheets("PV").Range("A5:A" & myTempCopy).Copy
+            Sheets("PV").Range("A6:A" & myTempCopy).Copy
+            Range("D" & Range("D" & Rows.Count).End(xlUp).Row + 1).PasteSpecial xlPasteValues
+        'Ver1.7:
+        myTemp = Range("D" & Rows.Count).End(xlUp).Row
+        Range("E8:E" & myTemp).Value = "=IF(COUNTIF($D$7:D8,D8)>1,""Delete"",Row(D8))"
+        Range("E7").Value = "Delete"
+        ActiveSheet.Range("D7:E" & myTemp).RemoveDuplicates Columns:=2, Header:=xlNo
+        'Range("D6:D" & Range("D" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=1, Header:=xlNo
+        'Range("D7:D" & Range("D" & Rows.Count).End(xlUp).Row + 1).RemoveDuplicates Columns:=1, Header:=xlNo
+        'ActiveSheet.Range("$D$7:$D$20").RemoveDuplicates Columns:=1, Header:=xlYes
+    myTempPivot = Range("D" & Rows.Count).End(xlUp).Row
+    Range("E7:E" & myTempPivot).Value = "=IFERROR(VLOOKUP(D:D,A:B,2,0),0)"
+    Range("E7").Value = "SRS " & Format(Date, "D Mmm Yyyy")
+    Range("F7:F" & myTempPivot).Value = "=IFERROR(VLOOKUP(D:D,PV!A:B,2,0),0)"
+    Range("F7").Value = "Shipped not yet billed"
+    Range("G7:G" & myTempPivot).Value = "=SUM(E7:F7)"
+    Range("G7").Value = "Total shipment - " & Format(Date, "D Mmm Yyyy")
+    Range("E" & myTempPivot + 1 & ":G" & myTempPivot + 1).Value = "=SUM(E8:E" & myTempPivot & ")"
+    Columns("E:G").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+    Range("B7").Copy
+    Range("D7:G7").PasteSpecial xlFormats
+    Range("B" & myTempPivot + 1).Copy
+    Range("D" & myTempPivot + 1 & ":G" & myTempPivot + 1).PasteSpecial xlFormats
+    Columns("D:G").AutoFit
+    Columns("D:D").HorizontalAlignment = xlLeft
+    Application.EnableEvents = False
+    'ActiveWorkbook.SaveAs Filename:=mySavePath & "SRS report - " & Format(Date, "DMmmYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+    ActiveWorkbook.SaveAs Filename:=mySavePath1 & "SRS report - " & Format(Date, "DMmmYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+    'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\SRS report - " & Format(Date, "DMmmYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\SRS report - " & Format(Date, "DMmmYY") & mySuffix & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+    
+    'ActiveWorkbook.Close False
+    Workbooks("SRS report - " & Format(Date, "DMmmYY") & mySuffix & ".xlsx").Close False
+    Application.EnableEvents = True
+    Call EmailSending("sk.loon@plexus.com", "sing-yee.ho@plexus.com", "", "SRS Report Report have been save in Share drive", "SRS Report Report have been save in Share drive")
+myNext4:
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+End Sub
+Sub ErrHnd(myPivotTable, myPivotFields, myPivotItems)
+    On Error Resume Next
+    'ActiveSheet.PivotTables("PivotTable2").PivotFields("Order Type").PivotItems(myA.Name).Visible = False
+    ActiveSheet.PivotTables(myPivotTable).PivotFields(myPivotFields).PivotItems(myPivotItems).Visible = False
+End Sub
+Sub EmailSending(myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String)
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Cc = myCc
+        .BCC = myBcc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        '.Display
+        .Send
+    End With
+End Sub
+Sub PasteAll()
+    On Error Resume Next
+    Range("A1").PasteSpecial xlPasteAll
+End Sub
+Sub ReadAllData()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("^a")
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    SendKeys "^{C}"
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Sub GetCursorPosDemo()
+Dim llCoord As POINTAPI
+' Get the cursor positions
+GetCursorPos llCoord
+' Display the cursor position coordinates
+MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+End Sub
+Private Sub MoveSingle(myX, myY)
+    SetCursorPos myX, myY 'x and y position
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub MoveSingleClick(myX, myY)
+  SetCursorPos myX, myY 'x and y position
+  Application.Wait (Now + TimeValue("00:00:01"))
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub SingleClick()
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub DoubleClick()
+  'Double click as a quick series of two clicks
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub RightClick()
+  'Right click
+  SetCursorPos 200, 200 'x and y position
+  mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+Sub TypeInCurrentWindow()
+DoEvents
+Application.EnableEvents = False
+Sleep 5000
+
+SendKeys "a"
+SendKeys "^a", True 'Select All
+Sleep 400 'Wait 0.4 seconds (400 milliseconds)
+SendKeys "^c", True 'Copy
+Sleep 400 'Wait 0.4 seconds
+'SendKeys "abcd", True 'Type abcd
+'Sleep 400 'Wait 0.4 seconds
+Application.EnableEvents = True
+End Sub
