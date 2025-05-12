@@ -1,0 +1,290 @@
+Dim myCutInsertCounter As Integer
+Dim myAttachement() As String
+Sub EmailTriggering()
+    ReDim myAttachement(0)
+    On Error GoTo Error1
+    myMacrofile = ActiveWorkbook.Name
+    
+'    With CreateObject("Outlook.Application").CreateItem(0)
+'        .To = "Sk.Loon@plexus.com"
+'        .Subject = Environ$("computername") & " Clearing Email in Outlook..."
+'        .HTMLBody = "Clearing Email in Outlook..."
+'        '.display
+'        .Send
+'    End With
+    Call SendSmtpEmail( _
+        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+        "sk.loon@plexus.com", _
+        "", _
+        "", _
+        Environ$("computername") & " is online!!!", _
+        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>This computer is online...</html>", _
+        myAttachement(), _
+        0, 0)
+'    Application.Wait (Now + TimeValue("00:00:05"))
+'    Set OutApp = CreateObject("Outlook.Application")
+'    Set mySyncObjects = OutApp.GetNamespace("MAPI").SyncObjects
+'    mySyncObjects(1).Start
+'    Set OutApp = Nothing
+'    Set mySyncObjects = Nothing
+'
+'    Application.Wait (Now + TimeValue("00:00:30"))
+Error1:
+    ActiveWorkbook.Save
+    Application.Quit
+    
+    'myEndTime = Time
+    'MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub SendMails()
+    'Declare Send Mail Property
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    'Set OutMail = OutApp.CreateItem(0)
+    
+    
+    'Calculate number of the same vendor
+    myFilename = ActiveWorkbook.Name
+    
+    'generateHTMLEmail (1)
+    'mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+    mySubject = "Test" 'Replace(mySubject, Chr(10), " ")
+    'myAttachPath = Range("G1").Value & "\"
+    
+    'Ver18: Change to HTML mail
+    'myBody = Range("F12").Value + vbCr + Range("F47").Value
+    
+    
+    For X = 2 To myTotalSend
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                Set OutMail = OutApp.CreateItem(0)
+                myTo = ""
+                myCc = ""
+                
+                'If Range("G2").Value <> "" Then
+                '    myTo = Range("G2").Value & ";"
+                'End If
+                'If Range("G3").Value Then
+                '    myCC = Range("G3").Value & ";"
+                'End If
+                
+                
+                
+                'imgEmbedComm = "<html><body><img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+                             & "<br><br><br></body></html>"
+                 imgEmbedComm = "<br><B>Embedded Image:</B><br>" _
+& "<img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+& "<br>Best Regards, <br>Sumit</font></span>"
+                htmlBodyCont = imgEmbedComm
+    
+                
+                With OutMail
+                .To = myTo
+                .Cc = myCc
+                .Subject = mySubject '& " (" & Cells(X, 1).Value & ")"
+                '.Body = myBody
+
+                .HTMLBody = htmlBodyCont & "1"
+                
+
+                    
+                    If Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send" Then
+                        .Send
+                        Cells(X, 4).Value = "Sent"
+                    Else
+                        .display
+                        Range("i1").Value = ActiveWorkbook.Path & "\1.jpg"
+                        Cells(X, 4).Value = "Displayed"
+                    End If
+                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+    MsgBox "Done!!!"
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub OpoSelect()
+    myOpoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Open PO Report (FOB) file")
+    If myOpoFile = False Then
+    Else
+        Range("B4").Value = myOpoFile
+    End If
+End Sub
+Sub SeaShipmentSelect()
+    mySeaFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Sea Shipment Part file")
+    If mySeaFile = False Then
+    Else
+        Range("B6").Value = mySeaFile
+    End If
+End Sub
+Sub PriceBookSelect()
+    myPriceBookFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Price Book file")
+    If myPriceBookFile = False Then
+    Else
+        Range("B8").Value = myPriceBookFile
+    End If
+End Sub
+Sub SheetSelect(mySheeetname)
+    On Error Resume Next
+    Sheets(mySheeetname).Select
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
