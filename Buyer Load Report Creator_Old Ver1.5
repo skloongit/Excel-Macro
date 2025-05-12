@@ -1,0 +1,620 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myMacroPath As String
+Dim myAttachement(0) As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub BuyerLoad()
+    Sheets("Macro").Select
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    myStrTime = Time
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySharePath = Range("B4").Value
+        'VEr1.2:
+        mySharePath1 = Range("B8").Value
+    myPrefix = Range("B6").Value
+    'myTodayDate = Format(Date - 9, "MMDDYYYY")
+    
+    'Ver1.3: Changing Path
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+    
+    myMacroCheck = Dir(myMacroPath & "\" & Year(Date) & "\", vbDirectory)
+        If myMacroCheck = "" Then
+            MkDir myMacroPath & "\" & Year(Date) & "\"
+        End If
+    
+    'Ver1.2: Add in No. of Supplier from 16 buckets
+    For myY = 0 To 20
+        'Ver1.2:
+        'If Dir(mySharePath & "830_16 Buckets Report_Monthly (Buy)." & Format(Date - myY, "YYYYMMDD") & "*") <> "" Then
+        If Dir(mySharePath1 & "830_16 Buckets Report_Monthly (Buy)." & Format(Date - myY, "YYYYMMDD") & "*") <> "" Then
+            'Ver1.2
+            'myBucket = Dir(mySharePath & "830_16 Buckets Report_Monthly (Buy)." & Format(Date - myY, "YYYYMMDD") & "*")
+            myBucket = Dir(mySharePath1 & "830_16 Buckets Report_Monthly (Buy)." & Format(Date - myY, "YYYYMMDD") & "*")
+            Exit For
+        End If
+    Next myY
+    If myBucket = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Cc = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "830_Buyer Load Summary file not found!"
+        '    .HTMLBody = "830_16 Buckets Report_Monthly (Buy) file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_16 Buckets Report_Monthly (Buy) file not found!</html>", _
+                        myAttachement(), _
+                        0, 0)
+        GoTo myEnd
+    End If
+    
+    If Dir(mySharePath & "830_Buyer Load Summary*.xlsx") = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Cc = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "830_Buyer Load Summary file not found!"
+        '    .HTMLBody = "830_Buyer Load Summary file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_Buyer Load Summary file not found!</html>", _
+                        myAttachement(), _
+                        0, 0)
+        GoTo myEnd
+    End If
+        
+    If Dir(mySharePath & "830_ERP Actions ISL*.xlsx") = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Cc = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "830_ERP Actions ISL file not found!"
+        '    .HTMLBody = "830_ERP Actions ISL file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_ERP Actions ISL file not found!</html>", _
+                        myAttachement(), _
+                        0, 0)
+        GoTo myEnd
+    End If
+                
+    'If Dir("\\ap\penadata\Site\Islandview\Purchasing_II\Others\Super A\PLXS Super A*.xlsx") = "" Then
+    If Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\Super A\PLXS Super A*.xlsx") = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Cc = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "PLXS Super A file not found!"
+        '    .HTMLBody = "PLXS Super A file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>PLXS Super A file not found!</html>", _
+                        myAttachement(), _
+                        0, 0)
+        GoTo myEnd
+    End If
+            
+    'mySuperA = Dir("\\ap\penadata\Site\Islandview\Purchasing_II\Others\Super A\PLXS Super A*.xlsx")
+    mySuperA = Dir("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\Super A\PLXS Super A*.xlsx")
+    Do Until mySuperA = ""
+        'myFileLastModified = fso.GetFile("\\ap\penadata\Site\Islandview\Purchasing_II\Others\Super A\" & mySuperA).DateLastModified
+        myFileLastModified = fso.GetFile("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\Super A\" & mySuperA).DateLastModified
+        If myFileLastModified > myCompareFileLastModified Then
+            'myCompareFileLastModified = fso.GetFile("\\ap\penadata\Site\Islandview\Purchasing_II\Others\Super A\" & mySuperA).DateLastModified
+            myCompareFileLastModified = fso.GetFile("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\Super A\" & mySuperA).DateLastModified
+            'myFileName = fso.GetFile("\\ap\penadata\Site\Islandview\Purchasing_II\Others\Super A\" & mySuperA).Name
+            myFileName = fso.GetFile("\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\Super A\" & mySuperA).Name
+        End If
+        mySuperA = Dir()
+    Loop
+    'Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\Purchasing_II\Others\Super A\" & myFileName, ReadOnly:=True
+    Workbooks.Open Filename:="\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Restricted\Automation\Super A\" & myFileName, ReadOnly:=True
+    mySuperAFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    
+    'Ver1.2: Add in No. of Supplier from 16 buckets
+    'Workbooks.Open Filename:=mySharePath & myBucket
+    Workbooks.Open Filename:=mySharePath1 & myBucket
+    myBucketFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    ActiveSheet.Range("$A$3:$EF$" & Range("A" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=Array(9, 15), Header:=xlYes
+    
+    
+    myCompareFileLastModified = Empty
+    myErpAction = Dir(mySharePath & "830_ERP Actions ISL*.xlsx")
+    Do Until myErpAction = ""
+        myFileLastModified = fso.GetFile(mySharePath & myErpAction).DateLastModified
+        If myFileLastModified > myCompareFileLastModified Then
+            myCompareFileLastModified = fso.GetFile(mySharePath & myErpAction).DateLastModified
+            myFileName = fso.GetFile(mySharePath & myErpAction).Name
+        End If
+        myErpAction = Dir()
+    Loop
+    Workbooks.Open Filename:=mySharePath & myFileName
+    myErpActionFilename = ActiveWorkbook.Name
+    ErrorHandler1
+    If Sheets("Temp").Range("A1").Value = "Error" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .Cc = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Buyer Load file error!"
+        '    .HTMLBody = "ERP Action file format error"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ActiveWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>ERP Action file format error</html>", _
+                        myAttachement(), _
+                        0, 0)
+        Application.EnableEvents = False
+        ActiveWorkbook.Close False
+        Workbooks(mySuperAFilename).Close False
+        Application.EnableEvents = True
+        GoTo myEnd
+    End If
+        
+    myCompareFileLastModified = Empty
+    myBuyerLoad = Dir(mySharePath & "830_Buyer Load Summary*.xlsx")
+    Do Until myBuyerLoad = ""
+        myFileLastModified = fso.GetFile(mySharePath & myBuyerLoad).DateLastModified
+        If myFileLastModified > myCompareFileLastModified Then
+            myCompareFileLastModified = fso.GetFile(mySharePath & myBuyerLoad).DateLastModified
+            myFileName = fso.GetFile(mySharePath & myBuyerLoad).Name
+        End If
+        myBuyerLoad = Dir()
+    Loop
+    Workbooks.Open Filename:=mySharePath & myFileName
+    myBuyerLoadFilename = ActiveWorkbook.Name
+
+        Rows("2:2").AutoFilter
+        Columns("B:B").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("B2").Value = "MPF"
+        Columns("C:E").Delete Shift:=xlToLeft
+        Columns("J:P").Delete Shift:=xlToLeft
+        Columns("J:P").Delete Shift:=xlToLeft
+        Columns("H:I").Delete Shift:=xlToLeft
+        Range("F:F,D:D").Delete Shift:=xlToLeft
+        Columns("K:L").Delete Shift:=xlToLeft
+        Columns("N:P").Delete Shift:=xlToLeft
+        Columns("L:L").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("K2").Value = "Super A"
+        Range("L2").Value = "A"
+        Columns("K:K").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("K2").Value = "No. of Suppliers"
+        Cells.EntireColumn.AutoFit
+        myTotalBuyer = Range("A" & Rows.Count).End(xlUp).Row
+        Range("L3:O" & myTotalBuyer).ClearContents
+        
+        Sheets("Part-Detail").Select
+        Rows("1:1").AutoFilter
+        myTotalPartDetail = Range("A" & Rows.Count).End(xlUp).Row
+        Columns("E:E").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("E1").Value = "MPF"
+        Range("E2:E" & myTotalPartDetail).Value = "=IF(I2=0,""MPF"",Row(I2))"
+        Range("E2:E" & myTotalPartDetail).Value = Range("E2:E" & myTotalPartDetail).Value
+            'Ver1.3: Cahnge rage
+            'Range("A1:M" & myTotalPartDetail).RemoveDuplicates Columns:=5, Header:=xlNo
+            Range("A1:Q" & myTotalPartDetail).RemoveDuplicates Columns:=5, Header:=xlNo
+        myTotalPartDetail = Range("A" & Rows.Count).End(xlUp).Row
+        Range("E2:E" & myTotalPartDetail).Value = "=RIGHT(RC[-1],3)"
+        Range("E2:E" & myTotalPartDetail).Value = Range("E2:E" & myTotalPartDetail).Value
+        
+
+        Range("E16").Select
+        Sheets.Add After:=ActiveSheet
+        ActiveSheet.Name = "Buyer MPF"
+        Range("A3").Select
+        'ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="Part-Detail!R1C1:R" & myTotalPartDetail & "C13", Version:=xlPivotTableVersion15).CreatePivotTable TableDestination:="'Buyer MPF'!R3C1", TableName:="PivotTable1", DefaultVersion:=xlPivotTableVersion15
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="Part-Detail!R1C1:R" & myTotalPartDetail & "C13").CreatePivotTable TableDestination:="'Buyer MPF'!R3C1", TableName:="PivotTable1" ', DefaultVersion:=xlPivotTableVersion15
+        With ActiveSheet.PivotTables("PivotTable1")
+            .InGridDropZones = True
+            .ShowDrillIndicators = False
+            .RowAxisLayout xlTabularRow
+        End With
+        With ActiveSheet.PivotTables("PivotTable1").PivotFields("Buyer")
+            .Orientation = xlRowField
+            .Position = 1
+        End With
+        With ActiveSheet.PivotTables("PivotTable1").PivotFields("MPF")
+            .Orientation = xlRowField
+            .Position = 2
+        End With
+        For Each pvtFld In ActiveSheet.PivotTables
+            'pvtFld.PivotFields("Buyer").Subtotals(1) = True
+            pvtFld.PivotFields("Buyer").Subtotals(1) = False
+        Next pvtFld
+        
+        myTotalPivot = Range("A" & Rows.Count).End(xlUp).Row
+        Range("K4:K" & myTotalPivot).Value = Range("A4:A" & myTotalPivot).Value
+        Range("L4:L" & myTotalPivot).Value = "=Text(B4,""000"")"
+        For myA = 5 To myTotalPivot
+            If Range("K" & myA + 1).Value = "" Then
+                If Range("K" & myA).Value = "Grand Total" Then Exit For
+                myTotalMpf = Range("K" & myA).End(xlDown).Row - 1
+                Range("M" & myA).Value = Join(Application.WorksheetFunction.Transpose(Range("L" & myA & ":L" & myTotalMpf).Value), " ")
+                myA = myTotalMpf
+            Else
+                Range("M" & myA).Value = "'" & Range("L" & myA).Value
+            End If
+        Next myA
+        
+        
+        Sheets("Composite-Buyer").Select
+        Range("B3:B" & myTotalBuyer).Value = "=VLOOKUP(RC[-1],'Buyer MPF'!C[9]:C[11],3,0)"
+        Range("B3:B" & myTotalBuyer).Value = Range("B3:B" & myTotalBuyer).Value
+        ActiveWorkbook.Worksheets("Composite-Buyer").AutoFilter.Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("Composite-Buyer").AutoFilter.Sort.SortFields.Add Key:=Range("B2"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        With ActiveWorkbook.Worksheets("Composite-Buyer").AutoFilter.Sort
+            .Header = xlYes
+            .MatchCase = False
+            .Orientation = xlTopToBottom
+            .SortMethod = xlPinYin
+            .Apply
+        End With
+        Columns("B:B").EntireColumn.AutoFit
+        Range("P2").Value = "Delete"
+            'New Ver: Delete Grand Sum
+            'Range("P3:P" & myTotalBuyer).Value = "=IF(A3=""Grand Sum"",Row(B3),IFERROR(IF(B3=""N/A"",""Delete"",Row(B3)),""Delete""))"
+            Range("P3:P" & myTotalBuyer).Value = "=IFERROR(IF(B3=""N/A"",""Delete"",ROW(B3)),""Delete"")"
+        Range("P3:P" & myTotalBuyer).Value = Range("P3:P" & myTotalBuyer).Value
+        Range("A2:P" & myTotalBuyer).RemoveDuplicates Columns:=16, Header:=xlNo
+        Columns("P:P").ClearContents
+        myTotalBuyer = Range("A" & Rows.Count).End(xlUp).Row
+            'New Ver: Add Sub Total
+            Rows("1:1").Insert
+            Range("B1").Value = "Sub Total"
+            Range("C1:J1").Value = "=SUBTOTAL(9,C4:C" & myTotalBuyer + 1 & ")"
+            Range("B1:J1").Select
+            Selection.Borders(xlEdgeLeft).LineStyle = xlContinuous
+            Selection.Borders(xlEdgeTop).LineStyle = xlContinuous
+            Selection.Borders(xlEdgeBottom).LineStyle = xlContinuous
+            Selection.Borders(xlEdgeRight).LineStyle = xlContinuous
+            Selection.Borders(xlInsideVertical).LineStyle = xlContinuous
+            Selection.Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        Sheets("Part-Detail").Select
+        Columns("I:I").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("I1").Value = "Super A"
+        Range("I2:I" & myTotalPartDetail).Value = "=IFERROR(VLOOKUP(RC[-5],'[" & Replace(mySuperAFilename, "'", "''", 1) & "]Temp'!C5,1,0),"""")"
+        Range("I2:I" & myTotalPartDetail).Value = Range("I2:I" & myTotalPartDetail).Value
+        Columns("H:H").Insert
+        Range("H2:H" & myTotalPartDetail).Value = "=IF(J2="""",I2,""Super A"")"
+        Range("H2:H" & myTotalPartDetail).Value = Range("H2:H" & myTotalPartDetail).Value
+        Range("H1").Value = Range("I1").Value
+        Columns("I:J").Delete
+        
+        Sheets.Add
+        ActiveSheet.Name = "BuyerMpfPivot"
+        'ActiveWorkbook.Worksheets("Buyer MPF").PivotTables("PivotTable1").PivotCache.CreatePivotTable TableDestination:="BuyerMpfPivot!R3C1", TableName:="PivotTable1", DefaultVersion:=xlPivotTableVersion15
+        ActiveWorkbook.Worksheets("Buyer MPF").PivotTables("PivotTable1").PivotCache.CreatePivotTable TableDestination:="BuyerMpfPivot!R3C1", TableName:="PivotTable1" ', DefaultVersion:=xlPivotTableVersion15
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Buyer").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("Buyer").Position = 1
+        ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables("PivotTable1").PivotFields("Name"), "Count of Name", xlCount
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("ABC Code").Orientation = xlColumnField
+        ActiveSheet.PivotTables("PivotTable1").PivotFields("ABC Code").Position = 1
+        ActiveSheet.PivotTables("PivotTable1").PivotCache.Refresh
+        
+        Sheets("Composite-Buyer").Select
+        'Format change
+        myTotalBuyer = Range("A" & Rows.Count).End(xlUp).Row
+        'Range("L3:O" & myTotalBuyer).Value = "=IFERROR(VLOOKUP($A3,BuyerMpfPivot!$A:$E,MATCH(L$2,BuyerMpfPivot!$4:$4,0),0),"""")"
+        'Range("L3:O" & myTotalBuyer).Value = Range("L3:O" & myTotalBuyer).Value
+        'Range("K3:K" & myTotalBuyer).Value = "=COUNTIF('[" & myErpActionFilename & "]Temp'!$A:$A,RIGHT(A3,LEN(A3)-4))"
+        'Range("K3:K" & myTotalBuyer).Value = Range("K3:K" & myTotalBuyer).Value
+        Range("L4:O" & myTotalBuyer).Value = "=IFERROR(VLOOKUP($A4,BuyerMpfPivot!$A:$E,MATCH(L$3,BuyerMpfPivot!$4:$4,0),0),"""")"
+        Range("L4:O" & myTotalBuyer).Value = Range("L4:O" & myTotalBuyer).Value
+        Range("K4:K" & myTotalBuyer).Value = "=COUNTIF('[" & myErpActionFilename & "]Temp'!$A:$A,RIGHT(A4,LEN(A4)-4))"
+        Range("K4:K" & myTotalBuyer).Value = Range("K4:K" & myTotalBuyer).Value
+        Columns("K:K").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        'Range("K2").Value = "Total ERP Actions"
+        'Range("K3:K" & myTotalBuyer).Value = "=SUM(RC[-5]:RC[-1])"
+        Range("K3").Value = "Total ERP Actions"
+        Range("K4:K" & myTotalBuyer).Value = "=SUM(RC[-5]:RC[-1])"
+        'Range("B" & myTotalBuyer).ClearContents
+        'Range("C" & myTotalBuyer & ":P" & myTotalBuyer).Value = "=SUM(R[" & 3 - myTotalBuyer & "]C:R[-1]C)"
+        Range("B" & myTotalBuyer + 1).ClearContents
+        Range("C" & myTotalBuyer + 1 & ":P" & myTotalBuyer + 1).Value = "=SUM(R[" & 3 - myTotalBuyer & "]C:R[-1]C)"
+        
+        
+        
+        ''Ver1.2: Add in No. of Supplier from 16 buckets
+        Range("L3").Value = "No. of Suppliers (ERP)"
+        Columns("M:M").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("M3").Value = "No. of Supplier (16 Weeks)"
+        Range("M4:M" & myTotalBuyer).Value = "=COUNTIF('[" & myBucketFilename & "]Temp'!C9,RIGHT(RC[-12],LEN(RC[-12])-FIND(""-"",RC[-12],5)))"
+        Range("M4:M" & myTotalBuyer).Value = Range("M4:M" & myTotalBuyer).Value
+        Range("C" & myTotalBuyer + 1 & ":Q" & myTotalBuyer + 1).Value = "=SUM(R[" & 3 - myTotalBuyer & "]C:R[-1]C)"
+        Columns("L:M").AutoFit
+            
+        Workbooks(myBucketFilename).Close False
+        'Ver1.3: Changing Path
+'        'Check Folder Availbility
+'        'Year
+'        myYear = Year(Date)
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\"
+'        End If
+'        'Data Integrity
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\"
+'        End If
+'        'Make Part
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer workload\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer workload\"
+'        End If
+'
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer workload\" & myMonthYear & "\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer workload\" & myMonthYear & "\"
+'        End If
+'        mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer workload\" & myMonthYear & "\"
+'
+        Application.EnableEvents = False
+        ActiveWorkbook.SaveAs Filename:=mySavePath & "Buyer Load " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"  'Password:="888"
+        'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Buyer Load_Old" & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"  'Password:="888"
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Buyer Load_Old" & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"  'Password:="888"
+        
+        'Ver1.5: Save as binary to send out
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Buyer Load_Old" & Format(Date, "MMDDYYYY") & myPrefix & ".xlsb", FileFormat:=xlExcel12, CreateBackup:=False
+        
+        ActiveWorkbook.Close False
+        Workbooks(mySuperAFilename).Close False
+        Workbooks(myErpActionFilename).Close False
+        Application.EnableEvents = False
+    'With CreateObject("Outlook.Application").CreateItem(0)
+    '    .To = "sk.loon@plexus.com"
+    '    .Cc = "Sing-Yee.Ho@plexus.com"
+    '    .Subject = "Buyer Load have been save in Share drive"
+    '    .HTMLBody = "Buyer Load have been save in Share drive"
+    '    '.Display
+    '    .Send
+    'End With
+    'Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        "Buyer Load have been save in Share drive", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Buyer Load have been save in Share drive</html>", _
+                        myAttachement(), _
+                        0, 0)
+    'Ver1.5: Save as binary to send out
+    myAttachement(0) = myMacroPath & "\" & Year(Date) & "\Buyer Load_Old" & Format(Date, "MMDDYYYY") & myPrefix & ".xlsb"
+    Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sing-yee.ho@plexus.com; chian-li.yew@plexus.com; se-hui.tan@plexus.com", _
+                        "", _
+                        "sk.loon@plexus.com", _
+                        "Buyer Load have been save in Share drive", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Buyer Load have been save in Share drive</html>", _
+                        myAttachement(), _
+                        1, 0)
+myEnd:
+    'Application.EnableEvents = False
+    Application.DisplayAlerts = False
+    Application.Quit
+    'Application.EnableEvents = True
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error GoTo Err1
+    Sheets.Add
+    ActiveSheet.Name = "Temp"
+    For myA = 1 To 5
+        If myA = 1 Then
+            Sheets("Expedite Actions Current").Select
+        ElseIf myA = 2 Then
+            Sheets("Cancel Actions Current").Select
+        ElseIf myA = 3 Then
+            Sheets("PO Reduction Actions Current").Select
+        ElseIf myA = 4 Then
+            Sheets("Push Out Actions Current").Select
+        ElseIf myA = 5 Then
+            Sheets("New Planned Orders Current").Select
+        End If
+        Application.DisplayAlerts = False
+        Rows("1:2").MergeCells = False
+        Application.DisplayAlerts = True
+        mySearchValue = Cells.Find(What:="Buyer", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 1 Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns("A:A").Insert
+        End If
+        mySearchValue = Cells.Find(What:="Supplier", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> 2 Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns("B:B").Insert
+        End If
+        Range("A1:B" & Range("A" & Rows.Count).End(xlUp).Row).Copy
+        Sheets("Temp").Range("A" & Sheets("Temp").Range("A" & Rows.Count).End(xlUp).Row + 1).PasteSpecial xlValue
+    Next myA
+    Application.CutCopyMode = False
+    Sheets("Temp").Select
+    ActiveSheet.Range("$A$1:$B$" & Range("A" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=Array(1, 2), Header:=xlNo
+    Exit Sub
+Err1:
+    Sheets("Temp").Range("A1").Value = "Error"
+End Sub
+Sub SharePath()
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select a Folder"
+        If .Show = -1 Then ' if OK is pressed
+            Range("B4").Value = .SelectedItems(1)
+        End If
+    End With
+    
+'    If sFolder <> "" Then ' if a file was chosen
+'        ' *********************
+'        ' put your code in here
+'        ' *********************
+'    End If
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+
