@@ -1,0 +1,1021 @@
+Dim myCutInsertCounter As Integer
+Sub ForecastAutomation()
+    Dim myFamily(9) As String
+    Dim myGroup(9) As String
+    Dim myCognos(9, 4) As String
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myStrTime = Time
+    
+    Sheets("Missing Product").Cells.Clear
+    Sheets("Missing Product").Range("A1").Value = "Part"
+
+    myFcstLoadingFile = Range("B56").Value
+    myMrpForCtbFile = Range("B58").Value
+    myOpenSoFile = Range("B60").Value
+    myProductModelFile = Range("B62").Value
+    myLegacyLoadingFile = Range("B64").Value
+    myMrpFile = Range("B66").Value
+    myEslotFile = Range("B68").Value
+    myItemBranchFile = Range("B70").Value
+    myMiscFile = Range("B72").Value
+    mySrsFile = Range("B74").Value
+    myTerMasterFile = Range("B76").Value
+    myCtbEtsFile = Range("B78").Value
+    
+    myTotalFamily = Cells(6, Columns.Count).End(xlToLeft).Column - 6
+    For myA = 1 To myTotalFamily
+        myFamily(myA) = Cells(6, myA + 6).Value
+        myGroup(myA) = Cells(8, myA + 6).Value
+        For myB = 1 To 4
+            If Cells(10, myA + 6).Value = "" Then
+                myCognos(myA, myB) = 0
+            Else
+                myCognos(myA, myB) = Cells(10, myA + 6).Value
+            End If
+        Next myB
+    Next myA
+    
+    myWw = Range("B4").Value
+        If myWw = 1 Then
+myWwRetry:
+            myWwInput = InputBox("You are select WW1 as current work week, Please enter your previous work week either 51,52 or 53?", "Please enter previous WW:", "51,52 or 53")
+            If myWwInput = vbNullString Then
+                MsgBox ("The Macro will stop here!!!")
+                End
+            Else
+                If myWwInput = 51 Or myWwInput = 52 Or myWwInput = 53 Then
+                    myLastWw = myWwInput
+                    myLastYear = Range("B8").Value - 1
+                Else
+                    MsgBox "Please enter 51, 52 or 53 only"
+                    GoTo myWwRetry
+                End If
+            End If
+        Else
+            myLastWw = myWw - 1
+            myLastYear = Range("B8").Value
+        End If
+    myMonth = Range("B6").Value
+    myYear = Range("B8").Value
+    myQtr = Range("B10").Value
+    mySuggestFrom = Range("B12").Value
+    mySuggestTo = Range("D12").Value
+    myCtbFrom = Range("B14").Value
+    myCtbTo = Range("D14").Value
+    Dim mySuggestFromArr(4) As String
+    Dim mySuggestToArr(4) As String
+    Dim myCtbFromArr(4) As String
+    Dim myCtbToArr(4) As String
+    Dim myQtrFrom(4) As String
+    Dim myQtrSpecialFrom(4) As String
+    Dim myQtrSpecialTo(4) As String
+    Dim myQtrTo(4) As String
+    
+    If myQtr = "CQ1" Then
+        myQtrFrom(1) = "1/1/" & myYear
+    ElseIf myQtr = "CQ2" Then
+        myQtrFrom(1) = "4/1/" & myYear
+    ElseIf myQtr = "CQ3" Then
+        myQtrFrom(1) = "7/1/" & myYear
+    ElseIf myQtr = "CQ4" Then
+        myQtrFrom(1) = "10/1/" & myYear
+    End If
+    
+    'Ver1.5: Change date
+    If myQtr = "CQ1" Then
+        myQtrSpecialFrom(1) = "12/1/" & myYear - 1
+    ElseIf myQtr = "CQ2" Then
+        myQtrSpecialFrom(1) = "3/1/" & myYear
+    ElseIf myQtr = "CQ3" Then
+        myQtrSpecialFrom(1) = "6/1/" & myYear
+    ElseIf myQtr = "CQ4" Then
+        myQtrSpecialFrom(1) = "9/1/" & myYear
+    End If
+    
+    mySuggestFromArr(1) = mySuggestFrom
+    mySuggestToArr(1) = mySuggestTo
+    myCtbFromArr(1) = myCtbFrom
+    myCtbToArr(1) = myCtbTo
+    For myX = 1 To 4
+        If myX > 1 Then
+            myQtrFrom(myX) = DateAdd("m", 3, myQtrFrom(myX - 1))
+            mySuggestFromArr(myX) = DateAdd("m", 3, mySuggestFromArr(myX - 1))
+            mySuggestToArr(myX) = DateAdd("m", 3, mySuggestToArr(myX - 1))
+            myCtbFromArr(myX) = DateAdd("m", 3, myCtbFromArr(myX - 1))
+            myCtbToArr(myX) = DateAdd("m", 3, myCtbToArr(myX - 1))
+            'Ver1.6: Add new Qtr
+            myQtrSpecialFrom(myX) = DateAdd("m", 3, myQtrSpecialFrom(myX - 1))
+        End If
+        myQtrTo(myX) = DateAdd("m", 3, myQtrFrom(myX)) - 1
+        'Ver1.6: Add new Qtr
+        myQtrSpecialTo(myX) = DateAdd("m", 3, myQtrSpecialFrom(myX)) - 1
+        
+    Next myX
+        
+    Workbooks.Open Filename:=myProductModelFile, UpdateLinks:=False, ReadOnly:=True
+    myProductModelFilename = ActiveWorkbook.Name
+    myProductModelSheetname = ActiveSheet.Name
+        Workbooks.Open Filename:=myMrpFile, UpdateLinks:=False, ReadOnly:=True
+        myMrpFilename = ActiveWorkbook.Name
+        Sheets("NPI ETS800").Select
+        myMrpSheetname = ActiveSheet.Name
+        If ActiveSheet.AutoFilterMode = True Then
+           Rows("2:2").AutoFilter
+        End If
+        myRetryCounter = 1
+        myCutInsertCounter = 0
+ReCheck1:
+        If myRetryCounter = 3 Then
+            Columns("A:BB").Insert
+            myRetryCounter = myRetryCounter + 1
+            GoTo ReCheck1
+        ElseIf myRetryCounter = 7 Then
+            MsgBox "File header problem. Please contact the Macro developer!"
+            End
+        Else
+            If Application.WorksheetFunction.CountIf(Columns("B:B"), "Stock Code") = 0 Then: Call CutInsertColumn("Stock Code", "B")
+            If Application.WorksheetFunction.CountIf(Columns("C:C"), "Plexus PN") = 0 Then: Call CutInsertColumn("Plexus PN", "C")
+            If Application.WorksheetFunction.CountIf(Columns("O:O"), "Quantity") = 0 Then: Call CutInsertColumn("Quantity", "O")
+            If Application.WorksheetFunction.CountIf(Columns("P:P"), "Unit Cost") = 0 Then: Call CutInsertColumn("Unit Cost", "P")
+            If Application.WorksheetFunction.CountIf(Columns("Q:Q"), "Extended Cost") = 0 Then: Call CutInsertColumn("Extended Cost", "Q")
+            If Application.WorksheetFunction.CountIf(Columns("T:T"), "Suggested Due Date") = 0 Then: Call CutInsertColumn("Suggested Due Date", "T")
+            If Application.WorksheetFunction.CountIf(Columns("Y:Y"), "MPR Loading date") = 0 Then: Call CutInsertColumn("MPR Loading date", "Y")
+            If myCutInsertCounter = 0 Then: GoTo CheckDone
+            myCutInsertCounter = 0
+            myRetryCounter = myRetryCounter + 1
+            GoTo ReCheck1
+        End If
+CheckDone:
+        myTotalMrp = Range("A" & Rows.Count).End(xlUp).Row
+        Range("AF2:AF" & myTotalMrp).Value = "=VLOOKUP(C2,'[" & myProductModelFilename & "]" & myProductModelSheetname & "'!$B:$D,3,0)"
+        Range("AF2:AF" & myTotalMrp).Value = Range("AF2:AF" & myTotalMrp).Value
+        If Application.WorksheetFunction.CountIf(Range("AF2:AF" & myTotalMrp), "#N/A") > 0 Then
+            Rows("3:3").AutoFilter
+            ActiveSheet.Range("$A$3:$AF$" & myTotalMrp).AutoFilter Field:=32, Criteria1:="#N/A"
+            Range("C4:C" & myTotalMrp).Copy
+            myTempPaste = Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & Rows.Count).End(xlUp).Row
+            Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & myTempPaste + 1).PasteSpecial xlValues
+            Rows("3:3").AutoFilter
+        End If
+            Workbooks.Open Filename:=myItemBranchFile, UpdateLinks:=False, ReadOnly:=True
+            myItemBranchFilename = ActiveWorkbook.Name
+            ActiveSheet.Name = "TempMacro"
+            If ActiveSheet.AutoFilterMode = True Then
+               Rows("2:2").AutoFilter
+            End If
+            myRetryCounter = 1
+            myCutInsertCounter = 0
+ReCheck2:
+            If myRetryCounter = 3 Then
+                Columns("A:BB").Insert
+                myRetryCounter = myRetryCounter + 1
+                GoTo ReCheck2
+            ElseIf myRetryCounter = 7 Then
+                MsgBox "File header problem. Please contact the Macro developer!"
+                End
+            Else
+                If Application.WorksheetFunction.CountIf(Columns("F:F"), "2nd Item Number") = 0 Then: Call CutInsertColumn("2nd Item Number", "F")
+                If Application.WorksheetFunction.CountIf(Columns("AC:AC"), "'QC' Quoted Cost") = 0 Then: Call CutInsertColumn("'QC' Quoted Cost", "AC")
+                If myCutInsertCounter = 0 Then: GoTo CheckDone2
+                myCutInsertCounter = 0
+                myRetryCounter = myRetryCounter + 1
+                GoTo ReCheck2
+            End If
+CheckDone2:
+                Workbooks.Open Filename:=myEslotFile, UpdateLinks:=False, ReadOnly:=True
+                myEslotFilename = ActiveWorkbook.Name
+                Sheets("Slots demand detail").Select
+                If ActiveSheet.AutoFilterMode = True Then
+                   Rows("2:2").AutoFilter
+                End If
+                myEslotFile = Range("A" & Rows.Count).End(xlUp).Row
+                myRetryCounter = 1
+                myCutInsertCounter = 0
+ReCheck3:
+                If myRetryCounter = 3 Then
+                    Columns("A:BB").Insert
+                    myRetryCounter = myRetryCounter + 1
+                    GoTo ReCheck3
+                ElseIf myRetryCounter = 7 Then
+                    MsgBox "File header problem. Please contact the Macro developer!"
+                    End
+                Else
+                    If Application.WorksheetFunction.CountIf(Columns("G:G"), "Order quantity") = 0 Then: Call CutInsertColumn("Order quantity", "G")
+                    If Application.WorksheetFunction.CountIf(Columns("H:H"), "FCT Commit Date (Shipdate)") = 0 Then: Call CutInsertColumn("FCT Commit Date (Shipdate)", "H")
+                    If Application.WorksheetFunction.CountIf(Columns("W:W"), "PN") = 0 Then: Call CutInsertColumn("PN", "W")
+                    If myCutInsertCounter = 0 Then: GoTo CheckDone3
+                    myCutInsertCounter = 0
+                    myRetryCounter = myRetryCounter + 1
+                    GoTo ReCheck3
+                End If
+CheckDone3:
+                'Check for invalid quantity
+                Range("AF2:AF" & myEslotFile).Value = "=ISNUMBER(G2)"
+                Range("AF2:AF" & myEslotFile).Value = Range("AF2:AF" & myEslotFile).Value
+                myErrorCheck = Application.WorksheetFunction.CountIf(Columns("AF:AF"), False)
+                If myErrorCheck > 0 Then
+                    For myErrCheckCnt = 2 To myEslotFile
+                        If Range("AF" & myErrCheckCnt).Value = False Then
+myRetry:
+                            myUserInput = InputBox("Part Number: " & Range("W" & myErrCheckCnt).Value & Chr(10) & "Order Quantity: " & Range("G" & myErrCheckCnt).Value, "Invalid quantity detected!", "Enter number only!")
+                            If myUserInput = vbNullString Then
+                                MsgBox ("The Macro will stop here!!!")
+                                End
+                            Else
+                                If IsNumeric(myUserInput) Then
+                                    Range("G" & myErrCheckCnt).Value = myUserInput
+                                Else
+                                    MsgBox "Only number is allow!"
+                                    GoTo myRetry
+                                End If
+                            End If
+                        End If
+                    Next myErrCheckCnt
+                End If
+                Range("AF2:AF" & myEslotFile).Value = "=IFERROR(IF(W2=0,0,IFERROR(VLOOKUP(W2,'[" & myMrpFilename & "]NPI ETS800'!$C:$P,14,0),VLOOKUP(W2,'[" & myItemBranchFilename & "]TempMacro'!$F:$AC,24,0))*G2),""NA"")"
+                Range("AF2:AF" & myEslotFile).Value = Range("AF2:AF" & myEslotFile).Value
+                'Ver1.4: check for N/A pricing
+                'Check for invalid quantity
+                myErrorCheck = Application.WorksheetFunction.CountIf(Columns("AF:AF"), "NA")
+                If myErrorCheck > 0 Then
+                    For myErrCheckCnt = 2 To myEslotFile
+                        If Range("AF" & myErrCheckCnt).Value = "NA" Then
+myRetry1:
+                            myUserInput = InputBox("Part Number: " & Range("W" & myErrCheckCnt).Value & Chr(10) & "Price: " & Range("AF" & myErrCheckCnt).Value, "Invalid quantity detected!", "Enter number only!")
+                            If myUserInput = vbNullString Then
+                                MsgBox ("The Macro will stop here!!!")
+                                End
+                            Else
+                                If IsNumeric(myUserInput) Then
+                                    Range("AF" & myErrCheckCnt).Value = myUserInput
+                                Else
+                                    MsgBox "Only number is allow!"
+                                    GoTo myRetry1
+                                End If
+                            End If
+                        End If
+                    Next myErrCheckCnt
+                End If
+                
+                Range("AG2:AG" & myEslotFile).Value = "=VLOOKUP(W2,'[" & myProductModelFilename & "]" & myProductModelSheetname & "'!$B:$D,3,0)"
+                Range("AG2:AG" & myEslotFile).Value = Range("AG2:AG" & myEslotFile).Value
+                If Application.WorksheetFunction.CountIf(Range("AG2:AG" & myEslotFile), "#N/A") > 0 Then
+                    Rows("1:1").AutoFilter
+                    ActiveSheet.Range("$A$1:$AG$" & myEslotFile).AutoFilter Field:=33, Criteria1:="#N/A"
+                    Range("W2:W" & myEslotFile).Copy
+                    myTempPaste = Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & Rows.Count).End(xlUp).Row
+                    Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & myTempPaste + 1).PasteSpecial xlValues
+                    Rows("1:1").AutoFilter
+                End If
+                    
+                    Workbooks.Open Filename:=myMiscFile, UpdateLinks:=False, ReadOnly:=True
+                    myMiscFilename = ActiveWorkbook.Name
+                    myMiscSheetname = ActiveSheet.Name
+                    If ActiveSheet.AutoFilterMode = True Then
+                       Rows("2:2").AutoFilter
+                    End If
+                    myMiscTotal = Range("A" & Rows.Count).End(xlUp).Row
+                    myRetryCounter = 1
+                myCutInsertCounter = 0
+ReCheck4:
+                If myRetryCounter = 3 Then
+                    Columns("A:BB").Insert
+                    myRetryCounter = myRetryCounter + 1
+                    GoTo ReCheck4
+                ElseIf myRetryCounter = 7 Then
+                    MsgBox "File header problem. Please contact the Macro developer!"
+                    End
+                Else
+                    If Application.WorksheetFunction.CountIf(Columns("B:B"), "Request ship date") = 0 Then: Call CutInsertColumn("Request ship date", "B")
+                    If Application.WorksheetFunction.CountIf(Columns("J:J"), "PN") = 0 Then: Call CutInsertColumn("PN", "J")
+                    If myCutInsertCounter = 0 Then: GoTo CheckDone4
+                    myCutInsertCounter = 0
+                    myRetryCounter = myRetryCounter + 1
+                    GoTo ReCheck4
+                End If
+CheckDone4:
+                    'Ver1.4: Error handler
+                    'Range("R2:R" & myMiscTotal).Value = "=IFERROR(VLOOKUP(J2,'[" & myMrpFilename & "]NPI ETS800'!$B:$P,15,0),VLOOKUP(J2&""-318"",'[" & myItemBranchFilename & "]TempMacro'!$F:$AC,24,0))*M2"
+                    Range("R2:R" & myMiscTotal).Value = "=IFERROR(IFERROR(VLOOKUP(J2,'[" & myMrpFilename & "]NPI ETS800'!$B:$P,15,0),VLOOKUP(J2&""-318"",'[" & myItemBranchFilename & "]TempMacro'!$F:$AC,24,0))*M2,""NA"")"
+                    Range("R2:R" & myMiscTotal).Value = Range("R2:R" & myMiscTotal).Value
+                    Range("S2:S" & myMiscTotal).Value = "=VLOOKUP(J2,'[" & myProductModelFilename & "]" & myProductModelSheetname & "'!$A:$D,4,0)"
+                    Range("S2:S" & myMiscTotal).Value = Range("S2:S" & myMiscTotal).Value
+                    If Application.WorksheetFunction.CountIf(Range("S2:S" & myMiscTotal), "#N/A") > 0 Then
+                        Rows("1:1").AutoFilter
+                        ActiveSheet.Range("$A$1:$S$" & myMiscTotal).AutoFilter Field:=19, Criteria1:="#N/A"
+                        Range("J2:J" & myMiscTotal).Copy
+                        myTempPaste = Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & Rows.Count).End(xlUp).Row
+                        Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & myTempPaste + 1).PasteSpecial xlValues
+                        Rows("1:1").AutoFilter
+                    End If
+                    'Ver1.4: Check for invalid price
+                    myErrorCheck = Application.WorksheetFunction.CountIf(Columns("R:R"), "NA")
+                    If myErrorCheck > 0 Then
+                        For myErrCheckCnt = 2 To myEslotFile
+                            If Range("R" & myErrCheckCnt).Value = "NA" Then
+myRetry2:
+                                myUserInput = InputBox("Part Number: " & Range("J" & myErrCheckCnt).Value & Chr(10) & "Price: " & Range("R" & myErrCheckCnt).Value, "Invalid quantity detected!", "Enter number only!")
+                                If myUserInput = vbNullString Then
+                                    MsgBox ("The Macro will stop here!!!")
+                                    End
+                                Else
+                                    If IsNumeric(myUserInput) Then
+                                        Range("R" & myErrCheckCnt).Value = myUserInput
+                                    Else
+                                        MsgBox "Only number is allow!"
+                                        GoTo myRetry2
+                                    End If
+                                End If
+                            End If
+                        Next myErrCheckCnt
+                    End If
+                    
+                    
+                        'Workbooks.Open Filename:=myTerMasterFile, UpdateLinks:=False, ReadOnly:=True
+                        'myTerMasterFilename = ActiveWorkbook.Name
+                        'myTerMasterSheetname = ActiveSheet.Name
+                            Workbooks.Open Filename:=mySrsFile, UpdateLinks:=False, ReadOnly:=True
+                            mySrsFilename = ActiveWorkbook.Name
+                            mySrsSheetname = ActiveSheet.Name
+                            If ActiveSheet.AutoFilterMode = True Then
+                                   Rows("2:2").AutoFilter
+                                End If
+                            Set mySearchValue = Cells.Find(What:="Actual Ship Date", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                            If mySearchValue Is Nothing Then
+                                MsgBox "Actual Ship Date column not found!"
+                                End
+                            Else
+                                mySearchValue = Cells.Find(What:="Actual Ship Date", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                Cells(1, mySearchValue).EntireColumn.Cut
+                                Columns("A:A").Insert
+                            End If
+                            Set mySearchValue = Cells.Find(What:="Invoice Amount", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                            If mySearchValue Is Nothing Then
+                                MsgBox "Invoice Amount column not found!"
+                                End
+                            Else
+                                mySearchValue = Cells.Find(What:="Invoice Amount", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                Cells(1, mySearchValue).EntireColumn.Cut
+                                Columns("B:B").Insert
+                            End If
+                            Set mySearchValue = Cells.Find(What:="Customer PO", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                            If mySearchValue Is Nothing Then
+                                MsgBox "Customer PO column not found!"
+                                End
+                            Else
+                                mySearchValue = Cells.Find(What:="Customer PO", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                Cells(1, mySearchValue).EntireColumn.Cut
+                                Columns("C:C").Insert
+                            End If
+                            Set mySearchValue = Cells.Find(What:="Item Number", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                            If mySearchValue Is Nothing Then
+                                MsgBox "Item Number column not found!"
+                                End
+                            Else
+                                mySearchValue = Cells.Find(What:="Item Number", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                Cells(1, mySearchValue).EntireColumn.Cut
+                                Columns("D:D").Insert
+                            End If
+                            myTotalSrs = Range("C" & Rows.Count).End(xlUp).Row
+                            'Range("G1:G" & myTotalSrs).Value = "=IF(IFERROR(VLOOKUP(C1,'[" & myTerMasterFilename & "]PO Master'!$E:$E,1,0),""NA"")=""NA"",""NA"",""Yes"")"
+                            'Range("G1:G" & myTotalSrs).Value = Range("G1:G" & myTotalSrs).Value
+                            Range("H1:H" & myTotalSrs).Value = "=VLOOKUP(D1,'[" & myProductModelFilename & "]" & myProductModelSheetname & "'!$B:$D,3,0)"
+                            Range("H1:H" & myTotalSrs).Value = Range("H1:H" & myTotalSrs).Value
+                            If Application.WorksheetFunction.CountIf(Range("H1:H" & myTotalSrs), "#N/A") > 0 Then
+                                Rows("3:3").AutoFilter
+                                ActiveSheet.Range("$A$3:$BA$" & myTotalSrs).AutoFilter Field:=8, Criteria1:="#N/A"
+                                Range("D4:D" & myTotalMrp).Copy
+                                myTempPaste = Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & Rows.Count).End(xlUp).Row
+                                Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & myTempPaste + 1).PasteSpecial xlValues
+                                Rows("3:3").AutoFilter
+                            End If
+                                Workbooks.Open Filename:=myCtbEtsFile, UpdateLinks:=False, ReadOnly:=True
+                                myCtbEtsFilename = ActiveWorkbook.Name
+                                myCtbEtsSheetname = ActiveSheet.Name
+                                If ActiveSheet.AutoFilterMode = True Then
+                                   Rows("2:2").AutoFilter
+                                End If
+                                myTotalCtbEts = Range("A" & Rows.Count).End(xlUp).Row
+                                myRetryCounter = 1
+                                myCutInsertCounter = 0
+ReCheck5:
+                                If myRetryCounter = 3 Then
+                                    Columns("A:BB").Insert
+                                    myRetryCounter = myRetryCounter + 1
+                                    GoTo ReCheck5
+                                ElseIf myRetryCounter = 7 Then
+                                    MsgBox "File header problem. Please contact the Macro developer!"
+                                    End
+                                Else
+                                    If Application.WorksheetFunction.CountIf(Columns("A:A"), "Part") = 0 Then: Call CutInsertColumn("Part", "A")
+                                    If Application.WorksheetFunction.CountIf(Columns("E:E"), "Due") = 0 Then: Call CutInsertColumn("Due", "E")
+                                    If Application.WorksheetFunction.CountIf(Columns("N:N"), "Overall CTB") = 0 Then: Call CutInsertColumn("Overall CTB", "N")
+                                    'If Application.WorksheetFunction.CountIf(Columns("P:P"), "Total Pirce") = 0 Then: Call CutInsertColumn("Total Pirce", "P")
+                                    If Application.WorksheetFunction.CountIf(Columns("P:P"), "Total Price") = 0 Then: Call CutInsertColumn("Total Pirce", "P")
+                                    If myCutInsertCounter = 0 Then: GoTo CheckDone5
+                                    myCutInsertCounter = 0
+                                    myRetryCounter = myRetryCounter + 1
+                                    GoTo ReCheck5
+                                End If
+CheckDone5:
+                                Range("S2:S" & myEslotFile).Value = "=VLOOKUP(A2,'[" & myProductModelFilename & "]" & myProductModelSheetname & "'!$B:$D,3,0)"
+                                Range("S2:S" & myEslotFile).Value = Range("S2:S" & myEslotFile).Value
+                                If Application.WorksheetFunction.CountIf(Range("S2:S" & myEslotFile), "#N/A") > 0 Then
+                                    Rows("2:2").AutoFilter
+                                    ActiveSheet.Range("$A$3:$S$" & myEslotFile).AutoFilter Field:=19, Criteria1:="#N/A"
+                                    Range("A3:A" & myEslotFile).Copy
+                                    myTempPaste = Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & Rows.Count).End(xlUp).Row
+                                    Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & myTempPaste + 1).PasteSpecial xlValues
+                                    Rows("2:2").AutoFilter
+                                End If
+                                    Workbooks.Open Filename:=myMrpForCtbFile, UpdateLinks:=False, ReadOnly:=True
+                                    myMrpForCtbFilename = ActiveWorkbook.Name
+                                    myMrpForCtbSheetname = ActiveSheet.Name
+                                    If ActiveSheet.AutoFilterMode = True Then
+                                       Rows("1:1").AutoFilter
+                                    End If
+                                    myTotalMrpForCtb = Range("A" & Rows.Count).End(xlUp).Row
+                                    myRetryCounter = 1
+                                myCutInsertCounter = 0
+ReCheck6:
+                                If myRetryCounter = 3 Then
+                                    Columns("A:BB").Insert
+                                    myRetryCounter = myRetryCounter + 1
+                                    GoTo ReCheck6
+                                ElseIf myRetryCounter = 7 Then
+                                    MsgBox "File header problem. Please contact the Macro developer!"
+                                    End
+                                Else
+                                    If Application.WorksheetFunction.CountIf(Columns("I:I"), "Plexus #") = 0 Then: Call CutInsertColumn("Plexus #", "I")
+                                    If Application.WorksheetFunction.CountIf(Columns("R:R"), "Extended cost") = 0 Then: Call CutInsertColumn("Extended cost", "R")
+                                    If Application.WorksheetFunction.CountIf(Columns("AG:AG"), "CTB") = 0 Then: Call CutInsertColumn("CTB", "AG")
+                                    If Application.WorksheetFunction.CountIf(Columns("AJ:AJ"), "Check") = 0 Then: Call CutInsertColumn("Check", "AJ")
+                                    If myCutInsertCounter = 0 Then: GoTo CheckDone6
+                                    myCutInsertCounter = 0
+                                    myRetryCounter = myRetryCounter + 1
+                                    GoTo ReCheck6
+                                End If
+CheckDone6:
+                                    Range("AO1:AO" & myTotalMrpForCtb).Value = "=IF(IFERROR(VLOOKUP(I1,'[" & myMacrofile & "]Exclusion'!$A:$A,1,0),""NA"")=""NA"",ROW(I1),""Delete"")"
+                                    Range("AO1:AO" & myTotalMrpForCtb).Value = Range("AO1:AO" & myTotalMrpForCtb).Value
+                                    Range("AO1").Value = "Delete"
+                                    Range("A1:AO" & myTotalMrpForCtb).RemoveDuplicates Columns:=41, Header:=xlNo
+                                    myTotalMrpForCtb = Range("A" & Rows.Count).End(xlUp).Row
+                                    Range("AO1:AO" & myTotalMrpForCtb).Value = Range("AO1:AO" & myTotalMrpForCtb).Value
+                                    Range("AO2:AO" & myTotalMrpForCtb).Value = "=VLOOKUP(I2,'[" & myProductModelFilename & "]" & myProductModelSheetname & "'!$B:$D,3,0)"
+                                    Range("AO2:AO" & myTotalMrpForCtb).Value = Range("AO2:AO" & myTotalMrpForCtb).Value
+                                    If Application.WorksheetFunction.CountIf(Range("AO2:AO" & myTotalMrpForCtb), "#N/A") > 0 Then
+                                        Rows("1:1").AutoFilter
+                                        ActiveSheet.Range("$A$3:$AO$" & myTotalMrpForCtb).AutoFilter Field:=41, Criteria1:="#N/A"
+                                        Range("I2:I" & myTotalMrpForCtb).Copy
+                                        myTempPaste = Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & Rows.Count).End(xlUp).Row
+                                        Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & myTempPaste + 1).PasteSpecial xlValues
+                                        Rows("1:1").AutoFilter
+                                    End If
+                                        'Workbooks.Open Filename:=myOpenSoFile, UpdateLinks:=False, ReadOnly:=True
+                                        'myOpenSoFilename = ActiveWorkbook.Name
+                                        'myOpenSoSheetname = ActiveSheet.Name
+                                            Workbooks.Open Filename:=myLegacyLoadingFile, UpdateLinks:=False, ReadOnly:=True
+                                            myLegacyLoadingFilename = ActiveWorkbook.Name
+                                            myLegacyLoadingSheetname = ActiveSheet.Name
+                                            If ActiveSheet.AutoFilterMode = True Then
+                                               Rows("1:1").AutoFilter
+                                            End If
+                                            myTotalLegacy = Range("A" & Rows.Count).End(xlUp).Row
+                                            myRetryCounter = 1
+                                            myCutInsertCounter = 0
+ReCheck7:
+                                            If myRetryCounter = 3 Then
+                                                Columns("A:BB").Insert
+                                                myRetryCounter = myRetryCounter + 1
+                                                GoTo ReCheck7
+                                            ElseIf myRetryCounter = 7 Then
+                                                MsgBox "File header problem. Please contact the Macro developer!"
+                                                End
+                                            Else
+                                                If Application.WorksheetFunction.CountIf(Columns("C:C"), "Plexus#") = 0 Then: Call CutInsertColumn("Plexus#", "C")
+                                                If Application.WorksheetFunction.CountIf(Columns("R:R"), "Extended cost") = 0 Then: Call CutInsertColumn("Extended cost", "R")
+                                                If Application.WorksheetFunction.CountIf(Columns("U:U"), "Suggested Due Date") = 0 Then: Call CutInsertColumn("Suggested Due Date", "U")
+                                                If Application.WorksheetFunction.CountIf(Columns("AB:AB"), "RSD") = 0 Then: Call CutInsertColumn("RSD", "AB")
+                                                'If Application.WorksheetFunction.CountIf(Columns("AD:AD"), "SHIPPED") = 0 Then: Call CutInsertColumn("Remark", "AJ")
+                                                If Application.WorksheetFunction.CountIf(Columns("AD:AD"), "SHIPPED") = 0 Then: Call CutInsertColumn("SHIPPED", "AD")
+                                                If myCutInsertCounter = 0 Then: GoTo CheckDone7
+                                                myCutInsertCounter = 0
+                                                myRetryCounter = myRetryCounter + 1
+                                                GoTo ReCheck7
+                                            End If
+CheckDone7:
+                                            Range("AF2:AF" & myTotalLegacy).Value = "=VLOOKUP(C2,'[" & myProductModelFilename & "]" & myProductModelSheetname & "'!$B:$D,3,0)"
+                                            Range("AF2:AF" & myTotalLegacy).Value = Range("AF2:AF" & myTotalLegacy).Value
+                                            If Application.WorksheetFunction.CountIf(Range("AF2:AF" & myTotalLegacy), "#N/A") > 0 Then
+                                                Rows("1:1").AutoFilter
+                                                ActiveSheet.Range("$A$3:$AF$" & myTotalLegacy).AutoFilter Field:=32, Criteria1:="#N/A"
+                                                Range("C2:C" & myTotalLegacy).Copy
+                                                myTempPaste = Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & Rows.Count).End(xlUp).Row
+                                                Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & myTempPaste + 1).PasteSpecial xlValues
+                                                Rows("1:1").AutoFilter
+                                            End If
+                                            'Workbooks(myMrpFilename).Sheets(myMrpSheetname).Range("A3:AF" & myTotalMrp).Copy
+                                            'Range("A" & myTotalLegacy + 1).PasteSpecial xlPasteAll
+                                            'Application.CutCopyMode = False
+                                                    Workbooks.Open Filename:=myFcstLoadingFile, UpdateLinks:=False
+                                                    myFcstLoadingFilename = ActiveWorkbook.Name
+                                                    myFcstLoadingSheetname = ActiveSheet.Name
+    
+    For myX = 1 To 3
+        If myX = 1 Then
+            Sheets("Overall").Select
+        ElseIf myX = 2 Then
+            Sheets("Legacy").Select
+        Else
+            Sheets("ETS800").Select
+        End If
+        'Find row to update (Current WW)
+        myLastRow = Range("B" & Rows.Count).End(xlUp).Row
+        Set myYearSearch = Range("B1:B" & myLastRow).Find(What:=myYear, After:=Range("B1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+        If myYearSearch Is Nothing Then
+            Range("B" & myLastRow + 1).Value = myYear
+            Range("C" & myLastRow + 1).Value = myMonth
+            Range("D" & myLastRow + 1).Value = "W" & myWw
+            myYearSearch = myLastRow + 1
+            myLastRow = myLastRow + 1
+        Else
+            myYearSearch = Range("B1:B" & myLastRow).Find(What:=myYear, After:=Range("B1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+        End If
+            Set myMonthSearch = Range("C" & myYearSearch & ":C" & myLastRow).Find(What:=myMonth, After:=Range("C" & myYearSearch), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+            If myMonthSearch Is Nothing Then
+                Range("B" & myLastRow + 1).Value = myYear
+                Range("C" & myLastRow + 1).Value = myMonth
+                Range("D" & myLastRow + 1).Value = "W" & myWw
+                myMonthSearch = myLastRow + 1
+                myLastRow = myLastRow + 1
+            Else
+                myMonthSearch = Range("C" & myYearSearch & ":C" & myLastRow).Find(What:=myMonth, After:=Range("C" & myYearSearch), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+            End If
+                Set myWwSearch = Range("D" & myMonthSearch & ":D" & myLastRow).Find(What:="W" & myWw, After:=Range("D" & myMonthSearch), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If myWwSearch Is Nothing Then
+                    Range("B" & myLastRow + 1).Value = myYear
+                    Range("C" & myLastRow + 1).Value = myMonth
+                    Range("D" & myLastRow + 1).Value = "W" & myWw
+                    myWwSearch = myLastRow + 1
+                    myLastRow = myLastRow + 1
+                Else
+                    myWwSearch = Range("D" & myMonthSearch & ":D" & myLastRow).Find(What:="W" & myWw, After:=Range("D" & myMonthSearch), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+                End If
+            Result = MsgBox(vbTab & " Previous" & vbTab & "Current" & vbCrLf & "Qtr" & vbTab & ": " & Range("E" & myWwSearch - 1).Value & vbTab & Range("E" & myWwSearch).Value & vbCrLf & "Year" & vbTab & ": " & Range("B" & myWwSearch - 1).Value & vbTab & Range("B" & myWwSearch).Value & vbCrLf & "Month" & vbTab & ": " & Range("C" & myWwSearch - 1).Value & vbTab & Range("C" & myWwSearch).Value & vbCrLf & "WW" & vbTab & ": " & Range("D" & myWwSearch - 1).Value & vbTab & Range("D" & myWwSearch).Value & vbCrLf & vbCrLf & vbCrLf & "Is this data correct?", vbYesNo + vbQuestion)
+            If Result = vbYes Then
+                
+            Else
+                MsgBox "Please make sure the previous Workweek is above the current workweek. The Macro will stop here!"
+                End
+            End If
+                    
+            
+        
+        'Previous Weekwork check
+        If Range("F" & myWwSearch - 1).Value = "All" Then
+            myPreviousUpdateRow = myWwSearch - 1
+            
+            If Range("D" & myPreviousUpdateRow + 1).Value <> "W" & myLastWw Then
+                Rows(myPreviousUpdateRow + 1 & ":" & myPreviousUpdateRow + myTotalFamily).Insert Shift:=xlShiftDown
+                Range("B" & myPreviousUpdateRow + 1 & ":B" & myPreviousUpdateRow + myTotalFamily).Value = Range("B" & myPreviousUpdateRow).Value
+                Range("C" & myPreviousUpdateRow + 1 & ":C" & myPreviousUpdateRow + myTotalFamily).Value = Range("C" & myPreviousUpdateRow).Value
+                Range("D" & myPreviousUpdateRow + 1 & ":D" & myPreviousUpdateRow + myTotalFamily).Value = Range("D" & myPreviousUpdateRow).Value
+                Range("E" & myPreviousUpdateRow + 1 & ":E" & myPreviousUpdateRow + myTotalFamily).Value = Range("E" & myPreviousUpdateRow).Value
+                Range("B" & myPreviousUpdateRow + 1 & ":F" & myPreviousUpdateRow + myTotalFamily).InsertIndent 1
+                Rows(myPreviousUpdateRow & ":" & myPreviousUpdateRow).Font.Bold = True
+                Range("F" & myPreviousUpdateRow).Value = "All"
+                For myA = 1 To myTotalFamily
+                    Range("F" & myPreviousUpdateRow + myA).Value = myFamily(myA)
+                Next myA
+                Columns("B:F").AutoFit
+                myLastCol = Cells(4, Columns.Count).End(xlToLeft).Column
+                Range(Cells(myPreviousUpdateRow + 1, 2), Cells(myPreviousUpdateRow + myTotalFamily, myLastCol)).Interior.Color = 14869218
+                Range(Cells(myPreviousUpdateRow + 1, 2), Cells(myPreviousUpdateRow + myTotalFamily, myLastCol)).Font.Color = -10477568 'Dark Blue
+                Range(Cells(myPreviousUpdateRow + 1, 2), Cells(myPreviousUpdateRow + myTotalFamily, myLastCol)).Font.Bold = False
+                Rows(myPreviousUpdateRow + 1 & ":" & myPreviousUpdateRow + myTotalFamily).Rows.Group
+                '=SUMIFS('[Sample Legacy Loading.xlsx]MRP'!$R:$R,'[Sample Legacy Loading.xlsx]MRP'!$AB:$AB,">=4/1/2019",'[Sample Legacy Loading.xlsx]MRP'!$AB:$AB,"<7/1/2019",'[Sample Legacy Loading.xlsx]MRP'!$AD:$AD,"")
+            End If
+            myWwSearch = myWwSearch + myTotalFamily
+        Else
+            For myY = myWwSearch To 1 Step -1
+                If Range("F" & myY - 1).Value = "All" Then
+                    myPreviousUpdateRow = myY - 1
+                    Exit For
+                End If
+            Next myY
+        End If
+        
+        myUpdateRow = myWwSearch
+        Columns("B:F").HorizontalAlignment = xlLeft
+        If Range("D" & myUpdateRow + 1).Value <> "W" & myWw Then
+            Rows(myUpdateRow + 1 & ":" & myUpdateRow + myTotalFamily).Insert Shift:=xlShiftDown
+            Range("B" & myUpdateRow & ":B" & myUpdateRow + myTotalFamily).Value = myYear
+            Range("C" & myUpdateRow & ":C" & myUpdateRow + myTotalFamily).Value = myMonth
+            Range("D" & myUpdateRow & ":D" & myUpdateRow + myTotalFamily).Value = "W" & myWw
+            Range("E" & myUpdateRow & ":E" & myUpdateRow + myTotalFamily).Value = myQtr
+            Range("B" & myUpdateRow + 1 & ":F" & myUpdateRow + myTotalFamily).InsertIndent 1
+            Rows(myUpdateRow & ":" & myUpdateRow).Font.Bold = True
+            Range("F" & myUpdateRow).Value = "All"
+            For myA = 1 To myTotalFamily
+                Range("F" & myUpdateRow + myA).Value = myFamily(myA)
+            Next myA
+            Columns("B:F").AutoFit
+            myLastCol = Cells(4, Columns.Count).End(xlToLeft).Column
+            Range(Cells(myUpdateRow + 1, 2), Cells(myUpdateRow + myTotalFamily, myLastCol)).Interior.Color = 14869218
+            Range(Cells(myUpdateRow + 1, 2), Cells(myUpdateRow + myTotalFamily, myLastCol)).Font.Color = -10477568 'Dark Blue
+            Range(Cells(myUpdateRow + 1, 2), Cells(myUpdateRow + myTotalFamily, myLastCol)).Font.Bold = False
+            Rows(myUpdateRow + 1 & ":" & myUpdateRow + myTotalFamily).Rows.Group
+            '=SUMIFS('[Sample Legacy Loading.xlsx]MRP'!$R:$R,'[Sample Legacy Loading.xlsx]MRP'!$AB:$AB,">=4/1/2019",'[Sample Legacy Loading.xlsx]MRP'!$AB:$AB,"<7/1/2019",'[Sample Legacy Loading.xlsx]MRP'!$AD:$AD,"")
+        End If
+        'Apply border
+        Range(Cells(myPreviousUpdateRow + 1, 2), Cells(myUpdateRow + myTotalFamily, myLastCol)).Borders(xlEdgeLeft).LineStyle = xlContinuous
+        Range(Cells(myPreviousUpdateRow + 1, 2), Cells(myUpdateRow + myTotalFamily, myLastCol)).Borders(xlEdgeTop).LineStyle = xlContinuous
+        Range(Cells(myPreviousUpdateRow + 1, 2), Cells(myUpdateRow + myTotalFamily, myLastCol)).Borders(xlEdgeBottom).LineStyle = xlContinuous
+        Range(Cells(myPreviousUpdateRow + 1, 2), Cells(myUpdateRow + myTotalFamily, myLastCol)).Borders(xlEdgeRight).LineStyle = xlContinuous
+        Range(Cells(myPreviousUpdateRow + 1, 2), Cells(myUpdateRow + myTotalFamily, myLastCol)).Borders(xlInsideVertical).LineStyle = xlContinuous
+        Range(Cells(myPreviousUpdateRow + 1, 2), Cells(myUpdateRow + myTotalFamily, myLastCol)).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    
+        
+        'Updating data
+        'myCqSearchCol = Range(Cells(3, myYearSearchCol - 1), Cells(3, myLastCol)).Find(What:=myQtr, After:=Cells(3, myYearSearchCol - 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        myLastCol = Cells(4, Columns.Count).End(xlToLeft).Column
+        myUpdateCounter = 1
+        
+        For myCounterB = 7 To myLastCol
+            If Cells(4, myCounterB).Value = "Cognos" Then
+                'Ver1.1: Clear Cognos
+                Cells(myUpdateRow, myCounterB).ClearContents
+                For myA = 1 To myTotalFamily
+                    If myX > 1 Then
+                        If myGroup(myA) = ActiveSheet.Name Then
+                            Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value + myCognos(myA, myUpdateCounter)
+                            Cells(myUpdateRow + myA, myCounterB).Value = myCognos(myA, myUpdateCounter)
+                        Else
+                            Cells(myUpdateRow + myA, myCounterB).ClearContents
+                        End If
+                    Else
+                        Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value + myCognos(myA, myUpdateCounter)
+                        Cells(myUpdateRow + myA, myCounterB).Value = myCognos(myA, myUpdateCounter)
+                    End If
+                Next myA
+            ElseIf Cells(4, myCounterB).Value = "MRP Load" Then
+                If myX = 1 Then
+                    Cells(myUpdateRow, myCounterB).Value = "=SUMIFS('[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!R:R,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AB:AB,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AB:AB,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AD:AD,"""")" & _
+                                                       "+SUMIFS('[" & myMrpFilename & "]NPI ETS800'!Q:Q,'[" & myMrpFilename & "]NPI ETS800'!Y:Y,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!Y:Y,""<=" & myQtrTo(myUpdateCounter) & """)"
+                    Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!R:R,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AB:AB,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AB:AB,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AD:AD,"""",'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AF:AF,F" & myUpdateRow + 1 & ")" & _
+                                                                                                                  "+SUMIFS('[" & myMrpFilename & "]NPI ETS800'!Q:Q,'[" & myMrpFilename & "]NPI ETS800'!Y:Y,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!Y:Y,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!AF:AF,F" & myUpdateRow + 1 & ")"
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value
+                ElseIf myX = 2 Then
+                    Cells(myUpdateRow, myCounterB).Value = "=SUMIFS('[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!R:R,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AB:AB,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AB:AB,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AD:AD,"""")"
+                    Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!R:R,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AB:AB,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AB:AB,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AD:AD,"""",'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AF:AF,F" & myUpdateRow + 1 & ")"
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value
+                Else
+                    Cells(myUpdateRow, myCounterB).Value = "=SUMIFS('[" & myMrpFilename & "]NPI ETS800'!Q:Q,'[" & myMrpFilename & "]NPI ETS800'!Y:Y,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!Y:Y,""<=" & myQtrTo(myUpdateCounter) & """)"
+                    Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myMrpFilename & "]NPI ETS800'!Q:Q,'[" & myMrpFilename & "]NPI ETS800'!Y:Y,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!Y:Y,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!AF:AF,F" & myUpdateRow + 1 & ")"
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value
+                End If
+                myAll = Cells(myUpdateRow, myCounterB).Value
+                mySumInd = Application.WorksheetFunction.Sum(Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)))
+                If Round(myAll, 2) = Round(mySumInd, 2) Then
+                    Cells(myUpdateRow, myCounterB).Font.Color = -10477568 'Black
+                Else
+                    Cells(myUpdateRow, myCounterB).Font.Color = -16776961 'Red
+                End If
+            ElseIf Cells(4, myCounterB).Value = "Customer FC" Then
+                If myX = 1 Then
+                    Cells(myUpdateRow, myCounterB).Value = "=SUMIFS('[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!R:R,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!U:U,"">=" & mySuggestFromArr(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!U:U,""<=" & mySuggestToArr(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AD:AD,"""") +SUMIFS('[" & myMrpFilename & "]NPI ETS800'!Q:Q,'[" & myMrpFilename & "]NPI ETS800'!T:T,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!T:T,""<=" & myQtrTo(myUpdateCounter) & """)"
+                    Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!R:R,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!U:U,"">=" & mySuggestFromArr(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!U:U,""<=" & mySuggestToArr(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AD:AD,"""",'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AF:AF,F" & myUpdateRow + 1 & ") +SUMIFS('[" & myMrpFilename & "]NPI ETS800'!Q:Q,'[" & myMrpFilename & "]NPI ETS800'!T:T,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!T:T,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!AF:AF,F" & myUpdateRow + 1 & ")"
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value
+                ElseIf myX = 2 Then
+                    Cells(myUpdateRow, myCounterB).Value = "=SUMIFS('[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!R:R,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!U:U,"">=" & mySuggestFromArr(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!U:U,""<=" & mySuggestToArr(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AD:AD,"""")"
+                    Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!R:R,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!U:U,"">=" & mySuggestFromArr(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!U:U,""<=" & mySuggestToArr(myUpdateCounter) & """,'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AD:AD,"""",'[" & myLegacyLoadingFilename & "]" & myLegacyLoadingSheetname & "'!AF:AF,F" & myUpdateRow + 1 & ")"
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value
+                Else
+                    Cells(myUpdateRow, myCounterB).Value = "=SUMIFS('[" & myMrpFilename & "]NPI ETS800'!Q:Q,'[" & myMrpFilename & "]NPI ETS800'!T:T,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!T:T,""<=" & myQtrTo(myUpdateCounter) & """)"
+                    Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myMrpFilename & "]NPI ETS800'!Q:Q,'[" & myMrpFilename & "]NPI ETS800'!T:T,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!T:T,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myMrpFilename & "]NPI ETS800'!AF:AF,F" & myUpdateRow + 1 & ")"
+                    Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value
+                End If
+                myAll = Cells(myUpdateRow, myCounterB).Value
+                mySumInd = Application.WorksheetFunction.Sum(Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)))
+                If Round(myAll, 2) = Round(mySumInd, 2) Then
+                    Cells(myUpdateRow, myCounterB).Font.Color = -10477568 'Black
+                Else
+                    Cells(myUpdateRow, myCounterB).Font.Color = -16776961 'Red
+                End If
+            ElseIf Cells(4, myCounterB).Value = "Eslot To Date" Then
+                Cells(myUpdateRow, myCounterB).Value = "=SUMIFS('[" & myEslotFilename & "]Slots demand detail'!AF:AF,'[" & myEslotFilename & "]Slots demand detail'!H:H,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myEslotFilename & "]Slots demand detail'!H:H,""<=" & myQtrTo(myUpdateCounter) & """)"
+                Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value
+                Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myEslotFilename & "]Slots demand detail'!AF:AF,'[" & myEslotFilename & "]Slots demand detail'!H:H,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myEslotFilename & "]Slots demand detail'!H:H,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myEslotFilename & "]Slots demand detail'!AG:AG,F" & myUpdateRow + 1 & ")"
+                Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value
+                myAll = Cells(myUpdateRow, myCounterB).Value
+                mySumInd = Application.WorksheetFunction.Sum(Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)))
+                If Round(myAll, 2) = Round(mySumInd, 2) Then
+                    Cells(myUpdateRow, myCounterB).Font.Color = -10477568 'Black
+                Else
+                    Cells(myUpdateRow, myCounterB).Font.Color = -16776961 'Red
+                End If
+            ElseIf Cells(4, myCounterB).Value = "Misc To Date" Then
+                Cells(myUpdateRow, myCounterB).Value = "=SUMIFS('[" & myMiscFilename & "]" & myMiscSheetname & "'!R:R,'[" & myMiscFilename & "]" & myMiscSheetname & "'!B:B,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMiscFilename & "]" & myMiscSheetname & "'!B:B,""<=" & myQtrTo(myUpdateCounter) & """)"
+                Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value
+                Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myMiscFilename & "]" & myMiscSheetname & "'!R:R,'[" & myMiscFilename & "]" & myMiscSheetname & "'!B:B,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myMiscFilename & "]" & myMiscSheetname & "'!B:B,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myMiscFilename & "]" & myMiscSheetname & "'!S:S,F" & myUpdateRow + 1 & ")"
+                Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value
+                myAll = Cells(myUpdateRow, myCounterB).Value
+                mySumInd = Application.WorksheetFunction.Sum(Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)))
+                If Round(myAll, 2) = Round(mySumInd, 2) Then
+                    Cells(myUpdateRow, myCounterB).Font.Color = -10477568 'Black
+                Else
+                    Cells(myUpdateRow, myCounterB).Font.Color = -16776961 'Red
+                End If
+            ElseIf Cells(4, myCounterB).Value = "OverLoading" Then
+                If myX = 1 Then
+                    Range(Cells(myUpdateRow, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=IF(R1C7=""MRP Loading"",RC[-4],RC[-3])+RC[1]-RC[-5]"
+                Else
+                    Range(Cells(myUpdateRow, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=RC[-4]+RC[1]-RC[-5]"
+                End If
+                a = 0
+            ElseIf Cells(4, myCounterB).Value = "Ship to Date" Then
+                If myUpdateCounter = 1 Then
+                    'Last Week
+                    If myX = 1 Then
+                        Cells(myPreviousUpdateRow, myCounterB).Value = "=SUMIFS('[" & mySrsFilename & "]" & mySrsSheetname & "'!B:B,'[" & mySrsFilename & "]" & mySrsSheetname & "'!A:A,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & mySrsFilename & "]" & mySrsSheetname & "'!A:A,""<=" & myQtrTo(myUpdateCounter) & """)"
+                        Cells(myPreviousUpdateRow, myCounterB).Value = Cells(myPreviousUpdateRow, myCounterB).Value
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & mySrsFilename & "]" & mySrsSheetname & "'!B:B,'[" & mySrsFilename & "]" & mySrsSheetname & "'!A:A,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & mySrsFilename & "]" & mySrsSheetname & "'!A:A,""<=" & myQtrTo(myUpdateCounter) & """,'[" & mySrsFilename & "]" & mySrsSheetname & "'!H:H,F" & myPreviousUpdateRow + 1 & ")"
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value
+                    ElseIf myX = 2 Then
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & mySrsFilename & "]" & mySrsSheetname & "'!B:B,'[" & mySrsFilename & "]" & mySrsSheetname & "'!A:A,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & mySrsFilename & "]" & mySrsSheetname & "'!A:A,""<=" & myQtrTo(myUpdateCounter) & """,'[" & mySrsFilename & "]" & mySrsSheetname & "'!H:H,F" & myPreviousUpdateRow + 1 & ")"
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value
+                        Cells(myPreviousUpdateRow, myCounterB).Value = "=SUM(R[1]C:R[5]C)"
+                    Else
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & mySrsFilename & "]" & mySrsSheetname & "'!B:B,'[" & mySrsFilename & "]" & mySrsSheetname & "'!A:A,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & mySrsFilename & "]" & mySrsSheetname & "'!A:A,""<=" & myQtrTo(myUpdateCounter) & """,'[" & mySrsFilename & "]" & mySrsSheetname & "'!H:H,F" & myPreviousUpdateRow + 1 & ")"
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value
+                        Cells(myPreviousUpdateRow, myCounterB).Value = "=SUM(R[1]C:R[5]C)"
+                    End If
+                    If myX > 1 Then
+                        For myA = 1 To myTotalFamily
+                            If myGroup(myA) <> ActiveSheet.Name Then
+                                Cells(myPreviousUpdateRow + myA, myCounterB).ClearContents
+                            End If
+                        Next myA
+                    End If
+                    myAll = Cells(myPreviousUpdateRow, myCounterB).Value
+                    mySumInd = Application.WorksheetFunction.Sum(Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)))
+                    If Round(myAll, 2) = Round(mySumInd, 2) Then
+                        Cells(myPreviousUpdateRow, myCounterB).Font.Color = -10477568 'Black
+                    Else
+                        Cells(myPreviousUpdateRow, myCounterB).Font.Color = -16776961 'Red
+                    End If
+                End If
+            ElseIf Cells(4, myCounterB).Value = "CTB" Then
+                ''Current Week
+                'Cells(myUpdateRow, myCounterB).Value = "=SUMIFS('[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!P:P,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,"">=" & CDate(myQtrFrom(myUpdateCounter)) + 14 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,""<=" & CDate(myQtrTo(myUpdateCounter)) + 14 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,""<=" & myQtrTo(myUpdateCounter) & """)"
+                'Cells(myUpdateRow, myCounterB).Value = Cells(myUpdateRow, myCounterB).Value
+                'Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!P:P,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,"">=" & CDate(myQtrFrom(myUpdateCounter)) + 14 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,""<=" & CDate(myQtrTo(myUpdateCounter)) + 14 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!S:S,F" & myUpdateRow + 1 & ")"
+                'Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)).Value
+                'myAll = Cells(myUpdateRow, myCounterB).Value
+                'mySumInd = Application.WorksheetFunction.Sum(Range(Cells(myUpdateRow + 1, myCounterB), Cells(myUpdateRow + myTotalFamily, myCounterB)))
+                'If Round(myAll, 2) = Round(mySumInd, 2) Then
+                '    Cells(myUpdateRow, myCounterB).Font.Color = -10477568 'Black
+                'Else
+                '    Cells(myUpdateRow, myCounterB).Font.Color = -16776961 'Red
+                'End If
+                'Last Week
+                If myUpdateCounter < 3 Then
+                    If myX = 1 Then
+                        'myQtrSpecialFrom
+                        'Cells(myPreviousUpdateRow, myCounterB).Value = "=SUMIFS('[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!P:P,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,"">=" & CDate(myQtrFrom(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,""<=" & CDate(myQtrTo(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,""<=" & myQtrTo(myUpdateCounter) & """)" & _
+                                                                       "+SUMIFS('[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!R:R,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,"">=" & myCtbFromArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,""<=" & myCtbToArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AJ:AJ,""#N/A"")"
+                        Cells(myPreviousUpdateRow, myCounterB).Value = "=SUMIFS('[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!P:P,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,"">=" & CDate(myQtrSpecialFrom(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,""<=" & CDate(myQtrSpecialTo(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,""<=" & myQtrTo(myUpdateCounter) & """)" & _
+                                                                       "+SUMIFS('[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!R:R,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,"">=" & myCtbFromArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,""<=" & myCtbToArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AJ:AJ,""#N/A"")"
+                        Cells(myPreviousUpdateRow, myCounterB).Value = Cells(myPreviousUpdateRow, myCounterB).Value
+                        'Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!P:P,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,"">=" & CDate(myQtrFrom(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,""<=" & CDate(myQtrTo(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!S:S,F" & myUpdateRow + 1 & ")" & _
+                                                                                                                                          "+SUMIFS('[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!R:R,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,"">=" & myCtbFromArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,""<=" & myCtbToArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AJ:AJ,""#N/A"",'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AO:AO,F" & myPreviousUpdateRow + 1 & ")"
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!P:P,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,"">=" & CDate(myQtrSpecialFrom(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,""<=" & CDate(myQtrSpecialTo(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!S:S,F" & myUpdateRow + 1 & ")" & _
+                                                                                                                                          "+SUMIFS('[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!R:R,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,"">=" & myCtbFromArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,""<=" & myCtbToArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AJ:AJ,""#N/A"",'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AO:AO,F" & myPreviousUpdateRow + 1 & ")"
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value
+                    ElseIf myX = 2 Then
+                        Cells(myPreviousUpdateRow, myCounterB).Value = "=SUMIFS('[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!R:R,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,"">=" & myCtbFromArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,""<=" & myCtbToArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AJ:AJ,""#N/A"")"
+                        Cells(myPreviousUpdateRow, myCounterB).Value = Cells(myPreviousUpdateRow, myCounterB).Value
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!R:R,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,"">=" & myCtbFromArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AG:AG,""<=" & myCtbToArr(myUpdateCounter) & """,'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AJ:AJ,""#N/A"",'[" & myMrpForCtbFilename & "]" & myMrpForCtbSheetname & "'!AO:AO,F" & myPreviousUpdateRow + 1 & ")"
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value
+                    Else
+                        'Cells(myPreviousUpdateRow, myCounterB).Value = "=SUMIFS('[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!P:P,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,"">=" & CDate(myQtrFrom(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,""<=" & CDate(myQtrTo(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,""<=" & myQtrTo(myUpdateCounter) & """)"
+                        Cells(myPreviousUpdateRow, myCounterB).Value = "=SUMIFS('[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!P:P,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,"">=" & CDate(myQtrSpecialFrom(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,""<=" & CDate(myQtrSpecialTo(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,""<=" & myQtrTo(myUpdateCounter) & """)"
+                        Cells(myPreviousUpdateRow, myCounterB).Value = Cells(myPreviousUpdateRow, myCounterB).Value
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=SUMIFS('[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!P:P,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,"">=" & CDate(myQtrFrom(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!N:N,""<=" & CDate(myQtrTo(myUpdateCounter)) + 15 & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,"">=" & myQtrFrom(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!E:E,""<=" & myQtrTo(myUpdateCounter) & """,'[" & myCtbEtsFilename & "]" & myCtbEtsSheetname & "'!S:S,F" & myUpdateRow + 1 & ")"
+                        Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value
+                    End If
+                    myAll = Cells(myPreviousUpdateRow, myCounterB).Value
+                    mySumInd = Application.WorksheetFunction.Sum(Range(Cells(myPreviousUpdateRow + 1, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)))
+                    If Round(myAll, 2) = Round(mySumInd, 2) Then
+                        Cells(myPreviousUpdateRow, myCounterB).Font.Color = -10477568 'Black
+                    Else
+                        Cells(myPreviousUpdateRow, myCounterB).Font.Color = -16776961 'Red
+                    End If
+                    Cells(myPreviousUpdateRow + 1, myCounterB).EntireColumn.Hidden = False
+                End If
+            ElseIf Cells(4, myCounterB).Value = "CTB % vs FC" Then
+                If myUpdateCounter < 3 Then
+                    If myX = 2 Then
+                        Range(Cells(myPreviousUpdateRow, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=IFERROR(RC[-1]/RC[-3],"""")"
+                    Else
+                        Range(Cells(myPreviousUpdateRow, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=IFERROR(RC[-1]/RC[-6],"""")"
+                    End If
+                    Range(Cells(myPreviousUpdateRow, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).NumberFormat = "0%"
+                    Cells(myPreviousUpdateRow, myCounterB).EntireColumn.Hidden = False
+                End If
+            ElseIf Cells(4, myCounterB).Value = "CTB % vs Load" Then
+                If myUpdateCounter < 3 Then
+                    If myX = 2 Then
+                        Range(Cells(myPreviousUpdateRow, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=IFERROR(RC[-2]/RC[-5],"""")"
+                    Else
+                        Range(Cells(myPreviousUpdateRow, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).Value = "=IFERROR(RC[-2]/RC[-8],"""")"
+                    End If
+                    Range(Cells(myPreviousUpdateRow, myCounterB), Cells(myPreviousUpdateRow + myTotalFamily, myCounterB)).NumberFormat = "0%"
+                    Cells(myPreviousUpdateRow, myCounterB).EntireColumn.Hidden = False
+                End If
+                myUpdateCounter = myUpdateCounter + 1
+            ElseIf Cells(4, myCounterB).Value = "NPI" Then
+                Cells(myUpdateRow, myCounterB).EntireColumn.Hidden = True
+            End If
+        Next myCounterB
+        'Update CONCATENATE
+        myTempConcatenate = Range("B" & Rows.Count).End(xlUp).Row
+        Range("A5:A" & myTempConcatenate).Value = "=B5&C5&D5"
+        If myX = 1 Then
+            Range("A5:E" & myTempConcatenate).Copy
+            'Sheets("Setting").Visible = True
+            Sheets("Setting").Range("F2").PasteSpecial xlValue
+            Sheets("Setting").Range("F2:J" & myTempConcatenate).RemoveDuplicates Columns:=1, Header:=xlNo
+        End If
+    Next myX
+    
+    'myTerMasterFilename = Range("B76").Value
+    
+    Workbooks(myMrpForCtbFilename).Close False
+    'Workbooks(myOpenSoFilename).Close False
+    Workbooks(myProductModelFilename).Close False
+    Workbooks(myLegacyLoadingFilename).Close False
+    Workbooks(myMrpFilename).Close False
+    Workbooks(myEslotFilename).Close False
+    Workbooks(myItemBranchFilename).Close False
+    Workbooks(myMiscFilename).Close False
+    Workbooks(mySrsFilename).Close False
+    Workbooks(myCtbEtsFilename).Close False
+    
+    myTempPaste = Workbooks(myMacrofile).Sheets("Missing Product").Range("A" & Rows.Count).End(xlUp).Row
+    If myTempPaste > 1 Then
+        Workbooks(myMacrofile).Sheets("Missing Product").Range("A1").Value = 0
+        Workbooks(myMacrofile).Sheets("Missing Product").Range("A1:A" & myTempPaste).RemoveDuplicates Columns:=1, Header:=xlNo
+        Workbooks(myMacrofile).Sheets("Missing Product").Range("A1").Value = "Part"
+        Workbooks(myMacrofile).Activate
+        Sheets("Missing Product").Select
+        Range("A1").Select
+    End If
+    Workbooks(myFcstLoadingFilename).Activate
+    
+    myEndTime = Time
+    MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+            'Ver1.3: Accept "Plexus PN" or "Plexus Part Number"
+            If myHeader = "Plexus PN" Then
+                Set mySearchValue = Cells.Find(What:="Plexus Part Number", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found! The Macro will stop here!"
+                    End
+                Else
+                    mySearchValueCol = Cells.Find(What:="Plexus Part Number", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                    mySearchValueRow = Cells.Find(What:="Plexus Part Number", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+                    Cells(mySearchValueRow, mySearchValueCol).Value = "Plexus PN"
+                End If
+            Else
+                MsgBox myHeader & " column not found! The Macro will stop here!"
+                End
+            End If
+        'MsgBox myHeader & " column not found! The Macro will stop here!"
+        'End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub CancelSheetSelect()
+    On Error GoTo Err1
+    Sheets("Cancel Actions (Update Here)").Select
+    Exit Sub
+Err1:
+    MsgBox "'Cancel Actions (Update Here)' sheet not found!"
+    End
+End Sub
+Sub PushOutSheetSelect()
+    On Error GoTo Err2
+    Sheets("Push Out Actions (Update Here)").Select
+    Exit Sub
+Err2:
+    MsgBox "'Push Out Actions (Update Here)' sheet not found!"
+    End
+End Sub
+Sub PivotBlankDeselect(myPivotTableName, myPivotTableField)
+    On Error Resume Next
+    ActiveSheet.PivotTables(myPivotTableName).PivotFields(myPivotTableField).PivotItems("(blank)").Visible = False
+End Sub
+Sub ForecaseLoadingFileSelect()
+    myForecaseLoadingFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Forecast Loading file")
+    If myForecaseLoadingFile = False Then
+    Else
+        Range("B56").Value = myForecaseLoadingFile
+    End If
+End Sub
+Sub MrpForCtbFileSelect()
+    myMrpForCtbFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please MRP - For CTB file")
+    If myMrpForCtbFile = False Then
+    Else
+        'Range("B57").Value = myMrpForCtbFile
+        Range("B58").Value = myMrpForCtbFile
+    End If
+End Sub
+Sub OpenSoFileSelect()
+    myOpenSoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Open SO file")
+    If myOpenSoFile = False Then
+    Else
+        Range("B60").Value = myOpenSoFile
+    End If
+End Sub
+Sub ProductModelFileSelect()
+    myProductModelFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Product Model file")
+    If myProductModelFile = False Then
+    Else
+        Range("B62").Value = myProductModelFile
+    End If
+End Sub
+Sub LegacyLoadingFileSelect()
+    myLegacyLoadingFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Legacy Loading file")
+    If myLegacyLoadingFile = False Then
+    Else
+        Range("B64").Value = myLegacyLoadingFile
+    End If
+End Sub
+Sub MrpSelect()
+    myMrpFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please MRP file")
+    If myMrpFile = False Then
+    Else
+        Range("B66").Value = myMrpFile
+    End If
+End Sub
+Sub EslotSelect()
+    myEslotFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Eagle Slot file")
+    If myEslotFile = False Then
+    Else
+        Range("B68").Value = myEslotFile
+    End If
+End Sub
+Sub ItemBranchSelect()
+    myItemBranchFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Item Branch file")
+    If myItemBranchFile = False Then
+    Else
+        Range("B70").Value = myItemBranchFile
+    End If
+End Sub
+Sub MiscSelect()
+    myMiscFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please Misc Order List")
+    If myMiscFile = False Then
+    Else
+        Range("B72").Value = myMiscFile
+    End If
+End Sub
+Sub SrsSelect()
+    mySrsFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please SRS Report")
+    If mySrsFile = False Then
+    Else
+        Range("B74").Value = mySrsFile
+    End If
+End Sub
+Sub TerMasterSelect()
+    myTerMasterFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please TER ETS 800 Master File")
+    If myTerMasterFile = False Then
+    Else
+        Range("B76").Value = myTerMasterFile
+    End If
+End Sub
+Sub CtbEtsSelect()
+    myCtbEtsFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please CTB (ETS-800) File")
+    If myCtbEtsFile = False Then
+    Else
+        Range("B78").Value = myCtbEtsFile
+    End If
+End Sub
+
