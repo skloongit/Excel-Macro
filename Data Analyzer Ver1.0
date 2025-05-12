@@ -1,0 +1,375 @@
+Sub DataAnalyzer()
+    Dim fso, oFolder, oSubfolder, oFile, queue As Collection
+    myMacroFilename = ActiveWorkbook.Name
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set queue = New Collection
+    'queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy") 'obviously replace
+    queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2018\Weekly Report\16 Wks Bucket Report\Buy Part") 'obviously replace
+    
+    Do While queue.Count > 0
+        Set oFolder = queue(1)
+        queue.Remove 1 'dequeue
+        '...insert any folder processing code here...
+        For Each oSubfolder In oFolder.SubFolders
+            queue.Add oSubfolder 'enqueue
+            myFilename = oSubfolder.Name
+        Next oSubfolder
+        For Each oFile In oFolder.Files
+            myFolder = oFolder.Name
+            myFilename = oFile.Name
+            'If Left(myFilename, 38) = "16 weeks bucket report Monthly (buy) -" Then
+            If Left(myFilename, 36) = "16 weeks bucket report Monthly (buy)" Then
+                myUpdateRow = Range("A" & Rows.Count).End(xlUp).Row + 1
+                Range("A" & myUpdateRow).Value = myFilename
+                'Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy\" & myFolder & "\" & myFilename, , True
+                Workbooks.Open "\\pena-dsk-601\Purchasing\2018\Weekly Report\16 Wks Bucket Report\Buy Part\" & myFolder & "\" & myFilename, False, True
+                myOpenFilename = ActiveWorkbook.Name
+                Sheets("Detail").Select
+                Set mySearchValue = Cells.Find(What:="TotalDemandQty", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found! The Macro will stop here!"
+                    End
+                Else
+                    mySearchcol = Cells.Find(What:="TotalDemandQty", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).EntireColumn.Address
+                End If
+                
+                ActiveSheet.Name = "Temp"
+                Workbooks(myMacroFilename).Activate
+                Range("B" & myUpdateRow & ":D" & myUpdateRow).Value = "=COUNTIF('[" & myOpenFilename & "]Temp'!$D:$D,B$2)"
+                Range("B" & myUpdateRow & ":D" & myUpdateRow).Value = Range("B" & myUpdateRow & ":D" & myUpdateRow).Value
+                Range("E" & myUpdateRow & ":G" & myUpdateRow).Value = "=COUNTIFS('[" & myOpenFilename & "]Temp'!$D:$D,E$2,'[" & myOpenFilename & "]Temp'!" & mySearchcol & ",""<>0"")"
+                Range("E" & myUpdateRow & ":G" & myUpdateRow).Value = Range("E" & myUpdateRow & ":G" & myUpdateRow).Value
+                Range("H" & myUpdateRow & ":J" & myUpdateRow).Value = "=COUNTIFS('[" & myOpenFilename & "]Temp'!$D:$D,H$2,'[" & myOpenFilename & "]Temp'!" & mySearchcol & ",""0"")"
+                Range("H" & myUpdateRow & ":J" & myUpdateRow).Value = Range("H" & myUpdateRow & ":J" & myUpdateRow).Value
+                'myOpenFilenameDate = Left(Right(myOpenFilename, 13), 8)
+                'myOpenFilenameDate = Left(myOpenFilenameDate, 4) & Right(myOpenFilenameDate, 2)
+                'Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Customer\FF1\2019 - Teradyne\MRP\MRP-" & myOpenFilenameDate & ".xlsx"
+                'myMrpFile = ActiveWorkbook.Name
+                Workbooks(myOpenFilename).Close False
+            End If
+            '...insert any file processing code here...
+        Next oFile
+    Loop
+
+End Sub
+Sub DataAnalyzer2019_318()
+    Dim fso, oFolder, oSubfolder, oFile, queue As Collection
+    myMacroFilename = ActiveWorkbook.Name
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set queue = New Collection
+    'queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy") 'obviously replace
+    queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Customer\FF1\2019 - Teradyne\MRP\") 'obviously replace
+    
+    Do While queue.Count > 0
+        Set oFolder = queue(1)
+        queue.Remove 1 'dequeue
+        '...insert any folder processing code here...
+        For Each oSubfolder In oFolder.SubFolders
+            queue.Add oSubfolder 'enqueue
+            myFilename = oSubfolder.Name
+        Next oSubfolder
+        For Each oFile In oFolder.Files
+            myFolder = oFolder.Name
+            myFilename = oFile.Name
+            'If Left(myFilename, 38) = "16 weeks bucket report Monthly (buy) -" Then
+            If Left(myFilename, 3) = "MRP" Then
+                myUpdateRow = Range("L" & Rows.Count).End(xlUp).Row + 1
+                Range("L" & myUpdateRow).Value = myFilename
+                'Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy\" & myFolder & "\" & myFilename, , True
+                Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Customer\FF1\2019 - Teradyne\" & myFolder & "\" & myFilename, False, True
+                myOpenFilename = ActiveWorkbook.Name
+                'Sheets("Detail").Select
+                
+                Set mySearchValue = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found! The Macro will stop here!"
+                    End
+                Else
+                    mySearchcol = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).EntireColumn.Address
+                End If
+                
+                ActiveSheet.Name = "Temp"
+                Workbooks(myMacroFilename).Activate
+                Range("M" & myUpdateRow & ":S" & myUpdateRow).Value = "=COUNTIF('[" & myOpenFilename & "]Temp'!" & mySearchcol & ",M$3)"
+                Range("M" & myUpdateRow & ":S" & myUpdateRow).Value = Range("M" & myUpdateRow & ":S" & myUpdateRow).Value
+                'Range("AF" & myUpdateRow & ":AG" & myUpdateRow).Value = "=COUNTIFS('[" & myOpenFilename & "]Temp'!$J:$J,AF$3,'[" & myOpenFilename & "]Temp'!" & mySearchcol & ",""<>0"")"
+                'Range("AF" & myUpdateRow & ":AG" & myUpdateRow).Value = Range("AF" & myUpdateRow & ":AG" & myUpdateRow).Value
+                Workbooks(myOpenFilename).Close False
+            End If
+            '...insert any file processing code here...
+        Next oFile
+    Loop
+    MsgBox "Done!"
+End Sub
+Sub DataAnalyzer2018_318()
+    Dim fso, oFolder, oSubfolder, oFile, queue As Collection
+    myMacroFilename = ActiveWorkbook.Name
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set queue = New Collection
+    'queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy") 'obviously replace
+    queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2018\Customer\FF1\2018 - Teradyne\MRP\") 'obviously replace
+    
+    Do While queue.Count > 0
+        Set oFolder = queue(1)
+        queue.Remove 1 'dequeue
+        '...insert any folder processing code here...
+        For Each oSubfolder In oFolder.SubFolders
+            queue.Add oSubfolder 'enqueue
+            myFilename = oSubfolder.Name
+        Next oSubfolder
+        For Each oFile In oFolder.Files
+            myFolder = oFolder.Name
+            myFilename = oFile.Name
+            'If Left(myFilename, 38) = "16 weeks bucket report Monthly (buy) -" Then
+            If Len(myFilename) < 17 Then
+                myUpdateRow = Range("L" & Rows.Count).End(xlUp).Row + 1
+                Range("L" & myUpdateRow).Value = myFilename
+                'Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy\" & myFolder & "\" & myFilename, , True
+                Workbooks.Open "\\pena-dsk-601\Purchasing\2018\Customer\FF1\2018 - Teradyne\" & myFolder & "\" & myFilename, False, True
+                myOpenFilename = ActiveWorkbook.Name
+                'Sheets("Detail").Select
+                
+                Set mySearchValue = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found! The Macro will stop here!"
+                    End
+                Else
+                    mySearchcol = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).EntireColumn.Address
+                End If
+                
+                ActiveSheet.Name = "Temp"
+                Workbooks(myMacroFilename).Activate
+                Range("M" & myUpdateRow & ":S" & myUpdateRow).Value = "=COUNTIF('[" & myOpenFilename & "]Temp'!" & mySearchcol & ",M$3)"
+                Range("M" & myUpdateRow & ":S" & myUpdateRow).Value = Range("M" & myUpdateRow & ":S" & myUpdateRow).Value
+                Workbooks(myOpenFilename).Close False
+            End If
+            '...insert any file processing code here...
+        Next oFile
+    Loop
+    MsgBox "Done!"
+End Sub
+Sub DataAnalyzer2019_260()
+    Dim fso, oFolder, oSubfolder, oFile, queue As Collection
+    myMacroFilename = ActiveWorkbook.Name
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set queue = New Collection
+    'queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy") 'obviously replace
+    queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Customer\FF1\2019 - HDD\MRP Messages (P part)\") 'obviously replace
+    
+    Do While queue.Count > 0
+        Set oFolder = queue(1)
+        queue.Remove 1 'dequeue
+        '...insert any folder processing code here...
+        For Each oSubfolder In oFolder.SubFolders
+            queue.Add oSubfolder 'enqueue
+            myFilename = oSubfolder.Name
+        Next oSubfolder
+        For Each oFile In oFolder.Files
+            myFolder = oFolder.Name
+            myFilename = oFile.Name
+            'If Left(myFilename, 38) = "16 weeks bucket report Monthly (buy) -" Then
+            If Left(myFilename, 3) = "MRP" Then
+                myUpdateRow = Range("U" & Rows.Count).End(xlUp).Row + 1
+                Range("U" & myUpdateRow).Value = myFilename
+                'Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy\" & myFolder & "\" & myFilename, , True
+                Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Customer\FF1\2019 - HDD\" & myFolder & "\" & myFilename, False, True
+                myOpenFilename = ActiveWorkbook.Name
+                'Sheets("Detail").Select
+                
+                Set mySearchValue = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found! The Macro will stop here!"
+                    End
+                Else
+                    mySearchcol = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).EntireColumn.Address
+                End If
+                
+                ActiveSheet.Name = "Temp"
+                Workbooks(myMacroFilename).Activate
+                Range("V" & myUpdateRow & ":AB" & myUpdateRow).Value = "=COUNTIF('[" & myOpenFilename & "]Temp'!" & mySearchcol & ",V$3)"
+                Range("V" & myUpdateRow & ":AB" & myUpdateRow).Value = Range("V" & myUpdateRow & ":AB" & myUpdateRow).Value
+                Workbooks(myOpenFilename).Close False
+            End If
+            '...insert any file processing code here...
+        Next oFile
+    Loop
+    MsgBox "Done!"
+End Sub
+Sub DataAnalyzer2018_260()
+    Dim fso, oFolder, oSubfolder, oFile, queue As Collection
+    myMacroFilename = ActiveWorkbook.Name
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set queue = New Collection
+    'queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy") 'obviously replace
+    queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2018\Customer\FF1\2018 - HDD\3. MRP Messages (P Part)") 'obviously replace
+    
+    Do While queue.Count > 0
+        Set oFolder = queue(1)
+        queue.Remove 1 'dequeue
+        '...insert any folder processing code here...
+        For Each oSubfolder In oFolder.SubFolders
+            queue.Add oSubfolder 'enqueue
+            myFilename = oSubfolder.Name
+        Next oSubfolder
+        For Each oFile In oFolder.Files
+            myFolder = oFolder.Name
+            myFilename = oFile.Name
+            'If Left(myFilename, 38) = "16 weeks bucket report Monthly (buy) -" Then
+            If Len(myFilename) > 17 Then
+                myUpdateRow = Range("U" & Rows.Count).End(xlUp).Row + 1
+                Range("U" & myUpdateRow).Value = myFilename
+                'Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy\" & myFolder & "\" & myFilename, , True
+                Workbooks.Open "\\pena-dsk-601\Purchasing\2018\Customer\FF1\2018 - HDD\" & myFolder & "\" & myFilename, False, True
+                myOpenFilename = ActiveWorkbook.Name
+                'Sheets("Detail").Select
+                
+                Set mySearchValue = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found! The Macro will stop here!"
+                    End
+                Else
+                    mySearchcol = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).EntireColumn.Address
+                End If
+                
+                ActiveSheet.Name = "Temp"
+                Workbooks(myMacroFilename).Activate
+                Range("V" & myUpdateRow & ":AB" & myUpdateRow).Value = "=COUNTIF('[" & myOpenFilename & "]Temp'!" & mySearchcol & ",V$3)"
+                Range("V" & myUpdateRow & ":AB" & myUpdateRow).Value = Range("V" & myUpdateRow & ":AB" & myUpdateRow).Value
+                Workbooks(myOpenFilename).Close False
+            End If
+            '...insert any file processing code here...
+        Next oFile
+    Loop
+    MsgBox "Done!"
+End Sub
+Sub DataAnalyzer2019_198()
+    Dim fso, oFolder, oSubfolder, oFile, queue As Collection
+    myMacroFilename = ActiveWorkbook.Name
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set queue = New Collection
+    'queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy") 'obviously replace
+    queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Customer\FF1\2019 - Magnum\MRP Message") 'obviously replace
+    
+    Do While queue.Count > 0
+        Set oFolder = queue(1)
+        queue.Remove 1 'dequeue
+        '...insert any folder processing code here...
+        For Each oSubfolder In oFolder.SubFolders
+            queue.Add oSubfolder 'enqueue
+            myFilename = oSubfolder.Name
+        Next oSubfolder
+        For Each oFile In oFolder.Files
+            myFolder = oFolder.Name
+            myFilename = oFile.Name
+            'If Left(myFilename, 38) = "16 weeks bucket report Monthly (buy) -" Then
+            If Left(myFilename, 12) = "MRP Messages" Then
+                myUpdateRow = Range("AD" & Rows.Count).End(xlUp).Row + 1
+                Range("AD" & myUpdateRow).Value = myFilename
+                'Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy\" & myFolder & "\" & myFilename, , True
+                Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Customer\FF1\2019 - Magnum\" & myFolder & "\" & myFilename, False, True
+                myOpenFilename = ActiveWorkbook.Name
+                'Sheets("Detail").Select
+                
+                Set mySearchValue = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found! The Macro will stop here!"
+                    End
+                Else
+                    mySearchcol = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).EntireColumn.Address
+                End If
+                
+                ActiveSheet.Name = "Temp"
+                Workbooks(myMacroFilename).Activate
+                Range("AE" & myUpdateRow & ":AK" & myUpdateRow).Value = "=COUNTIF('[" & myOpenFilename & "]Temp'!" & mySearchcol & ",AE$3)"
+                Range("AE" & myUpdateRow & ":AK" & myUpdateRow).Value = Range("AE" & myUpdateRow & ":AK" & myUpdateRow).Value
+                Workbooks(myOpenFilename).Close False
+            End If
+            '...insert any file processing code here...
+        Next oFile
+    Loop
+    MsgBox "Done!"
+End Sub
+Sub DataAnalyzer2018_198()
+    Dim fso, oFolder, oSubfolder, oFile, queue As Collection
+    myMacroFilename = ActiveWorkbook.Name
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set queue = New Collection
+    'queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy") 'obviously replace
+    queue.Add fso.GetFolder("\\pena-dsk-601\Purchasing\2018\Customer\FF1\2018 - Magnum\MRP message") 'obviously replace
+    
+    Do While queue.Count > 0
+        Set oFolder = queue(1)
+        queue.Remove 1 'dequeue
+        '...insert any folder processing code here...
+        For Each oSubfolder In oFolder.SubFolders
+            queue.Add oSubfolder 'enqueue
+            myFilename = oSubfolder.Name
+        Next oSubfolder
+        For Each oFile In oFolder.Files
+            myFolder = oFolder.Name
+            myFilename = oFile.Name
+            'If Left(myFilename, 38) = "16 weeks bucket report Monthly (buy) -" Then
+            If Len(myFilename) > 17 Then
+                myUpdateRow = Range("AD" & Rows.Count).End(xlUp).Row + 1
+                Range("AD" & myUpdateRow).Value = myFilename
+                'Workbooks.Open "\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy\" & myFolder & "\" & myFilename, , True
+                Workbooks.Open "\\pena-dsk-601\Purchasing\2018\Customer\FF1\2018 - Magnum\" & myFolder & "\" & myFilename, False, True
+                myOpenFilename = ActiveWorkbook.Name
+                'Sheets("Detail").Select
+                
+                Set mySearchValue = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found! The Macro will stop here!"
+                    End
+                Else
+                    mySearchcol = Cells.Find(What:="Message", After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).EntireColumn.Address
+                End If
+                
+                ActiveSheet.Name = "Temp"
+                Workbooks(myMacroFilename).Activate
+                Range("AE" & myUpdateRow & ":AK" & myUpdateRow).Value = "=COUNTIF('[" & myOpenFilename & "]Temp'!" & mySearchcol & ",AE$3)"
+                Range("AE" & myUpdateRow & ":AK" & myUpdateRow).Value = Range("AE" & myUpdateRow & ":AK" & myUpdateRow).Value
+                Workbooks(myOpenFilename).Close False
+            End If
+            '...insert any file processing code here...
+        Next oFile
+    Loop
+    MsgBox "Done!"
+End Sub
+Sub Macro5()
+    Dim wb As Workbook, ws As Worksheet
+    Dim sFil As String, sPath As String
+    Set wb = ActiveWorkbook
+    Set ws = ActiveSheet
+        
+    'OPENS THE PATH OF FOLDER - want to make it open all excel in sub folders as well
+    sPath = "\\pena-dsk-601\Purchasing\2019\Weekly Report\16 weeks bucket report\Buy" 'location of files, don't forget the "" at the end
+    sFil = Dir(sPath & "*.xls") 'change or add formats
+    Application.DisplayAlerts = False
+    
+    'FIND ALL THE FILES
+    Do Until sFil = ""
+        '16 weeks bucket report Monthly (buy) -
+        Workbooks.Open sPath & sFil
+        Set wb = ActiveWorkbook
+        
+        Application.ScreenUpdating = False
+        
+        'CREATE A WORKSHEET AT THE END CALLED "MASTER"
+        Set wsht = ActiveWorkbook.Sheets.Add(After:=ActiveWorkbook.Sheets(ActiveWorkbook.Sheets.Count))
+        wsht.Name = "Master"
+        
+        'LIST ALL WORKSHEETS NAMES
+        Dim x As Integer
+                
+        For x = 1 To Worksheets.Count
+            Cells(x, 1).Value = Worksheets(x).Name
+        Next x
+        ActiveWorkbook.Close savechanges:=True
+        
+        sFil = Dir()
+    Loop
+    Application.DisplayAlerts = True
+
+
+End Sub
