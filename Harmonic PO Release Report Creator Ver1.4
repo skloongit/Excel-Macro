@@ -1,0 +1,334 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myMacroPath As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub HarmonicReleasePo()
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySharePath = Range("B4").Value
+    myYear = Year(Date)
+    Dim myOpoFilename(2) As String
+    Dim mySumFilename(2) As String
+    '830_321_CQ12_Open & Planned PO Detail View
+    myOpoFilename(1) = "830_321_CQ12_Open & Planned PO Detail View"
+    myOpoFilename(2) = "830_586_CQ12_Open & Planned PO Detail View"
+    mySumFilename(1) = "830_321_CQ12_Summary Table"
+    mySumFilename(2) = "830_586_CQ12_Summary Table"
+    myCounter = 1
+'    'Check Folder Availbility
+'    'Year
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\"
+'    End If
+'    'Customer
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\"
+'    End If
+'    'FF2
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\"
+'    End If
+'    '2021 - Harmonic
+'    'myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\", vbDirectory)
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        'MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\"
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\"
+'    End If
+'    'Advance PO --> Material Readiness Report
+'    'myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\Material Readiness Report\", vbDirectory)
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\Material Readiness Report\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        'MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\Material Readiness Report\"
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\Material Readiness Report\"
+'    End If
+'        'Harmonic war room
+'       'myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\Material Readiness Report\Harmonic war room\", vbDirectory)
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\Material Readiness Report\Harmonic war room\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            'MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\Material Readiness Report\Harmonic war room\"
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\Material Readiness Report\Harmonic war room\"
+'        End If
+'
+'    'CQ12 PO Release Workbook
+'    'myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\", vbDirectory)
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        'MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\"
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\"
+'    End If
+'    'Month  Year
+'    myMonthYear = Format(Date, "MM. MmmYYYY")
+'    'myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\" & myMonthYear & "\", vbDirectory)
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\" & myMonthYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        'MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\" & myMonthYear & "\"
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\" & myMonthYear & "\"
+'    End If
+'    'mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\2021 - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\" & myMonthYear & "\"
+'    mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Customer\FF2\" & myYear & " - Harmonic\Material Readiness Report\Harmonic war room\CQ12 PO Release Workbook\" & myMonthYear & "\"
+'
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+    
+    myMacroCheck = Dir(myMacroPath & "\" & Year(Date) & "\", vbDirectory)
+        If myMacroCheck = "" Then
+            MkDir myMacroPath & "\" & Year(Date) & "\"
+        End If
+    
+    For myA = 1 To 2
+        myResult = Dir(mySharePath & myOpoFilename(myA) & "." & Format(Date - myCounter, "YYYYMMDD") & "*.xlsx")
+        If myResult = "" Then
+            If myA = 1 Then
+                my321OPO = "1(Error) --> "
+            Else
+                my586OPO = "(Error) --> "
+            End If
+        Else
+            
+            Workbooks.Open mySharePath & myResult, ReadOnly:=True
+            'mySheet = ActiveSheet.Name
+            'myTotal = Range("A" & Rows.Count).End(xlUp).Row
+            'Workbooks(myMacrofile).Sheets("PV").Copy before:=ActiveSheet
+            'Sheets("PV").Select
+            'ActiveSheet.PivotTables("PivotTable3").ChangePivotCache ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="[" & myResult & "]" & mySheet & "!R2C1:R" & myTotal & "C38")
+            'ActiveSheet.PivotTables("PivotTable3").PivotCache.Refresh
+            'ActiveSheet.PivotTables("PivotTable4").ChangePivotCache ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="[" & myResult & "]" & mySheet & "!R2C1:R" & myTotal & "C38")
+            'ActiveSheet.PivotTables("PivotTable4").PivotCache.Refresh
+            
+            
+            Application.EnableEvents = False
+            ActiveWorkbook.SaveAs Filename:=mySavePath & myResult, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False ', writeResPassword:="888"    'Password:="888"
+            'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & myResult, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False ', writeResPassword:="888"   'Password:="888"
+            ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\" & myResult, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False ', writeResPassword:="888"   'Password:="888"
+            ActiveWorkbook.Close False
+            If myA = 1 Then
+                my321OPO = "(Done) --> "
+            Else
+                my586OPO = "(Done) --> "
+            End If
+        End If
+    Next myA
+    
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    For myA = 1 To 2
+        myResult = Dir(mySharePath & mySumFilename(myA) & "." & Format(Date - 1, "YYYYMMDD") & "*.xlsx")
+        If myResult = "" Then
+            If myA = 1 Then
+                my321Sum = "(Error) --> "
+            Else
+                my586Sum = "(Error) --> "
+            End If
+        Else
+            fso.CopyFile mySharePath & myResult, mySavePath & myResult, True
+            fso.CopyFile mySharePath & myResult, myMacroPath & "\" & myResult, True
+            If myA = 1 Then
+                my321Sum = "(Done) --> "
+            Else
+                my586Sum = "(Done) --> "
+            End If
+        End If
+    Next myA
+            With CreateObject("Outlook.Application").CreateItem(0)
+                .To = "Sing-Yee.Ho@plexus.com;sk.loon@plexus.com"
+                .Subject = "Harmonic PO Release Files Status"
+                .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p><a href=""" & mySavePath & """>" & mySavePath & "</a><br><br>" & _
+                          my321OPO & "830_321_CQ12_Open & Planned PO Detail View <br>" & _
+                          my321Sum & "830_321_CQ12_Summary Table<br>" & _
+                          my586OPO & "830_586_CQ12_Open & Planned PO Detail View <br>" & _
+                          my586Sum & "830_586_CQ12_Summary Table" & _
+                          "<br><br>Thanks.<br/><br>This is an auto generated email. No reply required...</html>"
+                '.Display
+                .Send
+            End With
+
+
+'    Next myRetry
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub SheetSelect(mySheet)
+    On Error Resume Next
+    Sheets(mySheet).Select
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub ItemBpPurchasingSelect()
+    myItemBpPurchasingFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Item BP Purchasing Data file")
+    If myItemBpPurchasingFile = False Then
+    Else
+        Range("B8").Value = myItemBpPurchasingFile
+    End If
+End Sub
+Sub OpenPoSelect()
+    myOpenPoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO file")
+    If myOpenPoFile = False Then
+    Else
+        Range("B10").Value = myOpenPoFile
+    End If
+End Sub
+Sub SupplierAgreementSelect()
+    mySupplierAgreementFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Supplier Agreement file")
+    If mySupplierAgreementFile = False Then
+    Else
+        Range("B12").Value = mySupplierAgreementFile
+    End If
+End Sub
+Sub DataIntegritySelect()
+    myDataIntegrityFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Data Integrity file")
+    If myDataIntegrityFile = False Then
+    Else
+        Range("B14").Value = myDataIntegrityFile
+    End If
+End Sub
+Sub BucketsReportSelect()
+    myBucketsFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select 16 Buckets Report_Monthly (Buy) file")
+    If myBucketsFile = False Then
+    Else
+        Range("B16").Value = myBucketsFile
+    End If
+End Sub
+Sub OpenPoRrSelect()
+    myOpenPoRrFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO report (RR) file")
+    If myOpenPoRrFile = False Then
+    Else
+        Range("B18").Value = myOpenPoRrFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+Sub SharePath()
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select a Folder"
+        If .Show = -1 Then ' if OK is pressed
+            Range("B4").Value = .SelectedItems(1)
+        End If
+    End With
+    
+'    If sFolder <> "" Then ' if a file was chosen
+'        ' *********************
+'        ' put your code in here
+'        ' *********************
+'    End If
+End Sub
