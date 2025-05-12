@@ -1,0 +1,660 @@
+Sub PoImpact()
+'
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    Sheets("PO Impact").Select
+    mySuperAFile = Range("C6").Value
+    myCalendarFile = Range("C8").Value
+    myCompilePoFile = Range("C10").Value
+    'MergeMacro
+        ''Ver1.5: Set Potential Impact Q2 to Potential Impact Q3
+        'Columns("BM:BM").Replace What:="Potential Impact Q2", Replacement:="Potential Impact Q3", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    'Workbooks.Open myCompilePoFile, ReadOnly:=True, UpdateLinks:=False
+    '\\ap\penadata\Site\Islandview\Purchasing\Others\2020\Scheduler Report\Open PO\02. Feb2020
+    'myCompilePoFilename = ActiveWorkbook.Name
+    'myCompilePoSheetname = ActiveSheet.Name
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myYear = Year(Date)
+    myDateFormat = Format(Date, "MM. MmmYyyy")
+    
+    'Ver1.9:: Add in Item branch file to get leat time info
+    myFormat = Format(Date, "MMDDYYYY")
+    Workbooks.Open "\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Scheduler Report\Item Branch\" & Format(Date, "MM. MmmYyyy") & "\Item BP Purchasing Data - " & Format(Date, "MMDDYYYY") & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+    myIbFile = ActiveWorkbook.Name
+    myIbSheetname = ActiveSheet.Name
+    
+    'Ver1.6: Change path
+    'mySuperA = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Super A\" & myDateFormat & "\ISL_PLXS Super A's*")
+    mySuperA = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Super A\" & myDateFormat & "\ISL_PLXS Super A's*")
+    If mySuperA = "" Then
+        myPreviousMonth = DateAdd("m", -1, Date)
+        myYear = Year(myPreviousMonth)
+        myDateFormat = Format(myPreviousMonth, "MM. MmmYyyy")
+        'Ver1.6: Change path
+        'mySuperA = Dir("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Super A\" & myDateFormat & "\ISL_PLXS Super A's*")
+        mySuperA = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Super A\" & myDateFormat & "\ISL_PLXS Super A's*")
+    End If
+    If mySuperA <> "" Then
+        Do Until mySuperA = ""
+            'Ver1.6: Change path
+            'myFileLastModified = fso.GetFile("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Super A\" & myDateFormat & "\" & mySuperA).DateLastModified
+            myFileLastModified = fso.GetFile("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Super A\" & myDateFormat & "\" & mySuperA).DateLastModified
+            If myFileLastModified > myCompareFileLastModified Then
+                'Ver1.6: Change path
+                'myCompareFileLastModified = fso.GetFile("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Super A\" & myDateFormat & "\" & mySuperA).DateLastModified
+                'myFileName = fso.GetFile("\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Super A\" & myDateFormat & "\" & mySuperA).Name
+                myCompareFileLastModified = fso.GetFile("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Super A\" & myDateFormat & "\" & mySuperA).DateLastModified
+                myFileName = fso.GetFile("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Super A\" & myDateFormat & "\" & mySuperA).Name
+            End If
+            mySuperA = Dir()
+        Loop
+        'Ver1.6: Change path
+        'Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\Super A\" & myDateFormat & "\" & myFileName, ReadOnly:=True, UpdateLinks:=False
+        Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Super A\" & myDateFormat & "\" & myFileName, ReadOnly:=True, UpdateLinks:=False
+        'mySuperAname = ActiveWorkbook.Name
+        'myTotalTemp = Range("F" & Rows.Count).End(xlUp).Row
+    End If
+    
+    
+    'Workbooks.Open mySuperAFile, ReadOnly:=True, UpdateLinks:=False
+    mySuperAFile = ActiveWorkbook.Name
+    mySuperASheetname = ActiveSheet.Name
+    'Ver2.2: Change sheetname
+    'Sheets("Super As APAC2").Select
+    Sheets("Super As APAC3").Select
+    
+    Set mySearchValue = Cells.Find(What:="Part Number", after:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "sk.loon@plexus.com"
+            .CC = "Sing-Yee.Ho@plexus.com"
+            .Subject = "Super A file not found!"
+            .HTMLBody = "Super A file not found!"
+            .Send
+        End With
+        GoTo myEnd1
+    Else
+        mySearchValue = Cells.Find(What:="Part Number", after:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+'        If mySearchValue <> 1 Then
+'            Cells(1, mySearchValue).EntireColumn.Cut
+'            Columns("A:A").Insert
+'        End If
+    End If
+    'Z:\Others\2020\Weekly Report\PO Push Out and Cancellation Report\PO Cancellation & Push Out Action Macro
+    'Workbooks.Open myCalendarFile, ReadOnly:=True, UpdateLinks:=False
+    Workbooks.Open "\\ap\penadata\Site\Islandview\Purchasing\Others\" & myYear & "\Weekly Report\PO Push Out and Cancellation Report\PO Cancellation & Push Out Action Macro\Calender Days.xlsx", ReadOnly:=True, UpdateLinks:=False
+    myCalendarFilename = ActiveWorkbook.Name
+    myCalendarSheetname = ActiveSheet.Name
+    '\\ap\penadata\Site\Islandview\Purchasing\Others\2020\Scheduler Report\Open PO\02. Feb2020
+    'Workbooks.Open Filename:="C:\SK Loon\Macro\CoronaVirus Macro\Potential PO Impacted by Coronavirus Outbreak_masterfile 02072020.xlsx", ReadOnly:=True
+    
+    'Ver1.6: change
+    Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\Purchasing\Others\" & Year(Date) & "\Scheduler Report\Open PO\" & Format(Date, "MM. MmmYyyy") & "\Open PO report - " & Format(Date, "MMDDYYYY") & ".xlsx", ReadOnly:=True
+    'Workbooks.Open Filename:="\\ap\penadata\Site\Islandview\Purchasing\Others\2020\Scheduler Report\Open PO\" & myDateFormat & "\Open PO report - " & myDateFormat & ".xlsx", ReadOnly:=True
+    'myDateFormat
+    myPotentialPoFilename = ActiveWorkbook.Name
+    myPotentialSheetname = ActiveSheet.Name
+    If ActiveSheet.AutoFilterMode = True Then
+       Rows("3:3").AutoFilter
+    End If
+    myTotalPart = Range("A" & Rows.Count).End(xlUp).Row
+    Range("BI3").Value = "Delete"
+    Range("BI4:BI" & myTotalPart).Value = "=IF(OR(B4=875,B4=""""),""Delete"",IF(AND(AH4<'[" & myMacroFile & "]PO Impact'!$E$12,AH4>'[" & myMacroFile & "]PO Impact'!$C$12),IF(OR(AD4<0,AD4=""""),""Delete"",IF(N4=""OO"",""Delete"",Row(B4))),""Delete""))"
+    Range("BI4:BI" & myTotalPart).Value = Range("BI4:BI" & myTotalPart).Value
+    Range("A3:BI" & myTotalPart).RemoveDuplicates Columns:=61, Header:=xlNo
+    myTotalPart = Range("A" & Rows.Count).End(xlUp).Row
+    ActiveWindow.Zoom = 90
+    Rows("3:3").WrapText = True
+    Columns("AG:AJ").EntireColumn.AutoFit
+    Columns("AH:AH").TextToColumns Destination:=Range("AH1"), DataType:=xlFixedWidth, FieldInfo:=Array(0, 1), TrailingMinusNumbers:=True
+    Columns("AD:AD").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+    
+    Columns("A:A").Columns.Group
+    Columns("C:F").Columns.Group
+    Columns("G:G").EntireColumn.AutoFit
+    Columns("H:H").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("H3").Value = "COO China"
+    Range("H4").Select
+    Columns("H:H").EntireColumn.AutoFit
+    Range("H3").Interior.ThemeColor = xlThemeColorAccent5
+    Range("H3").Interior.TintAndShade = 0.599993896298105
+    Rows("3:3").Font.Bold = True
+    Range("H8").Select
+    Columns("I:I").EntireColumn.AutoFit
+    Columns("M:M").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Columns("K:L").Columns.Group
+    Range("M3").Value = "Concat"
+    Range("M3").Interior.ThemeColor = xlThemeColorAccent5
+    Range("M3").Interior.TintAndShade = 0.599993896298105
+    Range("M4:M" & myTotalPart).Value = "=N4&"":""&R4&"":""&S4"
+    Columns("O:O").Columns.Group
+    Columns("P:P").ColumnWidth = 5
+    Columns("Q:Q").Columns.Group
+    Columns("R:R").ColumnWidth = 3.71
+    Columns("S:S").EntireColumn.AutoFit
+    Columns("S:S").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("S3").Value = "Super A"
+    Columns("S:S").EntireColumn.AutoFit
+    Range("S3").Interior.ThemeColor = xlThemeColorAccent5
+    Range("S3").Interior.TintAndShade = 0.599993896298105
+        'Ver2.2: Change sheetname
+        'Range("S4:S" & myTotalPart).Value = "=VLOOKUP(RC[1],'[" & Replace(mySuperAFile, "'", "''") & "]Super As APAC2'!C" & mySearchValue & ",1,0)"
+        Range("S4:S" & myTotalPart).Value = "=VLOOKUP(RC[1],'[" & Replace(mySuperAFile, "'", "''") & "]Super As APAC3'!C" & mySearchValue & ",1,0)"
+    Range("S4:S" & myTotalPart).Value = Range("S4:S" & myTotalPart).Value
+    
+    'Range("U4").Select
+    'ActiveWindow.FreezePanes = True
+    Columns("V:W").Columns.Group
+    Columns("Y:AF").Columns.Group
+    Columns("AH:AI").Columns.Group
+    Columns("AL:AL").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Range("AL3").Value = "Qtr"
+    Range("AL3").Interior.ThemeColor = xlThemeColorAccent5
+    Range("AL3").Interior.TintAndShade = 0.599993896298105
+    Range("AL4:AL" & myTotalPart).Value = "=VLOOKUP(RC[-1],'[" & myCalendarFilename & "]" & myCalendarSheetname & "'!C1:C7,7,0)"
+    Range("AL4:AL" & myTotalPart).Value = Range("AL4:AL" & myTotalPart).Value
+    Columns("AO:AQ").Columns.Group
+    Columns("AU:BB").Columns.Group
+    Columns("BD:BK").Columns.Group
+    
+    Application.EnableEvents = False
+    Workbooks(myCalendarFilename).Close False
+    Workbooks(mySuperAFile).Close False
+    Application.EnableEvents = False
+    
+'    Range("BL3").Value = "Additional Part Missed Out"
+'    Range("BM3").Value = "Impacted by Coronavirus?"
+'    Range("BN3").Value = "If Impacted, New Commit Date"
+'    Range("BO3").Value = "Additional Remarks"
+'    Range("BP3").Value = "COO"
+'    'Range("BL3:BP3").Interior.Color = 65535
+'    Range("BL3:BQ3").Interior.Color = 65535
+'    Range("BQ3").Value = "Supplier Resume Date"
+'    Columns("BQ:BQ").NumberFormat = "m/d/yyyy"
+'    Columns("H:H").ColumnWidth = 5.57
+'    Columns("BN:BN").EntireColumn.AutoFit
+'    Columns("BN:BN").NumberFormat = "m/d/yyyy"
+'    Columns("BM:BM").EntireColumn.AutoFit
+'    Columns("BL:BL").EntireColumn.AutoFit
+'    Columns("BO:BO").EntireColumn.AutoFit
+'    'Range("BM17").Select
+'    'Windows("Compile PO_02042020.xlsx").Activate
+'    'Range("M4").Select
+'    'Windows("Potential PO Impacted by Coronavirus Outbreak_masterfile 02072020.xlsx").Activate
+'    Range("BL4:BL" & myTotalPart).Value = "=IFERROR(VLOOKUP(RC[-51],'[" & myCompilePoFilename & "]" & myCompilePoSheetname & "'!C13:C64,52,0),"""")"
+'    Range("BL4:BL" & myTotalPart).Value = Range("BL4:BL" & myTotalPart).Value
+'    Range("BM4:BM" & myTotalPart).Value = "=IF(BL4=0,"""",BL4)"
+'    Range("BL4:BL" & myTotalPart).Value = Range("BM4:BM" & myTotalPart).Value
+'    Range("BM4:BM" & myTotalPart).Value = "=IFERROR(VLOOKUP(RC[-52],'[" & myCompilePoFilename & "]" & myCompilePoSheetname & "'!C13:C65,53,0),"""")"
+'    Range("BM4:BM" & myTotalPart).Value = Range("BM4:BM" & myTotalPart).Value
+'    Range("BN4:BN" & myTotalPart).Value = "=IF(BM4=0,"""",IF(OR(TRIM(BM4)=""No"",TRIM(BM4)=""No impact"",TRIM(BM4)=""Not impact""),""No impact"",Trim(BM4)))"
+'    Range("BM4:BM" & myTotalPart).Value = Range("BN4:BN" & myTotalPart).Value
+'    Range("BN4:BN" & myTotalPart).Value = "=IFERROR(VLOOKUP(RC[-53],'[" & myCompilePoFilename & "]" & myCompilePoSheetname & "'!C13:C66,54,0),"""")"
+'    Range("BN4:BN" & myTotalPart).Value = Range("BN4:BN" & myTotalPart).Value
+'    Range("BO4:BO" & myTotalPart).Value = "=IF(BN4=0,"""",BN4)"
+'    Range("BN4:BN" & myTotalPart).Value = Range("BO4:BO" & myTotalPart).Value
+'    Range("BO4:BO" & myTotalPart).Value = "=IFERROR(VLOOKUP(RC[-54],'[" & myCompilePoFilename & "]" & myCompilePoSheetname & "'!C13:C67,55,0),"""")"
+'    Range("BO4:BO" & myTotalPart).Value = Range("BO4:BO" & myTotalPart).Value
+'    Range("BP4:BP" & myTotalPart).Value = "=IF(BO4=0,"""",BO4)"
+'    Range("BO4:BO" & myTotalPart).Value = Range("BP4:BP" & myTotalPart).Value
+'    Range("BP4:BP" & myTotalPart).Value = "=IFERROR(VLOOKUP(RC[-55],'[" & myCompilePoFilename & "]" & myCompilePoSheetname & "'!C13:C68,56,0),"""")"
+'    Range("BP4:BP" & myTotalPart).Value = Range("BP4:BP" & myTotalPart).Value
+'    Range("BQ4:BQ" & myTotalPart).Value = "=IF(BP4=0,"""",BP4)"
+'    Range("BP4:BP" & myTotalPart).Value = Range("BQ4:BQ" & myTotalPart).Value
+'        'Add Supplier Resume Date
+'        Range("BQ4:BQ" & myTotalPart).Value = "=IFERROR(VLOOKUP(RC[-56],'[" & myCompilePoFilename & "]" & myCompilePoSheetname & "'!C13:C69,57,0),"""")"
+'        Range("BQ4:BQ" & myTotalPart).Value = Range("BQ4:BQ" & myTotalPart).Value
+'        Range("BR4:BR" & myTotalPart).Value = "=IF(BQ4=0,"""",BQ4)"
+'        Range("BQ4:BQ" & myTotalPart).Value = Range("BR4:BR" & myTotalPart).Value
+'
+'    'Ver1.7: Clear all remaining data
+'    Rows(myTotalPart + 1 & ":" & Rows.Count).ClearContents
+'
+'    'Range("BQ4:BQ" & myTotalPart).ClearContents
+'    Range("BR4:BR" & myTotalPart).ClearContents
+    Columns("BL:CC").ClearContents
+    
+'    Range("BL4:BP4").Select
+'    Workbooks(myCompilePoFilename).Sheets(Array("PV", "Address Book", "List")).Copy after:=Sheets(Sheets.Count)
+'    Sheets(myPotentialSheetname).Select
+'    Range("H4:H" & myTotalPart).Value = "=VLOOKUP(C[1],'Address Book'!C[-7],1,0)"
+'    Range("H4:H" & myTotalPart).Value = Range("H4:H" & myTotalPart).Value
+'    Range("BR4:BS" & myTotalPart).Value = Range("I4:J" & myTotalPart).Value
+'    Range("BT3").Value = "Delete"
+'    Range("BR4:BS" & myTotalPart).Value = Range("I4:J" & myTotalPart).Value
+'    Range("BT4:BT" & myTotalPart).Value = "=IF(AND(ISNA(H4),BL4<>""""),ROW(BL4),""Delete"")"
+'    Range("BT4:BT" & myTotalPart).Value = Range("BT4:BT" & myTotalPart).Value
+'    Range("BR3:BT" & myTotalPart).RemoveDuplicates Columns:=3, Header:=xlNo
+'    myTempTotal = Range("BT" & Rows.Count).End(xlUp).Row
+'    myAddTotal = Sheets("Address Book").Range("A" & Rows.Count).End(xlUp).Row + 1
+'    Range("BR4:BS" & myTempTotal).Copy Sheets("Address Book").Range("A" & myAddTotal)
+'    myAddTotal = Sheets("Address Book").Range("A" & Rows.Count).End(xlUp).Row
+'    Sheets("Address Book").Range("$A$1:$V$" & myAddTotal).RemoveDuplicates Columns:=Array(1, 2, 3), Header:=xlYes
+'        myAddTotal = Sheets("Address Book").Range("A" & Rows.Count).End(xlUp).Row
+'        Sheets("Address Book").Rows(myAddTotal + 1 & ":" & Rows.Count).Clear
+'    Columns("BR:BT").ClearContents
+'    With Range("BL4:BL" & myTotalPart).Validation
+'        .Delete
+'        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:=xlBetween, Formula1:="=List!$D$1"
+'        .IgnoreBlank = True
+'        .InCellDropdown = True
+'        .InputTitle = ""
+'        .ErrorTitle = ""
+'        .InputMessage = ""
+'        .ErrorMessage = ""
+'        .ShowInput = True
+'        .ShowError = True
+'    End With
+'
+'    myDropDown = Sheets("List").Range("A" & Rows.Count).End(xlUp).Row
+'    With Range("BM4:BM" & myTotalPart).Validation
+'        .Delete
+'        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:=xlBetween, Formula1:="=List!$A$1:$A$" & myDropDown
+'        .IgnoreBlank = True
+'        .InCellDropdown = True
+'        .InputTitle = ""
+'        .ErrorTitle = ""
+'        .InputMessage = ""
+'        .ErrorMessage = ""
+'        .ShowInput = True
+'        .ShowError = True
+'    End With
+'
+'    Columns("BM:BM").ColumnWidth = 27.86
+'    Sheets("PV").Select
+'    'ActiveSheet.PivotTables("PivotTable1").ChangePivotCache ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myMacroPath & "\[" & myPotentialPoFilename & "]" & myPotentialSheetname & "!R3C2:R" & myTotalPart & "C68", Version:=xlPivotTableVersion15)
+'    ActiveSheet.PivotTables("PivotTable1").ChangePivotCache ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=ActiveWorkbook.Path & "\[" & myPotentialPoFilename & "]" & myPotentialSheetname & "!R3C2:R" & myTotalPart & "C68", Version:=xlPivotTableVersion15)
+'    ActiveSheet.PivotTables("PivotTable1").PivotCache.Refresh
+'    With ActiveSheet.PivotTables("PivotTable1").PivotFields("COO China")
+'        .Orientation = xlPageField
+'        .Position = 1
+'    End With
+'        ActiveSheet.PivotTables("PivotTable1").PivotFields("COO China").ClearAllFilters
+'    ActiveSheet.PivotTables("PivotTable1").PivotFields("COO China").CurrentPage = "(All)"
+'    With ActiveSheet.PivotTables("PivotTable1").PivotFields("COO China")
+'        .PivotItems("#N/A").Visible = False
+'    End With
+'
+'    ActiveSheet.PivotTables("PivotTable1").PivotFields("COO China").EnableMultiplePageItems = True
+'    Range("D4").Select
+'    'Changed comment from "Potential Impact Within 2 Weeks-Q2", "Potential Impact After 2 Weeks-Q2" to "Potential Impact Q2"
+'    'ActiveSheet.PivotTables("PivotTable1").PivotFields("Impacted by Coronavirus?").PivotItems("Potential Impact Within 2 Weeks-Q2").Position = 1
+'    'ActiveSheet.PivotTables("PivotTable1").PivotSelect "'Potential Impact After 2 Weeks-Q2'", xlDataAndLabel, True
+'    'Range("E4").Select
+'    'ActiveSheet.PivotTables("PivotTable1").PivotFields("Impacted by Coronavirus?").PivotItems("Potential Impact After 2 Weeks-Q2").Position = 2
+'    Range("F4").Select
+'    'ActiveSheet.PivotTables("PivotTable1").PivotFields("Impacted by Coronavirus?").PivotItems("Potential Impact Q3").Position = 3
+'    'ActiveSheet.PivotTables("PivotTable1").PivotFields("Impacted by Coronavirus?").PivotItems("Potential Impact Q4").Position = 3
+'    myCheck = Application.WorksheetFunction.CountIf(Sheets(myPotentialSheetname).Columns("BM:BM"), "Potential Impact Q1")
+'    If myCheck > 0 Then
+'        ActiveSheet.PivotTables("PivotTable1").PivotFields("Impacted by Coronavirus?").PivotItems("Potential Impact Q1").Position = 3
+'    End If
+'    ActiveWorkbook.ShowPivotTableFieldList = False
+'    Cells.Select
+'    Selection.ColumnWidth = 33.29
+'    Cells.Select
+'    Cells.EntireColumn.AutoFit
+'    Sheets(myPotentialSheetname).Select
+'    Application.EnableEvents = False
+'    Workbooks(myCompilePoFilename).Close False
+'    Application.EnableEvents = True
+    
+    'New
+    myB = 3
+    myDate = Format(Date - 1, "MMDDYYYY")
+    For myA = 1 To 6
+'        sdsdd = Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & myDate & ".xlsx"
+'        MsgBox sdsdd
+        
+        'Workbooks.Open Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 34).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & myDate & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+        Workbooks.Open Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 34).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & Format(Date - 7, "MMDDYYYY") & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+        'Workbooks.Open Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 34).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & Format(Date - 4, "MMDDYYYY") & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+        ActiveWorkbook.SaveAs Filename:=Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 34).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+        'ActiveWorkbook.SaveAs Filename:=Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 34).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+        
+        If ActiveWorkbook.MultiUserEditing Then
+            Application.DisplayAlerts = False
+            ActiveWorkbook.ExclusiveAccess
+            Application.DisplayAlerts = True
+        End If
+        
+        Sheets("Buyer Update").Select
+        myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+        If myLastRow > 1 Then
+            'Ver2.0: Additional Column Added in TER only (Factory Location)(Raw Mat Supplier Location)
+            If myA = 3 Or myA = 4 Then
+                Columns("G:H").Cut
+                Columns("AA:AA").Insert
+            End If
+        
+            Columns("N:N").Insert
+            Columns("S:S").Hidden = True
+            Range("N1").Value = "Leadtime (" & Format(Date, "MMDDYY") & ")"
+            Range("N2:N" & myLastRow).Value = "=VLOOKUP(C2,'[" & myIbFile & "]" & myIbSheetname & "'!$F:$H,3,0)"
+            Range("N2:N" & myLastRow).Value = Range("N2:N" & myLastRow).Value
+            For myZ = 2 To myLastRow
+                If Range("N" & myZ).Value <> Range("O" & myZ).Value Then
+                    Range("L" & myZ).Value = Date
+                    Range("M" & myZ).Value = "=N" & myZ & "-O" & myZ
+                End If
+            Next myZ
+            
+            'Ver2.0: Additional Column Added in TER only (Factory Location)(Raw Mat Supplier Location)
+            If myA = 3 Or myA = 4 Then
+                Columns("Z:AA").Cut
+                Columns("G:G").Insert
+            End If
+            
+        End If
+        
+        For Each myX In Worksheets
+            If Left(myX.Name, 7) = "Open PO" Then
+                Application.DisplayAlerts = False
+                Sheets(myX.Name).Select
+                Sheets(myX.Name).Delete
+                Application.DisplayAlerts = True
+                Exit For
+            End If
+        Next
+        Workbooks(myPotentialPoFilename).Sheets(myPotentialSheetname).Copy before:=ActiveSheet
+        myTotalMpf = Workbooks(myMacroFile).Sheets("Po Impact").Cells(17, myB).End(xlDown).Row
+        'myMpfFilename = Workbooks(myMacroFile).Sheets("Po Impact").Cells(17, myCnt).Value
+        myOverallMpf = ""
+        For myV = 18 To myTotalMpf
+            myOverallMpf = myOverallMpf & "RC[-69]&""""=""" & Workbooks(myMacroFile).Sheets("Po Impact").Cells(myV, myB).Value & ""","
+        Next myV
+        myOverallMpf = "=IF(OR(" & Left(myOverallMpf, Len(myOverallMpf) - 1) & "),ROW(RC[-69]),""Delete"")"
+        Range("BS3:BS" & myTotalPart).Value = myOverallMpf
+        Range("BS3:BS" & myTotalPart).Value = Range("BS3:BS" & myTotalPart).Value
+        Range("A3:BS" & myTotalPart).RemoveDuplicates Columns:=71, Header:=xlNo
+        Range("BS3:BS" & myTotalPart).ClearContents
+        ActiveWorkbook.KeepChangeHistory = True
+        ActiveWorkbook.ChangeHistoryDuration = 30
+        Application.EnableEvents = False
+        Application.DisplayAlerts = False
+        Sheets("Buyer Update").Select
+        ActiveWorkbook.SaveAs Filename:=Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 34).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, accessMode:=xlShared
+        'ActiveWorkbook.SaveAs Filename:=Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 34).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & Format(Date - 3, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, accessMode:=xlShared
+        
+        ActiveWorkbook.Close
+        Application.EnableEvents = True
+        Application.DisplayAlerts = True
+        myB = myB + 2
+        
+    Next myA
+    Workbooks(myPotentialPoFilename).Close False
+    
+    'Ver1.9: Add in Item branch file to get leat time info
+    Workbooks(myIbFile).Close False
+    
+'
+'    If Dir(myMacroPath & "\Temp.xlsx") <> "" Then
+'        Kill myMacroPath & "\Temp.xlsx"
+'    End If
+'    ActiveSheet.Outline.ShowLevels RowLevels:=0, ColumnLevels:=1
+'    Range("B1").Select
+'    Range("U4").Select
+'    ActiveWindow.FreezePanes = True
+'    Rows("3:3").AutoFilter
+'    Application.DisplayAlerts = False
+'    Application.EnableEvents = False
+'    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Potential PO Impacted by Coronavirus Outbreak " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+'    Application.DisplayAlerts = True
+'    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Temp.xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+'    Application.EnableEvents = True
+'
+'    'Save Pivot table as image
+'    Sheets("PV").Select
+'    myLastCol = Cells(4, Columns.Count).End(xlToLeft).Column
+'    myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+'    'Range(Cells(4, 1), Cells(myLastRow, myLastCol)).Select
+'    Range(Cells(4, 1), Cells(myLastRow, myLastCol)).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+'    Application.Wait (Now + TimeValue("00:00:03"))
+'    ActiveSheet.Range("AA1").PasteSpecial
+'    'Application.Range(Cells(4, 1), Cells(myLastRow, myLastCol)).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    '
+'    'ActiveSheet.Range("AA1").PasteSpecial
+'    myObject = Selection.Name
+'    Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+'    Selection.ShapeRange.PictureFormat.Brightness = 0.5:
+'    Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+'    Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+'    Selection.ShapeRange.Fill.Visible = msoFalse:
+'    Selection.ShapeRange.Line.Visible = msoFalse:
+'    Selection.ShapeRange.Rotation = 0#:
+'    Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+'    Selection.ShapeRange.PictureFormat.CropRight = 0#:
+'    Selection.ShapeRange.PictureFormat.CropTop = 0#:
+'    Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+'    Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+'    Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+'    Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+'    Set oDia = ActiveSheet.ChartObjects.Add(0, 0, ActiveSheet.Shapes(1).Width, ActiveSheet.Shapes(1).Height)
+'    Set oChartArea = oDia.Chart
+'    oDia.Activate
+'    oChartArea.ChartArea.Select
+'    oChartArea.Paste
+'    oChartArea.Export (ActiveWorkbook.Path & "\Temp.jpg")
+'    Selection.Delete
+'    oDia.Delete
+'    ActiveSheet.Shapes(myObject).Delete
+'    Application.EnableEvents = False
+'    Workbooks("Temp.xlsx").Close False
+'    Application.EnableEvents = True
+'
+'    'Check Folder Availbility
+'    myYear = Year(Date)
+'    myFolderCheck = Dir(myMacroPath & "\" & Format(Date, "MMDDYYYY"))
+'    If Len(Dir(myMacroPath & "\" & Format(Date, "MMDDYYYY"), vbDirectory)) = 0 Then
+'        MkDir myMacroPath & "\" & Format(Date, "MMDDYYYY")
+'    End If
+'    myCnt = 3
+'    myCntSharePath = 1
+'    Do Until Workbooks(myMacroFile).Sheets("Po Impact").Cells(17, myCnt).Value = ""
+'        myTotalMpf = Workbooks(myMacroFile).Sheets("Po Impact").Cells(17, myCnt).End(xlDown).Row
+'        myMpfFilename = Workbooks(myMacroFile).Sheets("Po Impact").Cells(17, myCnt).Value
+'        myOverallMpf = ""
+'        For myA = 18 To myTotalMpf
+'            myOverallMpf = myOverallMpf & "RC[-69]&""""=""" & Workbooks(myMacroFile).Sheets("Po Impact").Cells(myA, myCnt).Value & ""","
+'        Next myA
+'        myOverallMpf = "=IF(OR(" & Left(myOverallMpf, Len(myOverallMpf) - 1) & "),ROW(RC[-69]),""Delete"")"
+'        Workbooks.Open myMacroPath & "\Temp.xlsx"
+'        Range("BS3:BS" & myTotalPart).Value = myOverallMpf
+'        Range("A3:BS" & myTotalPart).RemoveDuplicates Columns:=71, Header:=xlNo
+'        Range("BS3:BS" & myTotalPart).ClearContents
+'        ActiveWorkbook.KeepChangeHistory = True
+'        ActiveWorkbook.ChangeHistoryDuration = 30
+'        mySharePath = Workbooks(myMacroFile).Sheets("Po Impact").Range("C" & myCntSharePath + 34).Value
+'        Application.EnableEvents = False
+'        ActiveWorkbook.SaveAs Filename:=mySharePath & myMpfFilename & " " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, accessMode:=xlShared
+'        'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Format(Date, "MMDDYYYY") & "\" & myMpfFilename & " " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, AccessMode:=xlShared
+'        ActiveWorkbook.Close False
+'        Application.EnableEvents = True
+'        myCnt = myCnt + 2
+'        myCntSharePath = myCntSharePath + 1
+'    Loop
+    
+    'Send Email
+    With CreateObject("Outlook.Application").CreateItem(0)
+        '.To = "Sing-Yee.Ho@plexus.com"
+        .BCC = "sk.loon@plexus.com"
+        .To = "Purchasing_IslandView_Buyers@plexus.com"
+        .CC = "isl_purch_mtm@plexus.com; Sonia.Chor@plexus.com; Sing-Yee.Ho@plexus.com"
+        '.Subject = "Coronavirus Outbreak Poses Threat to Supply Chain"
+        .Subject = "Covid-19 Outbreak Poses Threat to Supply Chain"
+
+        myStatement = "<br><img src=cid:Temp.jpg></img><br>"
+        '.Attachments.Add myMacroPath & "\Temp.jpg"
+        'As many countries have imposed lockdown, please help to update parts impacted, not only those COO China.
+        'Please continue to update impacted parts on daily basis.
+        
+        .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>Hi All Buyers," & _
+                  "<html><br>Please update impacted parts in Buyer Update tab (applied to all countries).<br/>" & _
+                  "<html><br>" & "<html>MPF10C" & vbTab & vbTab & vbTab & ":" & _
+                  "<html><a href=""" & Workbooks(myMacroFile).Sheets("Po Impact").Range("C" & 35).Value & Workbooks(myMacroFile).Sheets("Po Impact").Range("C17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx"">" & Workbooks(myMacroFile).Sheets("Po Impact").Range("C17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx</a>" & _
+                  "<html><br>" & "<html>MPF148" & vbTab & vbTab & vbTab & ":" & _
+                  "<html><a href=""" & Workbooks(myMacroFile).Sheets("Po Impact").Range("C" & 36).Value & Workbooks(myMacroFile).Sheets("Po Impact").Range("E17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx"">" & Workbooks(myMacroFile).Sheets("Po Impact").Range("E17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx</a>" & _
+                  "<html><br>" & "<html>MPF318" & vbTab & vbTab & vbTab & ":" & _
+                  "<html><a href=""" & Workbooks(myMacroFile).Sheets("Po Impact").Range("C" & 37).Value & Workbooks(myMacroFile).Sheets("Po Impact").Range("G17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx"">" & Workbooks(myMacroFile).Sheets("Po Impact").Range("G17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx</a>" & _
+                  "<html><br>" & "<html>MPF198,260" & vbTab & vbTab & vbTab & ":" & _
+                  "<html><a href=""" & Workbooks(myMacroFile).Sheets("Po Impact").Range("C" & 38).Value & Workbooks(myMacroFile).Sheets("Po Impact").Range("I17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx"">" & Workbooks(myMacroFile).Sheets("Po Impact").Range("I17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx</a>" & _
+                  "<html><br>" & "<html>MPF030,10D,10F" & vbTab & vbTab & vbTab & ":" & _
+                  "<html><a href=""" & Workbooks(myMacroFile).Sheets("Po Impact").Range("C" & 39).Value & Workbooks(myMacroFile).Sheets("Po Impact").Range("K17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx"">" & Workbooks(myMacroFile).Sheets("Po Impact").Range("K17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx</a>" & _
+                  "<html><br>" & "<html>MPF321,586,820" & vbTab & vbTab & vbTab & ":" & _
+                  "<html><a href=""" & Workbooks(myMacroFile).Sheets("Po Impact").Range("C" & 40).Value & Workbooks(myMacroFile).Sheets("Po Impact").Range("M17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx"">" & Workbooks(myMacroFile).Sheets("Po Impact").Range("M17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx</a>" & _
+                  "<html><br><br><b><font color=red>Cut-off time: Every Tuesday 4.30PM</font></b><br/>" & _
+                  "<html><br><br>Thanks.<br/>" & _
+                  "<br>This is an auto generated email. No reply required</html>"
+        '.Attachments.Add Workbooks(myMacroFile).Sheets("Po Impact").Range("C" & 35).Value & Workbooks(myMacroFile).Sheets("Po Impact").Range("C17").Value & " " & Format(Date, "MMDDYYYY") & ".xlsx"
+        '.Attachments.Add myMacroPath & "\830_Open PO Report." & myFileSaveDate
+        '.Display
+        .Send
+    End With
+    
+    'Workbooks.Open Filename:="D:\Materials\IA Reports\2020\02. Feb2020\02072020\Coronavirus\Potential PO Impacted by Coronavirus Outbreak_masterfile 02072020.xlsx"
+    'Workbooks.Open myMacroPath & "\Temp.xlsx"
+    'MsgBox "Done!"
+myEnd1:
+    'Application.EnableEvents = False
+    Application.DisplayAlerts = False
+    Application.Quit
+    'Application.EnableEvents = True
+End Sub
+Sub MergeMacro()
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    'Sheets("TempSheet").Select
+    'Sheets("TempSheet").Cells.ClearContents
+    
+    'myYear = Year(Date)
+    myDate = Format(Date, "MMDDYYYY")
+    mySharePath = Range("C35").Value
+    myLatestFile = Dir(mySharePath & Range("C17").Value & " " & myDate & ".xlsx")
+    If myLatestFile = "" Then
+        For myA = 1 To 20
+            myDate = Format(Date - myA, "MMDDYYYY")
+            myLatestFile = Dir(mySharePath & Range("C17").Value & " " & myDate & ".xlsx")
+            If myLatestFile <> "" Then
+                Exit For
+            End If
+        Next myA
+    End If
+    If myLatestFile = "" Then
+        With CreateObject("Outlook.Application").CreateItem(0)
+            .To = "sk.loon@plexus.com"
+            .CC = "Sing-Yee.Ho@plexus.com"
+            .Subject = "CoronaVirus Latest file not found!"
+            .HTMLBody = "CoronaVirus Latest file not found!"
+            .Send
+        End With
+        GoTo myEnd
+    End If
+    
+    Call fso.copyfile(mySharePath & Range("C17").Value & " " & myDate & ".xlsx", myMacroPath & "\Temp.xlsx", True)
+    'Workbooks.Open Range("C4").Value ', ReadOnly:=True
+    Workbooks.Open myMacroPath & "\Temp.xlsx", UpdateLinks:=False
+    myMasterFile = ActiveWorkbook.Name
+    Application.DisplayAlerts = False
+    If Workbooks(myMasterFile).MultiUserEditing Then
+        Workbooks(myMasterFile).ExclusiveAccess
+    End If
+    Application.DisplayAlerts = True
+    For Each myX In Worksheets
+        If Left(myX.Name, 7) = "Open PO" Then
+            Sheets(myX.Name).Select
+            Exit For
+        End If
+    Next
+    If Left(myX.Name, 7) <> "Open PO" Then
+        Application.Quit
+    End If
+    If ActiveSheet.AutoFilterMode = True Then
+       Rows("3:3").AutoFilter
+    End If
+    myOpoSheet = ActiveSheet.Name
+    myTempLastRow = Range("B" & Rows.Count).End(xlUp).Row
+    myB = 5
+    For myA = 1 To 5
+'        sdsdd = Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & myDate & ".xlsx"
+'        MsgBox sdsdd
+        Workbooks.Open Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value & Workbooks(myMacroFile).Worksheets("PO Impact").Cells(17, myB).Value & " " & myDate & ".xlsx", ReadOnly:=True, UpdateLinks:=False
+        For Each myX In Worksheets
+            If Left(myX.Name, 7) = "Open PO" Then
+                Sheets(myX.Name).Select
+                Exit For
+            End If
+        Next
+        If ActiveSheet.AutoFilterMode = True Then
+           Rows("3:3").AutoFilter
+        End If
+        'Ver: Fix number of column
+        'myLastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+        myLastCol = 69
+        'Header Check
+        For myX = 1 To myLastCol
+            If Cells(3, myX).Value <> Workbooks(myMasterFile).Sheets(myOpoSheet).Cells(3, myX).Value Then
+                With CreateObject("Outlook.Application").CreateItem(0)
+                    .To = "sk.loon@plexus.com"
+                    .CC = "Sing-Yee.Ho@plexus.com"
+                    .Subject = "CoronaVirus Different format detected!"
+                    .HTMLBody = Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value
+                    .Send
+                End With
+                GoTo myEnd
+            End If
+        Next myX
+        myTempLastRowCopy = Range("A" & Rows.Count).End(xlUp).Row
+        myTempLastRow = Workbooks(myMasterFile).Sheets(myOpoSheet).Range("A" & Rows.Count).End(xlUp).Row
+        'myAddBookLastRow = Workbooks(myMacroFile).Sheets("TempSheet").Range("A" & Rows.Count).End(xlUp).Row
+        myAddBookLastRow = Workbooks(myMasterFile).Sheets("Address Book").Range("A" & Rows.Count).End(xlUp).Row
+            'To prevent value update error
+            If Application.WorksheetFunction.CountA(Columns("BR:BR")) <> 0 Then
+                Columns("BR:BR").ClearContents
+            End If
+        
+        Rows("4:" & myTempLastRowCopy).Copy
+        Application.DisplayAlerts = False
+        Workbooks(myMasterFile).Sheets(myOpoSheet).Rows(myTempLastRow + 1).Insert
+        Application.DisplayAlerts = True
+        Sheets("Address Book").Select
+        myLastCol = Cells(1, Columns.Count).End(xlToLeft).Column
+        'Header Check
+        For myX = 1 To myLastCol
+            If Cells(1, myX).Value <> Workbooks(myMasterFile).Sheets("Address Book").Cells(1, myX).Value Then
+                With CreateObject("Outlook.Application").CreateItem(0)
+                    .To = "sk.loon@plexus.com"
+                    .CC = "Sing-Yee.Ho@plexus.com"
+                    .Subject = "CoronaVirus Different format detected!"
+                    .HTMLBody = Workbooks(myMacroFile).Worksheets("PO Impact").Range("C" & myA + 35).Value
+                    .Send
+                End With
+                GoTo myEnd
+            End If
+        Next myX
+        myTempLastRowCopy = Range("A" & Rows.Count).End(xlUp).Row
+        Rows("1:" & myTempLastRowCopy).Copy
+        'Workbooks(myMacroFile).Sheets("TempSheet").Rows(myAddBookLastRow + 1).Insert
+        Workbooks(myMasterFile).Sheets("Address Book").Rows(myAddBookLastRow + 1).Insert
+        Application.CutCopyMode = False
+        ActiveWorkbook.Close False
+        'myA = myA + 1
+        myB = myB + 2
+    Next myA
+    Workbooks("Temp.xlsx").Activate
+    Sheets("Address Book").Select
+    'myTotalAdd = Workbooks(myMacroFile).Sheets("TempSheet").Range("A" & Rows.Count).End(xlUp).Row
+    'Workbooks(myMacroFile).Sheets("TempSheet").Range("A2:W" & myTotalAdd).Value = Range("A1:W" & myTotalAdd).Value
+    'Workbooks(myMacroFile).Sheets("TempSheet").Range("A2:AK" & myTotalAdd).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalAdd = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A1:AK" & myTotalAdd).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTotalAdd = Range("A" & Rows.Count).End(xlUp).Row
+    'Range("A1:W" & Range("A" & Rows.Count).End(xlUp).Row).ClearContents
+    'Range("A1:W" & myTotalAdd).Value = Workbooks(myMacroFile).Sheets("TempSheet").Range("A2:W" & myTotalAdd - 1).Value
+    Workbooks(myMasterFile).Sheets(myOpoSheet).Select
+
+    Exit Sub
+myEnd:
+    Application.Quit
+End Sub
