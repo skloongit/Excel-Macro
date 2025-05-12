@@ -1,0 +1,614 @@
+Private Const IDC_WAIT As Long = 32514
+
+Private Type POINT
+    X As Long
+    Y As Long
+End Type
+
+Private Type CURSORINFO
+    cbSize As Long
+    flags As Long
+    hCursor As Long
+    ptScreenPos As POINT
+End Type
+
+Private Declare Function GetCursorInfo Lib "user32" (ByRef pci As CURSORINFO) As Boolean
+Private Declare Function LoadCursor Lib "user32" Alias "LoadCursorA" (ByVal hInstance As Long, ByVal lpCursorName As Long) As Long
+
+
+Public Declare Function SetCursorPos Lib "user32" (ByVal X As Long, ByVal Y As Long) As Long
+Public Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, ByVal dwExtraInfo As Long)
+Public Const MOUSEEVENTF_LEFTDOWN = &H2
+Public Const MOUSEEVENTF_LEFTUP = &H4
+Public Const MOUSEEVENTF_RIGHTDOWN As Long = &H8
+Public Const MOUSEEVENTF_RIGHTUP As Long = &H10
+Declare Function GetCursorPos Lib "user32" (lpPoint As POINTAPI) As Long
+' Create custom variable that holds two integers
+Type POINTAPI
+   Xcoord As Long
+   Ycoord As Long
+End Type
+Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+'Private Declare Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As Long
+'Private Declare Function PostMessage Lib "user32" Alias "PostMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Const WM_CLOSE = &H10
+Public Declare Function SetForegroundWindow Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function ShowWindow Lib "user32" (ByVal hwnd As Long, ByVal nCmdSHow As Long) As Long
+Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+Private Declare Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As Long
+Private Declare Function PostMessage Lib "user32" Alias "PostMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
+Private Declare Function SendMessage Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
+Private Declare Function SendMessageByString Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As String) As Long
+Private Declare Function SendMessageLong& Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
+Private Declare Function FindWindowEx Lib "user32" Alias "FindWindowExA" (ByVal hWnd1 As Long, ByVal hWnd2 As Long, ByVal lpsz1 As String, ByVal lpsz2 As String) As Long
+Declare PtrSafe Function FindWindowExW Lib "user32" (ByVal hWndParent As LongPtr, Optional ByVal hwndChildAfter As LongPtr, Optional ByVal lpszClass As LongPtr, Optional ByVal lpszWindow As LongPtr) As LongPtr
+Declare PtrSafe Function GetClassName Lib "user32" Alias "GetClassNameW" (ByVal hwnd As LongPtr, ByVal lpClassName As LongPtr, ByVal nMaxCount As Long) As Long
+Private Declare Function SendMessageW Lib "user32.dll" (ByVal hwnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
+Private Declare Function GetWindowTextW Lib "user32.dll" (ByVal hwnd As Long, ByVal lpString As Long, ByVal nMaxCount As Long) As Long
+Private Declare Function GetWindowTextLengthW Lib "user32.dll" (ByVal hwnd As Long) As Long
+Public Function GetWindowText()
+    hwnd = FindWindow(vbNullString, "Citrix Receiver")
+    Const WM_GETTEXT = &HD&, WM_GETTEXTLENGTH = &HE&
+    GetWindowText = Space$(GetWindowTextLengthW(hwnd))
+    GetWindowTextW hwnd, StrPtr(hwnd), Len(hwnd) + 1&
+    MsgBox GetWindowText
+End Function
+Sub Gtest()
+    hwnd = FindWindow(vbNullString, "Citrix Receiver")
+    Const WM_GETTEXT = &HD&, WM_GETTEXTLENGTH = &HE&
+
+    test = Space$(SendMessageW(hwnd, WM_GETTEXTLENGTH, 0&, 0&))
+    MsgBox test
+    SendMessageW hwnd, WM_GETTEXT, Len(hwnd) + 1&, StrPtr(hwnd)
+End Sub
+
+Sub ItemBranchMrpDownloader()
+    'Ver1.3: Get JDE shortcut link
+    Dim objSFolders As Object
+    Set objSFolders = CreateObject("WScript.Shell").SpecialFolders
+    Range("A1").Value = "='T:\Others\Macro_Backup\Info\[Book1.xlsm]Macro'!$B$4"
+    myPass = Replace(Replace(Replace(Replace(Range("A1").Value, "^", "{^}"), "%", "{%}"), "+", "{+}"), "~", "{~}")
+    Range("A1").ClearContents
+    
+    Dim handleWaitCursor As Long
+    Dim pci As CURSORINFO
+    Dim Ret As Boolean
+    Dim BufObj As MSForms.DataObject
+    Dim lngRet As Long
+    Dim Pid As Long
+    Dim Winwedgedl As Long
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const BM_CLICK As Long = &HF5&
+    Const WM_SETTEXT As Long = &HC
+    Const CB_SHOWDROPDOWN = 335
+    Set BufObj = New MSForms.DataObject
+    
+    myHomePath = "\\acc-homedrv-001\Homedrive\sk.loon\"
+    myCsvFiles = Dir(myHomePath & "*.csv")
+    Do While myCsvFiles <> ""
+        If Dir(myMacroPath & "\" & myCsvFiles) <> "" Then
+            Kill myMacroPath & "\" & myCsvFiles
+        End If
+        fso.MoveFile Source:=myHomePath & myCsvFiles, Destination:=myMacroPath & "\" & myCsvFiles
+        myCsvFiles = Dir(myHomePath & "*.csv")
+    Loop
+Relogin:
+'    'strFile = "C:\Users\sk.loon\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\JDEdwards 9 APAC - PD"  ' the file you want to open/etc.
+'    strFile = myMacroPath & "\JDEdwards 9 APAC - PD"  ' the file you want to open/etc.
+'    strAction = "OPEN"  ' action might be OPEN, NEW or other, depending on what you need to do
+'    lngErr = ShellExecute(0, strAction, strFile, "", "", 0)
+'
+'    hWndParent = FindWindow(vbNullString, "JD Edwards - Internet Explorer - \\Remote")
+'    For myCounter = 1 To 100
+'        Application.Wait (Now + TimeValue("00:00:05"))
+'        hWndParent = FindWindow(vbNullString, "JD Edwards - Internet Explorer - \\Remote")
+'        If hWndParent <> 0 Then
+'            Exit For
+'        End If
+'    Next myCounter
+'    If myCounter > 100 Then
+'        myRelogin = myRelogin + 1
+'        If myRelogin = 3 Then
+'            GoTo myEnd
+'        Else
+'            GoTo Relogin
+'        End If
+'    End If
+'
+'    SetForegroundWindow hWndParent
+''    Application.Wait (Now + TimeValue("00:00:02"))
+''    Application.SendKeys "~", True
+''    Application.Wait (Now + TimeValue("00:00:05"))
+'    Application.Wait (Now + TimeValue("00:00:05"))
+'    SetCursorPos 807, 482 'Sign In
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'        SetCursorPos 645, 397 'Sign In
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'    SetCursorPos 777, 412 'Sign In
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:15"))
+'
+
+    strFile = objSFolders("StartMenu") & "\Programs\JDEdwards 9 APAC - PD"
+    strAction = "OPEN"  ' action might be OPEN, NEW or other, depending on what you need to do
+    lngErr = ShellExecute(0, strAction, strFile, "", "", 0)
+    Application.Wait (Now + TimeValue("00:00:30"))
+    
+    'Set Username and Password
+    For myCounter = 1 To 31
+        Application.Wait (Now + TimeValue("00:00:05"))
+        Winwedgehdl = FindWindow(vbNullString, "JD Edwards - Internet Explorer - \\Remote")
+        ShowWindow Winwedgehdl, 3 '1 is restore, 2 is minimize, 3 is maximize
+        SetForegroundWindow Winwedgehdl 'Set to foreground
+        If Winwedgehdl = 0 Then
+            
+            If myCounter > 30 Then
+                If myRetryCnt = 2 Then
+
+                With CreateObject("Outlook.Application").CreateItem(0)
+                    '.To = "Sing-Yee.Ho@plexus.com"
+                    .BCC = "sk.loon@plexus.com"
+                    .Subject = "WIP Inventory Report Scheduler Error!"
+                    .HTMLBody = "<html><p>Unable find JD Edwards - Internet Explorer - \\Remote!"
+                    '.Display
+                    .Send
+                End With
+                GoTo myEnd
+                Else
+                    myRetryCnt = myRetryCnt + 1
+                    GoTo Relogin
+                End If
+            End If
+        Else
+            Application.Wait (Now + TimeValue("00:00:05"))
+            Exit For
+        End If
+    Next myCounter
+    Application.SendKeys ("sk.loon")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos 750, 440
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Application.SendKeys (myPass)
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Application.SendKeys ("~")
+    Application.Wait (Now + TimeValue("00:00:30"))
+
+    hWndParent = FindWindow(vbNullString, "JD Edwards - Internet Explorer - \\Remote")
+    For myCounter = 1 To 100
+        Application.Wait (Now + TimeValue("00:00:05"))
+        hWndParent = FindWindow(vbNullString, "JD Edwards - Internet Explorer - \\Remote")
+        If hWndParent <> 0 Then
+            Exit For
+        End If
+    Next myCounter
+    If myCounter > 100 Then
+        GoTo myEnd
+    End If
+    
+    
+    
+    
+    'Check Submitted Job Search button availbiity*********************************************************************************
+    Application.Wait (Now + TimeValue("00:00:10"))
+    'Read Data
+    SetCursorPos 214, 166 'Submitted Job Search
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos 254, 335 'Select All
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos 214, 166 'Submitted Job Search
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos 250, 203 'Copy
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set BufObj = New MSForms.DataObject
+    BufObj.GetFromClipboard
+    GetClipboardText = BufObj.GetText
+    myCheck = InStr(1, GetClipboardText, "View Submitted Job", vbBinaryCompare)
+    If myCheck = 0 Then
+        myRetryLoop = myRetryLoop + 1
+        Application.Wait (Now + TimeValue("00:00:10"))
+        If myRetryLoop > 10 Then
+            Call SendEmail("Item Branch Downloader (TER & Micron): Unable to find View Submitted Job Button!", "Unable to find View Submitted Job Button!")
+            GoTo myEnd
+        End If
+    End If
+    
+    'Submitted Job Search *********************************************************************************
+    
+    'Clear User ID (R5541008_PLX00008)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos 561, 258 'View Submitted Job Status
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:05"))
+    
+    SetCursorPos 883, 266 'Job
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    Application.SendKeys "R5541008_PLX00008"
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    'Magnifying glass
+    SetCursorPos 240, 166 'Magnifying glass
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    'Submitted Job Search *********************************************************************************
+    Application.Wait (Now + TimeValue("00:00:10"))
+    'Read Data
+    SetCursorPos 214, 136 'Submitted Job Search
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos 254, 305 'Select All
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos 214, 136 'Submitted Job Search
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos 250, 173 'Copy
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    GetClipboardText = BufObj.GetText
+    myCheck = InStr(1, GetClipboardText, "R5541008_PLX00008", vbBinaryCompare)
+    If myCheck = 0 Then
+        myRetryLoop = myRetryLoop + 1
+        Application.Wait (Now + TimeValue("00:00:10"))
+        If myRetryLoop > 10 Then
+            Call SendEmail("Item Branch Downloader (TER & Micron): Unable to find Item B/P Purchasing Data Report!", "Unable to find Item B/P Purchasing Data Report!")
+            GoTo myEnd
+        End If
+    End If
+    myCheck = InStr(myCheck, GetClipboardText, "Done", vbBinaryCompare)
+    If myCheck = 0 Then
+        myRetryLoop = myRetryLoop + 1
+        Application.Wait (Now + TimeValue("00:00:10"))
+        If myRetryLoop > 10 Then
+            Call SendEmail("Item Branch Downloader (TER & Micron): Item B/P Purchasing Data Report not yet ready!", "Item B/P Purchasing Data Report not yet ready!")
+            GoTo myEnd
+        End If
+    End If
+    
+    'Select fist line
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos 225, 326 'Check first line
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos 225, 326 'Check first line
+    mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    SetCursorPos 235, 467 'View CSV
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+    'Range("A1").Value = "\\acc-homedrv-001\Homedrive\sk.loon\"
+    'Range("A1").Copy
+    BufObj.SetText "\\acc-homedrv-001\Homedrive\sk.loon\"
+    BufObj.PutInClipboard
+    SetCursorPos 1077, 837 'Save arrow
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+    SetCursorPos 1184, 813 'Save as
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:03"))
+    
+    Sample
+    
+'    SetCursorPos 789, 228 'Select address bar
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:03"))
+'    SetCursorPos 514, 228 'Right Click Address
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:03"))
+'    SetCursorPos 520, 316 'Paste address
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:03"))
+'    SetCursorPos 850, 229 'Arrow
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:30"))
+'    SetCursorPos 908, 628 'Save
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:03"))
+    
+    For myA = 1 To 300
+        Application.Wait (Now + TimeValue("00:00:10"))
+        myCsvFiles = Dir(myHomePath & "*.csv")
+        If myCsvFiles <> "" Then
+            Exit For
+        End If
+    Next myA
+    If myA > 300 Then
+        Call SendEmail("Item Branch Downloader (TER & Micron): Unable to download CSV file from JDE", "Item B/P Purchasing Data Report")
+        GoTo myEnd
+    End If
+    
+    myWw = WorksheetFunction.WeekNum(Date, vbMonday)
+    myWwYy = "WW" & myWw & "'" & Format(Date, "Yy")
+    'Check Folder Availbility
+    'Year
+    myYear = Year(Date)
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\"
+    End If
+    'Macro Rescheduling
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\"
+    End If
+    
+    'Rescheduling Report
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\Rescheduling Report\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\Rescheduling Report\"
+    End If
+    
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\Rescheduling Report\" & myMonthYear & "\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\Rescheduling Report\" & myMonthYear & "\"
+    End If
+    mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\Rescheduling Report\" & myMonthYear & "\"
+    
+    
+    '318 Month
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 318\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 318\"
+    End If
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 318\" & Format(Date, "YYYYMMDD") & "\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 318\" & Format(Date, "YYYYMMDD") & "\"
+    End If
+    my318SavePath = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 318\" & Format(Date, "YYYYMMDD") & "\"
+    
+    '260 Month
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 260\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 260\"
+    End If
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 260\" & myWwYy & "\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 260\" & myWwYy & "\"
+    End If
+    my260SavePath = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 260\" & myWwYy & "\"
+    
+    '198 Month
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 198\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 198\"
+    End If
+    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 198\" & myWwYy & "\", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 198\" & myWwYy & "\"
+    End If
+    my198SavePath = "\\ap\penadata\Site\Islandview\Purchasing\Materials\" & myYear & "\Macro Rescheduling\MPF 198\" & myWwYy & "\"
+    'Delete report
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetCursorPos 270, 166 'Delete
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:15"))
+    SetCursorPos 770, 510 'OK
+    Application.Wait (Now + TimeValue("00:00:02"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    
+    
+    Workbooks.Open Filename:=myHomePath & myCsvFiles
+    ActiveSheet.Name = "Sheet1"
+    myTempTotal = Range("F" & Rows.Count).End(xlUp).Row
+    If myTempTotal = 1 Then
+        
+    Else
+        Application.CutCopyMode = False
+        Columns("H:H").Insert
+        Range("H4:H" & myTempTotal).Value = "=TRIM(F4)"
+        Range("H4:H" & myTempTotal).Value = Range("H4:H" & myTempTotal).Value
+        Range("F4:F" & myTempTotal).Value = Range("H4:H" & myTempTotal).Value
+        'Columns("H:H").Delete
+        'Rows("4:4").AutoFilter
+        'Rows("4:4").WrapText = True
+    End If
+    
+    For myA = 1 To 3
+        ActiveSheet.Copy
+        If myA = 1 Then
+            Range("H4:H" & myTempTotal).Value = "=IF(D4=198,Row(D4),""Delete"")"
+        ElseIf myA = 2 Then
+            Range("H4:H" & myTempTotal).Value = "=IF(D4=260,Row(D4),""Delete"")"
+        ElseIf myA = 3 Then
+            Range("H4:H" & myTempTotal).Value = "=IF(D4=318,Row(D4),""Delete"")"
+        End If
+        Range("H4:H" & myTempTotal).Value = Range("H4:H" & myTempTotal).Value
+        Range("A4:AG" & myTempTotal).RemoveDuplicates Columns:=8, Header:=xlNo
+        Columns("H:H").Delete
+        Application.EnableEvents = False
+        If myA = 1 Then
+            ActiveWorkbook.SaveAs Filename:=my198SavePath & "\(Macro Download) Item Branch-198 " & Format(Date, "MMDDYYYY") & ".xlsx" ', FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+            ActiveWorkbook.SaveAs Filename:=myMacroPath & "\198\Item Branch-198 " & Format(Date, "MMDDYYYY") & ".xlsx"
+            Call SendEmail("TER Rescheduling Macro: 198 Item Branch Report have been save in Share drive", "198 Item Branch Report have been save in Share drive")
+        ElseIf myA = 2 Then
+            ActiveWorkbook.SaveAs Filename:=my260SavePath & "\(Macro Download) Item Branch-260 " & Format(Date, "MMDDYYYY") & ".xlsx" ', FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+            ActiveWorkbook.SaveAs Filename:=myMacroPath & "\260\Item Branch-260 " & Format(Date, "MMDDYYYY") & ".xlsx"
+            Call SendEmail("TER Rescheduling Macro: 260 Item Branch Report have been save in Share drive", "260 Item Branch Report have been save in Share drive")
+        ElseIf myA = 3 Then
+            ActiveWorkbook.SaveAs Filename:=my318SavePath & "\(Macro Download) IB.xlsx" ', FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888"
+            ActiveWorkbook.SaveAs Filename:=myMacroPath & "\318\Item Branch-318 " & Format(Date, "MMDDYYYY") & ".xlsx"
+            Call SendEmail("TER Rescheduling Macro: 318 Item Branch Report have been save in Share drive", "318 Item Branch Report have been save in Share drive")
+        End If
+        ActiveWorkbook.Close False
+        Application.EnableEvents = True
+    Next myA
+    
+    Application.EnableEvents = False
+    Workbooks(myCsvFiles).Close False
+    Application.EnableEvents = True
+    'Delete Homedrive file
+    myCsvFiles = Dir(myHomePath & "*.csv")
+    Do While myCsvFiles <> ""
+        If Dir(myMacroPath & "\Homedrive\" & myCsvFiles) <> "" Then
+            Kill myMacroPath & "\Homedrive\" & myCsvFiles
+        End If
+        fso.MoveFile Source:=myHomePath & myCsvFiles, Destination:=myMacroPath & "\Homedrive\" & myCsvFiles
+        myCsvFiles = Dir(myHomePath & "*.csv")
+    Loop
+    
+    hWndParent = FindWindow(vbNullString, "Submitted Job Search - Internet Explorer - \\Remote")
+    
+    SendMessage hWndParent, WM_CLOSE, 0, 0 'Close WMS
+    'ActiveWorkbook.Save
+    Application.DisplayAlerts = False
+    Application.Quit
+    End
+myEnd:
+    hWndParent = FindWindow(vbNullString, "Submitted Job Search - Internet Explorer - \\Remote")
+    If hWndParent > 0 Then
+        SendMessage hWndParent, WM_CLOSE, 0, 0 'Close WMS
+    End If
+    hWndParent = FindWindow(vbNullString, "Version Prompting - Internet Explorer - \\Remote")
+    If hWndParent > 0 Then
+        SendMessage hWndParent, WM_CLOSE, 0, 0 'Close WMS
+    End If
+    hWndParent = FindWindow(vbNullString, "JD Edwards - Internet Explorer - \\Remote")
+    If hWndParent > 0 Then
+        SendMessage hWndParent, WM_CLOSE, 0, 0 'Close WMS
+    End If
+    
+    Application.DisplayAlerts = False
+    Application.Quit
+    
+End Sub
+Sub SendEmail(mySubject As String, myBody As String)
+     With CreateObject("Outlook.Application").CreateItem(0)
+        .To = "sk.loon@plexus.com"
+        'If mySubject = "WIP Inventory Report have been save in Share drive" Or mySubject = "Raw material & Finish good Report have been save in Share drive" Then
+        '    .Cc = "Sing-Yee.Ho@plexus.com; kelly_hsy@hotmail.com"
+        'End If
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        .Send
+    End With
+End Sub
+Sub PasteAll()
+    On Error Resume Next
+    Range("A1").PasteSpecial xlPasteAll
+End Sub
+Sub ReadAllData()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("^a")
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    SendKeys "^{C}"
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Private Sub MoveSingle(myX, myY)
+    SetCursorPos myX, myY 'x and y position
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub MoveSingleClick(myX, myY)
+  SetCursorPos myX, myY 'x and y position
+  Application.Wait (Now + TimeValue("00:00:01"))
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub SingleClick()
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub DoubleClick()
+  'Double click as a quick series of two clicks
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub RightClick()
+  'Right click
+  SetCursorPos 200, 200 'x and y position
+  mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+Sub TypeInCurrentWindow()
+DoEvents
+Application.EnableEvents = False
+Sleep 5000
+
+SendKeys "a"
+SendKeys "^a", True 'Select All
+Sleep 400 'Wait 0.4 seconds (400 milliseconds)
+SendKeys "^c", True 'Copy
+Sleep 400 'Wait 0.4 seconds
+'SendKeys "abcd", True 'Type abcd
+'Sleep 400 'Wait 0.4 seconds
+Application.EnableEvents = True
+End Sub
+Sub GetCursorPosDemo()
+Dim llCoord As POINTAPI
+' Get the cursor positions
+GetCursorPos llCoord
+' Display the cursor position coordinates
+MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+End Sub
