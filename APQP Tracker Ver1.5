@@ -1,0 +1,1253 @@
+Private Const IDC_WAIT As Long = 32514
+
+Private Type POINT
+    x As Long
+    y As Long
+End Type
+
+Private Type cursorInfo
+    cbSize As Long
+    flags As Long
+    hCursor As Long
+    ptScreenPos As POINT
+End Type
+
+Private Declare Function GetCursorInfo Lib "user32" (ByRef pci As cursorInfo) As Boolean
+Private Declare Function LoadCursor Lib "user32" Alias "LoadCursorA" (ByVal hInstance As Long, ByVal lpCursorName As Long) As Long
+Declare Function MinimizeAllWindows Lib "user32" () As Long
+Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As rect) As Long
+
+Public Declare Function SetCursorPos Lib "user32" (ByVal x As Long, ByVal y As Long) As Long
+Public Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, ByVal dwExtraInfo As Long)
+Public Const MOUSEEVENTF_LEFTDOWN = &H2
+Public Const MOUSEEVENTF_LEFTUP = &H4
+Public Const MOUSEEVENTF_RIGHTDOWN As Long = &H8
+Public Const MOUSEEVENTF_RIGHTUP As Long = &H10
+Declare Function GetCursorPos Lib "user32" (lpPoint As POINTAPI) As Long
+' Create custom variable that holds two integers
+Type POINTAPI
+   Xcoord As Long
+   Ycoord As Long
+End Type
+Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+'Private Declare Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As Long
+'Private Declare Function PostMessage Lib "user32" Alias "PostMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Const WM_CLOSE = &H10
+Public Declare Function SetForegroundWindow Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function ShowWindow Lib "user32" (ByVal hwnd As Long, ByVal nCmdSHow As Long) As Long
+Public Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+Private Declare Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As Long
+Private Declare Function PostMessage Lib "user32" Alias "PostMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
+Private Declare Function SendMessage Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
+Private Declare Function SendMessageByString Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As String) As Long
+Private Declare Function SendMessageLong& Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
+Private Declare Function FindWindowEx Lib "user32" Alias "FindWindowExA" (ByVal hWnd1 As Long, ByVal hWnd2 As Long, ByVal lpsz1 As String, ByVal lpsz2 As String) As Long
+
+Declare Function GetSystemMetrics Lib "user32" (ByVal nIndex As Long) As Long
+Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Long) As Integer
+Dim myAttachement() As String
+Dim myMacroPath As String
+Private Declare PtrSafe Function GetClientRect Lib "user32" (ByVal hwnd As LongPtr, lpRect As rect) As Long
+Private Declare PtrSafe Function GetDesktopWindow Lib "user32" () As LongPtr
+Private Type rect
+        Left As Long
+        Top As Long
+        Right As Long
+        Bottom As Long
+End Type
+
+Sub Test()
+    Dim objFSO As Object, objFile As Object
+    Dim strHTML As String
+    Dim strFilePath As String
+    
+    ' Specify the path to the saved HTML file
+    strFilePath = "C:\path\to\your\saved\page.html" ' Replace with the actual path
+    
+    ' Create a FileSystemObject
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    
+    ' Open the HTML file
+    Set objFile = objFSO.OpenTextFile(strFilePath, 1) ' 1 for reading
+    
+    ' Read the entire HTML content
+    strHTML = objFile.ReadAll
+    
+    ' Close the file
+    objFile.Close
+    
+    '... (your code to process the strHTML content)...
+    
+    ' Clean up
+    Set objFile = Nothing
+    Set objFSO = Nothing
+End Sub
+
+Sub SendEmail(myTo As String, mySubject As String, myBody As String)
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody & "<p>" & _
+                  "<br>This is an auto generated email no reply required</p></html>"
+        .Send
+    End With
+End Sub
+Sub ApqpFileDownload()
+    ReDim myAttachement(0)
+    Dim llCoord As POINTAPI
+    Dim handleWaitCursor As Long
+    Dim pci As cursorInfo
+    Dim ret As Boolean
+    Dim BufObj As MSForms.DataObject
+    Dim lngRet As Long
+    Dim Pid As Long
+    Dim Winwedgedl As Long
+    Dim myXcord(6) As String
+    Dim myYcord(6) As String
+    Dim myText(6) As String
+    Dim myActDown(6) As String
+    Dim rScreen As rect
+    
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    
+    myFolderCheck = Dir(myMacroPath & "\APQP Result", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir myMacroPath & "\APQP Result"
+    End If
+    myFolderCheck = Dir(myMacroPath & "\Summary", vbDirectory)
+    If myFolderCheck = "" Then
+        MkDir myMacroPath & "\Summary"
+    End If
+    
+    'Ver1.5:
+    'If Dir(myMacroPath & "\Summary\APQP Tracker " & Format(Date, "MmDdYyyy") & ".xlsx", vbNormal) <> "" Then Exit Sub
+    If Dir(myMacroPath & "\Summary\APQP Tracker " & Format(Date, "MmDdYyyy") & ".xlsx", vbNormal) <> "" Then GoTo myEnd
+    
+    'Task Scheduler
+        Dim rect As rect
+        Const SW_MINIMIZE = 6
+        myTask = FindWindow(vbNullString, "Task Scheduler")
+        ShowWindow myTask, SW_MINIMIZE
+
+        result = GetWindowRect(myTask, rect)
+    
+        If result <> 0 Then
+            myTaskRight = rect.Right
+            myTaskTop = rect.Top
+            SetCursorPos myTaskRight - 125, myTaskTop + 10 'Task Scheduler Screen
+            Application.Wait (Now + TimeValue("00:00:01"))
+            mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+            mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+            Application.Wait (Now + TimeValue("00:00:02"))
+        End If
+        
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Const BM_CLICK As Long = &HF5&
+    Const WM_SETTEXT As Long = &HC
+    Const CB_SHOWDROPDOWN = 335
+    Set BufObj = New MSForms.DataObject
+        
+    'Configuration File Check
+    myConfigCheck = Dir(myMacroPath & "\APQP Tracker Configuration.xlsx")
+    If myConfigCheck = "" Then
+        'Call SendEmail("sk.loon@plexus.com", "sk.loon@plexus.com", "", "Error:" & myMacrofile, "Unable to find Configuration.xlsx file!", "", "")
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to find Configuration.xlsx file!</html>", _
+                myAttachement(), _
+                0, 0)
+        GoTo myEnd
+    End If
+    Workbooks.Open myMacroPath & "\APQP Tracker Configuration.xlsx" ', False, True
+    'To
+    If Sheets("To").Range("A1").Value <> "" Then
+        If Sheets("To").Range("A2").Value <> "" Then
+            myTempToTotal = Sheets("To").Range("A" & Rows.Count).End(xlUp).Row
+            myTo = Join(Application.WorksheetFunction.Transpose(Sheets("To").Range("A1:A" & myTempToTotal).Value), ";")
+        Else
+            myTo = Sheets("To").Range("A1").Value
+        End If
+    End If
+    'Cc
+    If Sheets("Cc").Range("A1").Value <> "" Then
+        If Sheets("Cc").Range("A2").Value <> "" Then
+            myTempCcTotal = Sheets("Cc").Range("A" & Rows.Count).End(xlUp).Row
+            myCc = Join(Application.WorksheetFunction.Transpose(Sheets("Cc").Range("A1:A" & myTempCcTotal).Value), ";")
+        Else
+            myCc = Sheets("Cc").Range("A1").Value
+        End If
+    End If
+    If Sheets("Subject").Range("A1").Value <> "" Then
+        mySubject = Sheets("Subject").Range("A1").Value
+    End If
+    If Sheets("Contents").Range("A1").Value <> "" Then
+        myBody = Sheets("Contents").Range("A1").Value
+    End If
+    ActiveWorkbook.Close False
+    
+    'Delete Downloaded File
+    myDataFile = Dir("C:\Users\sk.loon\Downloads\dat*", vbNormal)
+    Do While myDataFile <> ""
+        Kill "C:\Users\sk.loon\Downloads\" & myDataFile
+        myDataFile = Dir("C:\Users\sk.loon\Downloads\dat*", vbNormal)
+    Loop
+        
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.WindowState = xlMinimized
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set objShell = CreateObject("Shell.Application")
+    Application.Wait (Now + TimeValue("00:00:01"))
+    objShell.ToggleDesktop
+       
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Ver1.5: Change to Power BI
+    'sURL = "https://reports.plexus.com/Reports/powerbi/Global/Manufacturing%20-%20Operations/APQP/APQP%20Report"
+    'Affected Item vs APQP
+    sURL = "https://app.powerbi.com/groups/me/apps/1a6bbf85-517a-4852-a432-fea001dc595c/reports/94538bfb-e106-42b8-a435-223fa9daf138/be74e5935b5906024456?experience=power-bi"
+    
+    Set oShell = CreateObject("WScript.Shell")
+    oShell.Run "chrome.exe " & sURL
+    
+    'Ver1.5: Change to Power BI
+    'Application.Wait (Now + TimeValue("00:03:00"))
+    Application.Wait (Now + TimeValue("00:00:45"))
+    For myCounter = 1 To 30
+        'Ver1.5: Change to Power BI
+        'If oShell.AppActivate("APQP Report - Power BI Report Server - Google Chrome") = False Then
+        If oShell.AppActivate("APQP - Power BI - Google Chrome") = False Then
+            'Ver1.5: Sing in Chrome
+            If oShell.AppActivate("Sign in to your account - Google Chrome") = True Then
+                GetClientRect GetDesktopWindow, rScreen
+                myScreenWidth = rScreen.Right - rScreen.Left
+                myScreenLength = rScreen.Bottom - rScreen.Top
+                If myWideScreen = "Yes" Then
+                    SetCursorPos myScreenWidth / 2, (myScreenLength / 2) + 10 'sk.loon@plexus.com
+                Else
+                    SetCursorPos myScreenWidth / 2, (myScreenLength / 2) + 10 'sk.loon@plexus.com
+                End If
+                ChromeParent = FindWindow(vbNullString, "Sign in to your account - Google Chrome")
+                SetForegroundWindow ChromeParent
+                
+                Application.Wait (Now + TimeValue("00:00:01"))
+                mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+                mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+                Application.Wait (Now + TimeValue("00:00:15"))
+
+            End If
+            
+            Application.Wait Now + TimeValue("00:00:30") ' Adjust wait time as needed
+        Else
+            Exit For
+        End If
+    Next myCounter
+    
+    If myA > 30 Then
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to locate APQP Report - Power BI Report Server - Google Chrome.</html>", _
+                myAttachement(), _
+                0, 0)
+        GoTo myEnd
+    End If
+    
+    Application.Wait (Now + TimeValue("00:00:02"))
+        For myCounter = 1 To 30
+            Application.Wait (Now + TimeValue("00:00:05"))
+            'Ver1.5: Change to Power BI
+            'ChromeParent = FindWindow(vbNullString, "APQP Report - Power BI Report Server - Google Chrome")
+            ChromeParent = FindWindow(vbNullString, "APQP - Power BI - Google Chrome")
+            If ChromeParent <> 0 Then
+                SetForegroundWindow ChromeParent
+                Application.Wait (Now + TimeValue("00:00:02"))
+                SetForegroundWindow ChromeParent
+                Application.Wait (Now + TimeValue("00:00:02"))
+                ShowWindow ChromeParent, 0 'MINIMIZE Chrome window
+                Application.Wait (Now + TimeValue("00:00:02"))
+                ShowWindow ChromeParent, 3 'MAXIMIZE Chrome window
+                Application.Wait (Now + TimeValue("00:00:02"))
+                Exit For
+            End If
+        Next myCounter
+        
+        
+        
+        If ChromeParent = 0 Then
+            'Call SendEmail("sk.loon@plexus.com", "GSF ASM WO Report download error", "Unable to open Google Chrome.")
+            Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to open Google Chrome.</html>", _
+                myAttachement(), _
+                0, 0)
+            GoTo myEnd
+        End If
+     
+    'Affected Item vs APQP tab *************************************************************************************************************************************************************************
+    Application.WindowState = xlMinimized
+    Application.Wait (Now + TimeValue("00:00:05"))
+    'SetCursorPos 1750, 265 'Save button
+        'Ver1.3: Read screen resolution
+        'Dim rScreen As rect
+        GetClientRect GetDesktopWindow, rScreen
+        myScreenWidth = rScreen.Right - rScreen.Left
+        myScreenLength = rScreen.Bottom - rScreen.Top
+        
+        'Ver1.2: Check wide screen
+        If myScreenWidth = 1920 Then
+            myWideScreen = "Yes"
+        End If
+        
+        'SetCursorPos 1290, 265 'Save button
+    'Ver1.3: Change filename
+    'If Dir(myMacroPath & "\APQP Result\Affected vs APQP " & Format(Date, "MmDdYyyy") & ".xlsx", vbNormal) <> "" Then GoTo CoverageRate
+    If Dir(myMacroPath & "\APQP Result\Affected Item vs APQP " & Format(Date, "MmDdYyyy") & ".xlsx", vbNormal) <> "" Then GoTo CoverageRate
+    
+'Ver1.5: Change to Power BI
+'    SetCursorPos myScreenWidth / 2, (myScreenLength / 2) + 100 'middle of the screen (CREATIONDATE)
+'    For myA = 1 To 30
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+'        mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        SendKeys ("^c")
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        BufObj.GetFromClipboard
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        GetClipboardText = BufObj.GetText
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        myShow = InStr(1, GetClipboardText, "Show ", vbTextCompare)
+'        If myShow > 0 Then Exit For
+'    Next myA
+'    If myA > 30 Then
+'        Call SendSmtpEmail( _
+'            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+'            "sk.loon@plexus.com", _
+'            "", _
+'            "", _
+'            ThisWorkbook.Name & " Error!", _
+'            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to find keyword Show in the Affected Item vs APQP tab.</html>", _
+'            myAttachement(), _
+'            0, 0)
+'        GoTo CoverageRate
+'    End If
+    'Ver1.2: Clear clipboard
+    BufObj.SetText "empty"
+    BufObj.PutInClipboard
+'
+'
+'    'Clear APQPID
+'    'Ver1.2: Cater for wide screen
+'    If myWideScreen = "Yes" Then
+'        SetCursorPos 680, 285 'Eraser icon (Clear selection)
+'    Else
+'        SetCursorPos 502, 275 'Eraser icon (Clear selection) wpend006348
+'    End If
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:15"))
+     
+    'Export button
+    Application.Wait (Now + TimeValue("00:00:05"))
+    'Ver1.5: Change to Power BI
+    'SetCursorPos myScreenWidth / 2, (myScreenLength / 2) + 100 'middle of the screen (CREATIONDATE)
+    If myWideScreen = "Yes" Then
+        SetCursorPos (myScreenWidth / 2) - 50, (myScreenLength / 2) + 128 'middle of the screen (Affected Item)
+    Else
+        SetCursorPos myScreenWidth / 2, (myScreenLength / 2) + 108  'middle of the screen (Affected Item)
+    End If
+    For myA = 1 To 30
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:01"))
+        SendKeys ("^c")
+        Application.Wait (Now + TimeValue("00:00:01"))
+        BufObj.GetFromClipboard
+        Application.Wait (Now + TimeValue("00:00:01"))
+        GetClipboardText = BufObj.GetText
+        Application.Wait (Now + TimeValue("00:00:01"))
+        'Ver1.5: Change to Power BI
+        'myShow = InStr(1, GetClipboardText, "Show ", vbTextCompare)
+        myShow = InStr(1, GetClipboardText, "Copy", vbTextCompare)
+        If myShow > 0 Then Exit For
+    Next myA
+    If myA > 30 Then
+        'Call SendEmail("sk.loon@plexus.com", "GSF ASM WO Report download error", "Unable to open Google Chrome.")
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ThisWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to find keyword Copy in the initial screen.</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo CoverageRate
+    End If
+    
+    'Export data button
+    'Ver1.2: Cater for wide Screen
+    If myWideScreen = "Yes" Then
+        'Ver1.5: Cahnge to Power BI
+        'SetCursorPos rScreen.Right - 325, rScreen.Top + 600 '...
+        SetCursorPos rScreen.Right - 155, rScreen.Top + 630 '...
+    Else
+        'Ver1.5: Cahnge to Power BI
+        'SetCursorPos rScreen.Right - 245, rScreen.Top + 515 '... wpend0066348
+        SetCursorPos rScreen.Right - 75, rScreen.Top + 535 '... wpend0066348
+    End If
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Ver1.2: Cater for wide Screen
+    If myWideScreen = "Yes" Then
+        'Ver1.5: Cahnge to Power BI
+        'SetCursorPos rScreen.Right - 305, rScreen.Top + 620 'Export Data
+        SetCursorPos rScreen.Right - 305, rScreen.Top + 730 'Export Data
+    Else
+        'Ver1.5: Change to Power BI
+        'SetCursorPos rScreen.Right - 225, rScreen.Top + 535 'Export Data wpend0066348
+        SetCursorPos rScreen.Right - 235, rScreen.Top + 630 'Export Data wpend0066348
+    End If
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:30"))
+        'Ver1.5: Change to Power BI (Summarized data)
+        SetCursorPos (rScreen.Right) / 2, (rScreen.Bottom) / 2 'Summarized data
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:02"))
+        
+        'Export button
+        'Ver1.2: Cater for wide Screen
+        If myWideScreen = "Yes" Then
+            'Ver1.5: Change to Power BI
+            'SetCursorPos rScreen.Right - 800, rScreen.Top + 875 'Export
+            SetCursorPos rScreen.Right - 800, rScreen.Top + 825 'Export
+        Else
+            'Ver1.5: Changed to  Power BI
+            'SetCursorPos rScreen.Right - 550, rScreen.Top + 785 'Export wpend0066348
+            SetCursorPos rScreen.Right - 550, rScreen.Top + 735 'Export wpend0066348
+        End If
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:30"))
+    
+    For myA = 1 To 30
+        mySaveAs = FindWindow(vbNullString, "Save As")
+        If mySaveAs = 0 Then
+            Application.Wait (Now + TimeValue("00:00:05"))
+        
+        Else
+            SetForegroundWindow mySaveAs
+            Application.Wait (Now + TimeValue("00:00:02"))
+            SendKeys ("{ENTER}")
+            Application.Wait (Now + TimeValue("00:00:10"))
+            Exit For
+        End If
+    Next myA
+    
+    If myA < 31 Then
+        For myA = 1 To 30
+            If Dir("C:\Users\sk.loon\Downloads\data.xlsx", vbNormal) <> "" Then
+                fso.CopyFile "C:\Users\sk.loon\Downloads\data.xlsx", myMacroPath & "\APQP Result\Affected Item vs APQP " & Format(Date, "MmDdYyyy") & ".xlsx"
+                'Ver1.5: Delete downloaded file
+                Kill "C:\Users\sk.loon\Downloads\data.xlsx"
+                Exit For
+            End If
+            Application.Wait (Now + TimeValue("00:00:05"))
+        Next myA
+    End If
+    If myA > 30 Then
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ThisWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to save Affected Item vs APQP file.</html>", _
+            myAttachement(), _
+            0, 0)
+    End If
+    
+CoverageRate: '**********************************************************************************************************************************************************************************
+'    Application.WindowState = xlMinimized
+'    SetForegroundWindow ChromeParent
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    SetForegroundWindow ChromeParent
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    ShowWindow ChromeParent, 0 'MINIMIZE Chrome window
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    ShowWindow ChromeParent, 3 'MAXIMIZE Chrome window
+'    Application.Wait (Now + TimeValue("00:00:02"))
+'    BufObj.SetText "empty"
+'    BufObj.PutInClipboard
+'    'SetForegroundWindow ChromeParent
+'    'Application.Wait (Now + TimeValue("00:00:02"))
+'    'Ver1.5: Change to Power BI
+'    'SetCursorPos rScreen.Left + 350, rScreen.Bottom - 55 'Coverage Rate
+'    SetCursorPos rScreen.Left + 50, rScreen.Bottom - 155 'Coverage Rate
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:15"))
+'    'Ver1.2: Cater for wide Screen
+'    If myWideScreen = "Yes" Then
+'        SetCursorPos 480, 405 'Eraser icon (Clear selection)
+'    Else
+'        SetCursorPos 355, 372 'Eraser icon (Clear selection) wpend0066348
+'    End If
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+'    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+'    Application.Wait (Now + TimeValue("00:00:15"))
+    sURL = "https://app.powerbi.com/groups/me/apps/1a6bbf85-517a-4852-a432-fea001dc595c/reports/94538bfb-e106-42b8-a435-223fa9daf138/71d36a10605d0e11ae05?experience=power-bi"
+    oShell.Run "chrome.exe " & sURL
+    
+    'Ver1.5: Change to Power BI
+    'Application.Wait (Now + TimeValue("00:03:00"))
+    Application.Wait (Now + TimeValue("00:00:30"))
+    For myCounter = 1 To 30
+        'Ver1.5: Change to Power BI
+        'If oShell.AppActivate("APQP Report - Power BI Report Server - Google Chrome") = False Then
+        If oShell.AppActivate("APQP - Power BI - Google Chrome") = False Then
+            'Ver1.5: Sing in Chrome
+            If oShell.AppActivate("Sign in to your account - Google Chrome") = True Then
+                GetClientRect GetDesktopWindow, rScreen
+                myScreenWidth = rScreen.Right - rScreen.Left
+                myScreenLength = rScreen.Bottom - rScreen.Top
+                If myWideScreen = "Yes" Then
+                    SetCursorPos myScreenWidth / 2, (myScreenLength / 2) + 10 'sk.loon@plexus.com
+                Else
+                    SetCursorPos myScreenWidth / 2, (myScreenLength / 2) + 10 'sk.loon@plexus.com
+                End If
+                ChromeParent = FindWindow(vbNullString, "Sign in to your account - Google Chrome")
+                SetForegroundWindow ChromeParent
+                
+                Application.Wait (Now + TimeValue("00:00:01"))
+                mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+                mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+                Application.Wait (Now + TimeValue("00:00:15"))
+
+            End If
+            
+            
+            Application.Wait Now + TimeValue("00:00:30") ' Adjust wait time as needed
+        Else
+            Exit For
+        End If
+    Next myCounter
+    
+    'Ver1.2: Cater for wide Screen
+    If myWideScreen = "Yes" Then
+        'Ver1.5: Change to Power BI
+        'SetCursorPos rScreen.Right - 400, rScreen.Top + 740 'middle of the screen (ProjectID)
+        SetCursorPos rScreen.Right - 300, rScreen.Top + 760 'middle of the screen (ProjectID)
+    Else
+        'Ver1.5: Change to Power BI
+        'SetCursorPos rScreen.Right - 250, rScreen.Top + 640 'middle of the screen (ProjectID)
+        SetCursorPos rScreen.Right - 250, rScreen.Top + 640 'middle of the screen (ProjectID)
+    End If
+    'GetClientRect GetDesktopWindow, rScreen
+    For myA = 1 To 30
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:01"))
+        SendKeys ("^c")
+        Application.Wait (Now + TimeValue("00:00:01"))
+        BufObj.GetFromClipboard
+        Application.Wait (Now + TimeValue("00:00:01"))
+        GetClipboardText = BufObj.GetText
+        Application.Wait (Now + TimeValue("00:00:01"))
+        myShow = InStr(1, GetClipboardText, "Copy", vbTextCompare)
+        If myShow > 0 Then Exit For
+    Next myA
+    If myA > 30 Then
+        'Call SendEmail("sk.loon@plexus.com", "GSF ASM WO Report download error", "Unable to open Google Chrome.")
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ThisWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to find keyword Show in the Coverage Rate screen.</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    
+    'Export data button
+    'Ver1.2: Cater for wide Screen
+    If myWideScreen = "Yes" Then
+        'Ver1.5: Change to Power BI
+        'SetCursorPos rScreen.Right - 325, rScreen.Top + 705 '...
+        SetCursorPos rScreen.Right - 155, rScreen.Top + 725 '...
+    Else
+        'Ver1.5: Change to Power BI
+        'SetCursorPos rScreen.Right - 75, rScreen.Top + 605 '... wpend0066348
+        SetCursorPos rScreen.Right - 75, rScreen.Top + 608 '... wpend0066348
+    End If
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:02"))
+    'Ver1.2: Cater for wide Screen
+    If myWideScreen = "Yes" Then
+        'Ver1.5: Change to Power BI
+        'SetCursorPos rScreen.Right - 305, rScreen.Top + 725 'Export Data
+        SetCursorPos rScreen.Right - 305, rScreen.Top + 820 'Export Data
+    Else
+        SetCursorPos rScreen.Right - 225, rScreen.Top + 705 'Export Data wpend0066348
+    End If
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:30"))
+        'Ver1.5: Change to Power BI (Summarized data)
+        SetCursorPos (rScreen.Right) / 2, (rScreen.Bottom) / 2 'Summarized data
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:00:02"))
+        
+        'Export button
+        'Ver1.2: Cater for wide Screen
+        If myWideScreen = "Yes" Then
+            'Ver1.5: Change to Power BI
+            'SetCursorPos rScreen.Right - 800, rScreen.Top + 875 'Export
+            SetCursorPos rScreen.Right - 790, rScreen.Top + 830 'Export
+        Else
+            'Ver1.5: Change to Power BI
+            'SetCursorPos rScreen.Right - 550, rScreen.Top + 785 'Export wpend0066348
+            SetCursorPos rScreen.Right - 550, rScreen.Top + 735 'Export wpend0066348
+        End If
+        
+        Application.Wait (Now + TimeValue("00:00:01"))
+        mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+        mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+        Application.Wait (Now + TimeValue("00:01:00"))
+
+        
+    For myA = 1 To 30
+        mySaveAs = FindWindow(vbNullString, "Save As")
+        If mySaveAs = 0 Then
+            Application.Wait (Now + TimeValue("00:00:05"))
+            'Ver1.5: Add more delay
+            Application.Wait (Now + TimeValue("00:00:15"))
+        Else
+            SetForegroundWindow mySaveAs
+            Application.Wait (Now + TimeValue("00:00:02"))
+            SendKeys ("{ENTER}")
+            Application.Wait (Now + TimeValue("00:00:10"))
+            Exit For
+        End If
+    Next myA
+    
+    If myA < 31 Then
+        For myA = 1 To 30
+            'Ver1.5: Change to Power BI
+            'If Dir("C:\Users\sk.loon\Downloads\data (1).xlsx", vbNormal) <> "" Then
+            If Dir("C:\Users\sk.loon\Downloads\data.xlsx", vbNormal) <> "" Then
+                'Ver1.5: Change to Power BI
+                'fso.CopyFile "C:\Users\sk.loon\Downloads\data (1).xlsx", myMacroPath & "\APQP Result\Coverage Rate " & Format(Date, "MmDdYyyy") & ".xlsx"
+                fso.CopyFile "C:\Users\sk.loon\Downloads\data.xlsx", myMacroPath & "\APQP Result\Coverage Rate " & Format(Date, "MmDdYyyy") & ".xlsx"
+                Exit For
+            End If
+            Application.Wait (Now + TimeValue("00:00:05"))
+        Next myA
+    End If
+    If myA > 30 Then
+        'Call SendEmail("sk.loon@plexus.com", "GSF ASM WO Report download error", "Unable to open Google Chrome.")
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ThisWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to save Coverage Rate file.</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    
+        
+    'Ver1.2: Close Existing tab
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SetForegroundWindow ChromeParent
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SendKeys ("^w")
+    
+    'Ver1.3: Close 5 tab
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SendKeys ("{ENTER}")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SendKeys ("^w")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SendKeys ("^w")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SendKeys ("^w")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SendKeys ("^w")
+    Application.Wait (Now + TimeValue("00:00:02"))
+    SendKeys ("^w")
+    Application.Wait (Now + TimeValue("00:00:05"))
+    SendMessage ChromeParent, WM_CLOSE, 0, 0 'Close WMS
+    
+    'Create Summary file
+    Workbooks.Open myMacroPath & "\APQP Result\Coverage Rate " & Format(Date, "MmDdYyyy") & ".xlsx"
+    ActiveSheet.Name = "Coverage Rate"
+    Workbooks.Open myMacroPath & "\APQP Result\Affected Item vs APQP " & Format(Date, "MmDdYyyy") & ".xlsx"
+    ActiveSheet.Name = "Affected Item vs APQP"
+    ActiveSheet.Move After:=Workbooks("Coverage Rate " & Format(Date, "MmDdYyyy") & ".xlsx").Sheets("Coverage Rate")
+    
+    'Ver1.5:
+    myTotalApqp = Range("E" & Rows.Count).End(xlUp).Row
+    Range("M3:M" & myTotalApqp).Value = "=IF(C3=""Penang-Islandview"",Row(C3),""Delete"")"
+    Range("M3:M" & myTotalApqp).Value = Range("M3:M" & myTotalApqp).Value
+    Range("M3").Value = "Delete"
+    Range("A3:M" & myTotalApqp).RemoveDuplicates Columns:=13, Header:=xlNo
+    Columns("M:M").Delete
+    
+    Sheets("Coverage Rate").Activate
+        'Ver1.5: Power BI format
+        'myTotal = Range("A" & Rows.Count).End(xlUp).Row
+        'Rows(myTotal - 1 & ":" & myTotal).Delete
+        'myTotal = Range("E" & Rows.Count).End(xlUp).Row
+        'Range("A2:A" & myTotal).MergeCells = False
+        ''If Application.WorksheetFunction.CountBlank(Range("A3:A" & myTotal)) > 0 Then
+        ''    Range("A3:A" & myTotal).SpecialCells(xlCellTypeBlanks).Value = "=IF(R[-1]C="""","""",R[-1]C)"
+        ''    Range("A3:A" & myTotal).Value = Range("A3:A" & myTotal).Value
+        ''End If
+        'Range("B2:B" & myTotal).MergeCells = False
+        ''If Application.WorksheetFunction.CountBlank(Range("B3:B" & myTotal)) > 0 Then
+        ''    Range("B3:B" & myTotal).SpecialCells(xlCellTypeBlanks).Value = "=IF(R[-1]C="""","""",R[-1]C)"
+        ''    Range("B3:B" & myTotal).Value = Range("B3:B" & myTotal).Value
+        ''End If
+        'Range("C2:C" & myTotal).MergeCells = False
+        ''If Application.WorksheetFunction.CountBlank(Range("C3:C" & myTotal)) > 0 Then
+        ''    Range("C3:C" & myTotal).SpecialCells(xlCellTypeBlanks).Value = "=IF(R[-1]C="""","""",R[-1]C)"
+        ''    Range("C3:C" & myTotal).Value = Range("C3:C" & myTotal).Value
+        ''End If
+        'Range("D2:D" & myTotal).MergeCells = False
+        'Range("E2:E" & myTotal).MergeCells = False
+        'Range("F2:F" & myTotal).MergeCells = False
+        'Range("G2:G" & myTotal).MergeCells = False
+        'Range("H2:H" & myTotal).MergeCells = False
+        'Range("I2:I" & myTotal).MergeCells = False
+        'Rows("1:2").Insert
+    Columns("B:B").Insert
+    Range("B3").Value = "Part&Rev"
+    'myTotal = Range("D" & Rows.Count).End(xlUp).Row
+    myTotal = Range("E" & Rows.Count).End(xlUp).Row
+        'Ver1.5: Power BI Format
+        'Range("B4:B" & myTotal).Value = "=IF(C4=""Penang-Islandview (830)"",IF(LEFT(J4,4)=""PPQP"",""Part&Rev"",Row(C4)),""Part&Rev"")"
+        Range("B4:B" & myTotal).Value = "=IF(C4=""Penang-Islandview"",IF(LEFT(J4,4)=""PPQP"",""Part&Rev"",Row(C4)),""Part&Rev"")"
+    Range("B4:B" & myTotal).Value = Range("B4:B" & myTotal).Value
+    Range("A3:J" & myTotal).RemoveDuplicates Columns:=2, Header:=xlNo
+    myTotal = Range("D" & Rows.Count).End(xlUp).Row
+    Range("K3").Value = "Phase"
+    
+    'sURL = "https://app.powerbi.com/groups/me/apps/1a6bbf85-517a-4852-a432-fea001dc595c/reports/94538bfb-e106-42b8-a435-223fa9daf138/71d36a10605d0e11ae05?experience=power-bi"
+    'oShell.Run "chrome.exe " & sURL
+    
+        'Ver1.5:  Change to Power BI format
+        Range("K4:K" & myTotal).Value = "=IF(RIGHT(J4,1)=""?"",LEFT(J4,LEN(J4)-1),IF(J4="""","""",J4))"
+        Range("K4:K" & myTotal).Value = Range("K4:K" & myTotal).Value
+        Range("J4:J" & myTotal).Value = Range("K4:K" & myTotal).Value
+        'Range("K4:K" & myTotal).Value = "=IFERROR(VLOOKUP([@ProjectID],'Affected Item vs APQP'!$A:$I,9,0),""No APQP created"")"
+        Range("K4:K" & myTotal).Value = "=IFERROR(VLOOKUP(J4,'Affected Item vs APQP'!$A:$I,9,0),""No APQP created"")"
+    Range("K4:K" & myTotal).Value = Range("K4:K" & myTotal).Value
+    Range("L3").Value = "Main APQP created"
+    Range("M3").Value = "Data2"
+        'Ver1.5:  Change to Power BI format
+        'Range("M4:M" & myTotal).Value = "=COUNTIF('Affected Item vs APQP'!$E:$E,""*""&[@[Part Number]]&""*"")"
+        Range("M4:M" & myTotal).Value = "=COUNTIF('Affected Item vs APQP'!$E:$E,""*"" & F4 & ""*"")"
+    Range("N3").Value = "Row #"
+        'Ver1.5:  Change to Power BI format
+        'Range("N4:N" & myTotal).Value = "=IF([@Data2]=0,"""",MATCH(""*""&[@[Part Number]]&""*"",'Affected Item vs APQP'!$E:$E,0))"
+        Range("N4:N" & myTotal).Value = "=IF(M4=0,"""",MATCH(""*""&F4&""*"",'Affected Item vs APQP'!$E:$E,0))"
+    Columns("M:M").Insert
+    Range("M3").Value = "Year"
+        'Ver1.5:  Change to Power BI format
+        'Range("M4:M" & myTotal).Value = "=Year([@[Part Creation Date]])"
+        Range("M4:M" & myTotal).Value = "=Year(E4)"
+    'Ver1.2: Add in status
+    Range("P3").Value = "Status"
+        'Ver1.5:  Change to Power BI format
+        'Range("P4:P" & myTotal).Value = "=IFERROR(VLOOKUP([@ProjectID],'Affected Item vs APQP'!$A:$J,10,0),"""")"
+        Range("P4:P" & myTotal).Value = "=IFERROR(VLOOKUP(J4,'Affected Item vs APQP'!$A:$J,10,0),"""")"
+    Range("P4:P" & myTotal).Value = Range("P4:P" & myTotal).Value
+    myTotal = Range("D" & Rows.Count).End(xlUp).Row
+        'Ver1.5:  Change to Power BI format: Remain data 2024 onward
+        'Range("B4:B" & myTotal).Value = "=IF(P4=""Cancelled"",""Part&Rev"",Row(C4))"
+        Range("B4:B" & myTotal).Value = "=IF(OR(P4=""Cancelled"",M4<2024),""Part&Rev"",Row(C4))"
+    Range("B4:B" & myTotal).Value = Range("B4:B" & myTotal).Value
+    Range("A3:P" & myTotal).RemoveDuplicates Columns:=2, Header:=xlNo
+    'Columns("N:O").Hidden = True
+    Columns("N:P").Hidden = True
+    
+    'Ver1.5:
+    myTotal = Range("D" & Rows.Count).End(xlUp).Row
+
+    Range("H1:I1").Value = Workbooks(myMacroFile).Sheets("Macro").Range("H1:I1").Value
+        'Ver1.5:  Change to Power BI format
+        'Range("L4:L" & myTotal).Value = "=IF(AND([@HasAPQP]=$I$1,[@[APQP Required]]=$H$1),IF([@[Row '#]]="""",""No APQP"",""Add into Relationship""),IF(AND([@Phase]=""No APQP created"",[@[APQP Required]]=$H$1),""Required to create APQP now!"",""""))"
+        Range("L4:L" & myTotal).Value = "=IF(AND(I4=$I$1,H4=$H$1),IF(O4="""",""No APQP"",""Add into Relationship""),IF(AND(K4=""No APQP created"",H4=$H$1),""Required to create APQP now!"",""""))"
+    
+    'Ver1.2: Set Part & Rev
+        'Ver1.5:  Change to Power BI format
+        'Range("B4:B" & myTotal).Value = "=[@[Part Number]]&[@[Part Number Revision]]"
+        Range("B4:B" & myTotal).Value = "=F4&G4"
+    Range("B4:B" & myTotal).Value = Range("B4:B" & myTotal).Value
+    Columns("B:B").Hidden = True
+    
+    'Ver1.5:  Change to Power BI format
+    Range("I3").Value = "HasAPQP"
+    Range("D3").Value = "Customer"
+    
+    'ActiveSheet.ListObjects.Add(xlSrcRange, Range("$A$3:$P$" & myTotal), , xlYes).Name = "Table1"
+        
+    Workbooks(myMacroFile).Sheets("Summary").Copy before:=ActiveSheet
+    Workbooks(myMacroFile).Sheets("Search").Copy before:=ActiveSheet
+    
+    'Ver1.3: Display as empty instead of #N/A
+    'Ver1.2:
+    'Range("C2").Value = "=IF(A2="""","""",VLOOKUP(A2&B2,'Coverage Rate'!B:K,9,0))"
+    'Range("D2").Value = "=IF(A2="""","""",VLOOKUP(A2&B2,'Coverage Rate'!B:K,10,0))"
+    Range("C2").Value = "=IF(A2="""","""",IFERROR(VLOOKUP(A2&B2,'Coverage Rate'!B:K,9,0),""""))"
+    Range("D2").Value = "=IF(A2="""","""",IFERROR(VLOOKUP(A2&B2,'Coverage Rate'!B:K,10,0),""""))"
+    Columns("B:B").ColumnWidth = 10
+    Columns("C:C").ColumnWidth = 18
+    Columns("D:D").ColumnWidth = 40
+    Columns("E:E").ColumnWidth = 45
+    
+    Range("A2:B2").ClearContents
+    Sheets("Summary").Select
+    
+    ActiveSheet.PivotTables("PivotTable2").ChangePivotCache ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="Table1")
+    myCurYear = Year(Date)
+    For myA = 2026 To myCurYear
+        ActiveWorkbook.SlicerCaches("Slicer_Year").SlicerItems(CStr(myA)).Selected = True
+    Next myA
+    
+    'Ver1.3: Save data
+    ActiveSheet.PivotTables("PivotTable2").SaveData = True
+    
+'    ActiveSheet.ChartObjects("Chart 1").Activate
+'    ActiveChart.PlotArea.Select
+'    ActiveChart.ChartArea.Select
+'    ActiveSheet.Shapes("Chart 1").ScaleWidth 0.8941033768, msoFalse, msoScaleFromBottomRight
+'    ActiveSheet.Shapes("Chart 1").ScaleHeight 1.0057251908, msoFalse, msoScaleFromTopLeft
+'    ActiveSheet.Shapes("Chart 1").IncrementTop 3.75
+'    ActiveSheet.Shapes("Chart 1").IncrementLeft 72
+    
+    Application.DisplayAlerts = False
+    'ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Receipt Daily Issue Log- " & Format(Date - 1, "DD Mmm Yyyy") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Summary\APQP Tracker " & Format(Date, "MmDdYyyy") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    Application.DisplayAlerts = True
+    For myA = 1 To 10
+        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+            Kill myMacroPath & "\Chart.jpg"
+        End If
+        Sheets("SUMMARY").Select
+        'Ver1.5:
+        'Range("A1:G5").Copy
+        Range("A1:H27").Copy
+
+        
+        Application.Wait (Now + TimeValue("00:00:05"))
+        'Range("J1").Select
+        'Application.Wait (Now + TimeValue("00:00:01"))
+        'ActiveSheet.Pictures.Paste.Select
+        ''asfd = Selection.Name
+        'ActiveSheet.Shapes.Range(Array(Selection.Name)).Select
+        'Selection.Copy
+        SaveGraph
+        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+            'If Dir(myMacroPath & "\IncomingAgingSummary.jpg", vbNormal) <> "" Then
+            '    Kill myMacroPath & "\IncomingAgingSummary.jpg"
+            'End If
+            'Name myMacroPath & "\Chart.jpg" As myMacroPath & "\IncomingAgingSummary.jpg"
+            Exit For
+        End If
+    Next myA
+    
+    
+'    'Workbooks(myMacrofile).Activate
+'    For myA = 1 To 10
+'        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+'            Kill myMacroPath & "\Chart.jpg"
+'        End If
+'        Sheets("Pivot").Select
+'        Range("A1:B" & Range("A" & Rows.Count).End(xlUp).Row).Copy
+'        'Application.Wait (Now + TimeValue("00:00:01"))
+''        Range("P1").Select
+''        'Application.Wait (Now + TimeValue("00:00:01"))
+''        ActiveSheet.Pictures.Paste.Select
+''        Application.Wait (Now + TimeValue("00:00:01"))
+''        Selection.Copy
+'        ''asfd = Selection.Name
+'        ''ActiveSheet.Shapes.Range(Array(Selection.Name)).Select
+'        SaveGraph
+'        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+'            If Dir(myMacroPath & "\MpfTable.jpg", vbNormal) <> "" Then
+'                Kill myMacroPath & "\MpfTable.jpg"
+'            End If
+'            Name myMacroPath & "\Chart.jpg" As myMacroPath & "\MpfTable.jpg"
+'            Exit For
+'        End If
+'    Next myA
+'
+'    'Workbooks(myMacrofile).Activate
+'    For myA = 1 To 10
+'        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+'            Kill myMacroPath & "\Chart.jpg"
+'        End If
+'        Sheets("Pivot").Select
+'        ActiveSheet.Shapes.Range(Array("Chart 1")).Select
+''        Application.Wait (Now + TimeValue("00:00:01"))
+''        Selection.Copy
+''        Application.Wait (Now + TimeValue("00:00:01"))
+''        'asfd = Selection.Name
+''        'ActiveSheet.Shapes.Range(Array(Selection.Name)).Select
+''        ActiveSheet.Pictures.Paste.Select
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        Selection.Copy
+'
+'        SaveGraph
+'        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+'            If Dir(myMacroPath & "\TotalProblematic.jpg", vbNormal) <> "" Then
+'                Kill myMacroPath & "\TotalProblematic.jpg"
+'            End If
+'            Name myMacroPath & "\Chart.jpg" As myMacroPath & "\TotalProblematic.jpg"
+'            Exit For
+'        End If
+'    Next myA
+    
+    If Dir(myMacroPath & "\Chart.jpg", vbNormal) = "" Then
+        'Call SendEmail("sk.loon@plexus.com", "sk.loon@plexus.com", "", "Error:" & myMacrofile, "Unable to generate Graph Picture!", "", "")
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ThisWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to generate Graph Picture!</html>", _
+                myAttachement(), _
+                0, 0)
+        
+        
+        ActiveWorkbook.Close False
+        GoTo myEnd
+    End If
+    
+    Workbooks("APQP Tracker " & Format(Date, "MmDdYyyy") & ".xlsx").Close False
+    
+    ReDim myAttachement(3)
+    myAttachement(0) = myMacroPath & "\Chart.jpg"
+    myAttachement(1) = myMacroPath & "\Summary\APQP Tracker " & Format(Date, "MmDdYyyy") & ".xlsx"
+    myAttachement(2) = myMacroPath & "\IncomingAgingSummary.jpg"
+    myAttachement(3) = myMacroPath & "\" & Year(Date) & "\Receipt Daily Issue Log- " & Format(Date, "DD Mmm Yyyy") & ".xlsx"
+    'Ver1.5: Change to Power BI
+    'myBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******" & Replace(Replace(myBody, "WW", "WW" & myCurWw), Chr(10), "<br>") & _
+                "<html><br>Dear all,<br>The attached chart provides a visual overview of APQP activities across different customers and phases as of today.<br>" & _
+                "<html>" & _
+                "<html><img src=cid:Image1>" & _
+                "<p>&nbsp;</p>" & _
+                myRaci & "<p></BODY>© Copyright Plexus Islandview 2025. All rights reserved.</p>" '& "</p></BODY>© Copyright Plexus Islandview 2025. All rights reserved. <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Unsubscribe Receiving SharePoint Receipt Daily Notification'>Unsubscribe</a> | <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Subscribe Receiving SharePoint Receipt Daily Notification'>Subscribe</a></html>"
+    myBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******" & Replace(Replace(myBody, "WW", "WW" & myCurWw), Chr(10), "<br>") & _
+                "<html><br>Dear all,<br>Please note that this data is sourced from new Power BI page.<br>Should you find any discrepancies, please do not hesitate to let me know.<br>The attached chart provides a visual overview of APQP activities across different customers and phases as of today.<br>" & _
+                "<html>" & _
+                "<html><img src=cid:Image1>" & _
+                "<p>New link: https://app.powerbi.com/groups/me/apps/1a6bbf85-517a-4852-a432-fea001dc595c/reports/94538bfb-e106-42b8-a435-223fa9daf138/be74e5935b5906024456?experience=power-bi</p>" & _
+                myRaci & "<p></BODY>© Copyright Plexus Islandview 2025. All rights reserved.</p>" '& "</p></BODY>© Copyright Plexus Islandview 2025. All rights reserved. <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Unsubscribe Receiving SharePoint Receipt Daily Notification'>Unsubscribe</a> | <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Subscribe Receiving SharePoint Receipt Daily Notification'>Subscribe</a></html>"
+    '
+    Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                myTo & "", _
+                myCc & "", _
+                "Sk.loon@plexus.com", _
+                "Islandview APQP Status - " & Format(Date, "Dd Mmm Yyyy"), _
+                myBody & "", _
+                myAttachement(), _
+                2, 1)
+
+    ActiveWorkbook.Save
+    Application.DisplayAlerts = False
+    Application.Quit
+    End
+myEnd:
+    SendMessage ChromeParent, WM_CLOSE, 0, 0 'Close WMS
+    Application.DisplayAlerts = False
+    ActiveWorkbook.Close False
+    Application.Quit
+    
+End Sub
+Sub PasteAll()
+    On Error Resume Next
+    Range("A1").PasteSpecial xlPasteAll
+End Sub
+Sub ReadAllData()
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+    Application.Wait (Now + TimeValue("00:00:01"))
+    'Application.SendKeys ("^a")
+    'Application.Wait (Now + TimeValue("00:00:01"))
+    SendKeys "^{C}"
+    Application.Wait (Now + TimeValue("00:00:01"))
+End Sub
+Private Sub MoveSingle(myX, myY)
+    SetCursorPos myX, myY 'x and y position
+    Application.Wait (Now + TimeValue("00:00:01"))
+    mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+    mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub MoveSingleClick(myX, myY)
+  SetCursorPos myX, myY 'x and y position
+  Application.Wait (Now + TimeValue("00:00:01"))
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+Private Sub SingleClick()
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub DoubleClick()
+  'Double click as a quick series of two clicks
+  SetCursorPos 100, 100 'x and y position
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_LEFTUP, 0, 0, 0, 0
+End Sub
+
+Private Sub RightClick()
+  'Right click
+  SetCursorPos 200, 200 'x and y position
+  mouse_event MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0
+  mouse_event MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0
+End Sub
+Sub TypeInCurrentWindow()
+DoEvents
+Application.EnableEvents = False
+Sleep 5000
+
+SendKeys "a"
+SendKeys "^a", True 'Select All
+Sleep 400 'Wait 0.4 seconds (400 milliseconds)
+SendKeys "^c", True 'Copy
+Sleep 400 'Wait 0.4 seconds
+'SendKeys "abcd", True 'Type abcd
+'Sleep 400 'Wait 0.4 seconds
+Application.EnableEvents = True
+End Sub
+Sub GetCursorPosDemo()
+Dim llCoord As POINTAPI
+' Get the cursor positions
+GetCursorPos llCoord
+' Display the cursor position coordinates
+MsgBox "X Position: " & llCoord.Xcoord & vbNewLine & "Y Position: " & llCoord.Ycoord
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+Sub SaveGraph()
+    On Error GoTo Err1
+    Sheets.Add
+    Application.Wait (Now + TimeValue("00:00:01"))
+        'ActiveSheet.Range("I1").PasteSpecial
+        Range("I1").Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        ActiveSheet.Pictures.Paste.Select
+    myObject = Selection.Name
+    Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+    Selection.ShapeRange.PictureFormat.Brightness = 1:
+    Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+    Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+    Selection.ShapeRange.Fill.Visible = msoFalse:
+    Selection.ShapeRange.Line.Visible = msoFalse:
+    Selection.ShapeRange.Rotation = 0#:
+    Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+    Selection.ShapeRange.PictureFormat.CropRight = 0#:
+    Selection.ShapeRange.PictureFormat.CropTop = 0#:
+    Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+    Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+    Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+        'Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+        Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlBMP
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set oDia = ActiveSheet.ChartObjects.Add(0, 0, ActiveSheet.Shapes(1).Width, ActiveSheet.Shapes(1).Height)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set oChartArea = oDia.Chart
+    Application.Wait (Now + TimeValue("00:00:01"))
+    oDia.Activate
+    Application.Wait (Now + TimeValue("00:00:01"))
+    oChartArea.ChartArea.Select
+    Application.Wait (Now + TimeValue("00:00:01"))
+        'oChartArea.Paste
+        oChartArea.Pictures.Paste
+    Application.Wait (Now + TimeValue("00:00:02"))
+    oChartArea.Export (myMacroPath & "\Chart.jpg")
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.DisplayAlerts = False
+    ActiveSheet.Delete
+    Application.DisplayAlerts = True
+    mySuccess = "Yes"
+    Exit Sub
+Err1:
+End Sub
