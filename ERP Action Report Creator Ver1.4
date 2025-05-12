@@ -1,0 +1,586 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myMacroPath As String
+Dim myAttachement() As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub ErpAction()
+    ReDim myAttachement(0)
+    Dim myBody As String
+    Sheets("Macro").Select
+    myMonthYear = Format(Date, "MM. MmmYYYY")
+    myStrTime = Time
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySharePath = Range("B4").Value
+    myPrefix = Range("B6").Value
+    myTodayDate = Format(Date, "MMDDYYYY")
+        
+    If Dir(mySharePath & "830_ERP Actions ISL*.xlsx") = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "ERP Action Error!"
+        '    .HTMLBody = "830_ERP Actions ISL file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_ERP Actions ISL file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    myCompareFileLastModified = Empty
+    myErpAction = Dir(mySharePath & "830_ERP Actions ISL*.xlsx")
+    Do Until myErpAction = ""
+        myFileLastModified = fso.GetFile(mySharePath & myErpAction).DateLastModified
+        If myFileLastModified > myCompareFileLastModified Then
+            myCompareFileLastModified = fso.GetFile(mySharePath & myErpAction).DateLastModified
+            myFileName = fso.GetFile(mySharePath & myErpAction).Name
+        End If
+        myErpAction = Dir()
+    Loop
+    Workbooks.Open Filename:=mySharePath & myFileName
+    myErpActionFilename = ActiveWorkbook.Name
+    ErrorHandler1
+    If Sheets("Temp").Range("A1").Value = "Error" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "ERP Action Macro Error!"
+        '    .HTMLBody = "ERP Action file format error"
+            '.Display
+        '    .Send
+        'End With
+        
+        Application.EnableEvents = False
+        ActiveWorkbook.Close False
+        Workbooks(mySuperAFilename).Close False
+        Application.EnableEvents = True
+        
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>ERP Action file format error</html>", _
+            myAttachement(), _
+            0, 0)
+        GoTo myEnd
+    End If
+    Rows("1:1").Delete
+    myTotalBuyer = Range("A" & Rows.Count).End(xlUp).Row
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("A3"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    With ActiveWorkbook.Worksheets("Temp").Sort
+        .SetRange Range("A3:B" & myTotalBuyer)
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    Range("C1:J1").Value = "=SUBTOTAL(9,C4:C" & myTotalBuyer & ")"
+    Range("C2:E2").Merge
+    Range("F2:J2").Merge
+    Range("B1").Value = "Sub Total"
+    Range("C2").Value = "Active Part"
+    Range("F2").Value = "ERP Actions Count"
+    Range("C3").Value = "Discrete"
+    Range("D3").Value = "SCM"
+    Range("E3").Value = "Total"
+    Range("F3").Value = "Cancel"
+    Range("G3").Value = "Reduction"
+    Range("H3").Value = "Expedite"
+    Range("I3").Value = "New Planned"
+    Range("J3").Value = "Push Out"
+    Range("K3").Value = "Total ERP Actions"
+    Range("L3").Value = "No. of Suppliers"
+    Range("C2:L3").Interior.ThemeColor = xlThemeColorAccent5
+    Range("C2:L3").Interior.TintAndShade = 0.599993896298105
+    Range("C2:L3").Font.Bold = True
+    Columns("C:L").HorizontalAlignment = xlCenter
+    Range("B1:J2").Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    
+    Range("A3:L" & myTotalBuyer).Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    Range("C4:E" & myTotalBuyer).Interior.ThemeColor = xlThemeColorAccent6
+    Range("C4:E" & myTotalBuyer).Interior.TintAndShade = 0.599993896298105
+    Range("F4:L" & myTotalBuyer).Interior.ThemeColor = xlThemeColorAccent2
+    Range("F4:L" & myTotalBuyer).Interior.TintAndShade = 0.599993896298105
+    Range("C4:C" & myTotalBuyer).FormulaR1C1 = _
+        "=COUNTIFS('Cancel Actions Current'!C[50],RC[-2],'Cancel Actions Current'!C[51],RC[-1],'Cancel Actions Current'!C[7],"""")" & _
+        "+COUNTIFS('Cancel Actions Current'!C[50],RC[-2],'Cancel Actions Current'!C[51],RC[-1],'Cancel Actions Current'!C[7],""830*"")" & Chr(10) & _
+        "+COUNTIFS('PO Reduction Actions Current'!C[50],RC[-2],'PO Reduction Actions Current'!C[51],RC[-1],'PO Reduction Actions Current'!C[7],"""")" & _
+        "+COUNTIFS('PO Reduction Actions Current'!C[50],RC[-2],'PO Reduction Actions Current'!C[51],RC[-1],'PO Reduction Actions Current'!C[7],""830*"")" & Chr(10) & _
+        "+COUNTIFS('Expedite Actions Current'!C[50],RC[-2],'Expedite Actions Current'!C[51],RC[-1],'Expedite Actions Current'!C[7],"""")" & _
+        "+COUNTIFS('Expedite Actions Current'!C[50],RC[-2],'Expedite Actions Current'!C[51],RC[-1],'Expedite Actions Current'!C[7],""830*"")" & Chr(10) & _
+        "+COUNTIFS('New Planned Orders Current'!C[50],RC[-2],'New Planned Orders Current'!C[51],RC[-1],'New Planned Orders Current'!C[6],"""")" & _
+        "+COUNTIFS('New Planned Orders Current'!C[50],RC[-2],'New Planned Orders Current'!C[51],RC[-1],'New Planned Orders Current'!C[6],""830*"")" & Chr(10) & _
+        "+COUNTIFS('Push Out Actions Current'!C[50],RC[-2],'Push Out Actions Current'!C[51],RC[-1],'Push Out Actions Current'!C[7],"""")" & _
+        "+COUNTIFS('Push Out Actions Current'!C[50],RC[-2],'Push Out Actions Current'!C[51],RC[-1],'Push Out Actions Current'!C[7],""830*"")"
+    Range("D4:D" & myTotalBuyer) = "=RC[1]-RC[-1]"
+    Range("E4:E" & myTotalBuyer).FormulaR1C1 = _
+        "=COUNTIFS('Cancel Actions Current'!C[48],RC[-4],'Cancel Actions Current'!C[49],RC[-3])" & Chr(10) & _
+        "+COUNTIFS('PO Reduction Actions Current'!C[48],RC[-4],'PO Reduction Actions Current'!C[49],RC[-3])+" & Chr(10) & _
+        "+COUNTIFS('Expedite Actions Current'!C[48],RC[-4],'Expedite Actions Current'!C[49],RC[-3])" & Chr(10) & _
+        "+COUNTIFS('New Planned Orders Current'!C[48],RC[-4],'New Planned Orders Current'!C[49],RC[-3])" & Chr(10) & _
+        "+COUNTIFS('Push Out Actions Current'!C[48],RC[-4],'Push Out Actions Current'!C[49],RC[-3])"
+    Range("F4:F" & myTotalBuyer) = "=COUNTIFS('Cancel Actions Current'!C[47],RC[-5],'Cancel Actions Current'!C[48],RC[-4])"
+    Range("G4:G" & myTotalBuyer) = "=COUNTIFS('PO Reduction Actions Current'!C[46],RC[-6],'PO Reduction Actions Current'!C[47],RC[-5])"
+    Range("H4:H" & myTotalBuyer) = "=COUNTIFS('Expedite Actions Current'!C[45],RC[-7],'Expedite Actions Current'!C[46],RC[-6])"
+    Range("I4:I" & myTotalBuyer) = "=COUNTIFS('New Planned Orders Current'!C[44],RC[-8],'New Planned Orders Current'!C[45],RC[-7])"
+    Range("J4:J" & myTotalBuyer) = "=COUNTIFS('Push Out Actions Current'!C[43],RC[-9],'Push Out Actions Current'!C[44],RC[-8])"
+    Range("K4:K" & myTotalBuyer) = "=SUM(RC[-5]:RC[-1])"
+    Range("L4:L" & myTotalBuyer) = "=COUNTIFS(C[8],RC[-11],C[9],RC[-10])"
+    Range("C4:L" & myTotalBuyer).Value = Range("C4:L" & myTotalBuyer).Value
+    
+    Columns("T:V").ClearContents
+        Sheets("Expedite Actions Current").Columns("BA:BD").ClearContents
+        Sheets("Cancel Actions Current").Columns("BA:BD").ClearContents
+        Sheets("PO Reduction Actions Current").Columns("BA:BD").ClearContents
+        Sheets("Push Out Actions Current").Columns("BA:BD").ClearContents
+        Sheets("New Planned Orders Current").Columns("BA:BD").ClearContents
+        
+    Range("A3:L3").AutoFilter
+    Columns("A:L").AutoFit
+    Range("A1").ClearContents
+    Range("A1").Select
+    ActiveSheet.Name = "Summary"
+    
+    myCounter = 4
+    Range("A4:L4").Interior.ThemeColor = xlThemeColorAccent & myCounter
+    Range("A4:L4").Interior.TintAndShade = 0.599993896298105
+   
+    For myA = 5 To myTotalBuyer
+        If Range("A" & myA - 1).Value <> Range("A" & myA).Value Then
+            myCounter = myCounter + 1
+            If myCounter = 12 Then
+                myCounter = 4
+            End If
+        End If
+        Range("A" & myA & ":L" & myA).Interior.ThemeColor = xlThemeColorAccent & myCounter
+        Range("A" & myA & ":L" & myA).Interior.TintAndShade = 0.599993896298105
+    Next myA
+    
+        'Check Folder Availbility
+'        'Year
+'        myYear = Year(Date)
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\"
+'        End If
+'        'Data Integrity
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\"
+'        End If
+'        'Make Part
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer ERP\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer ERP\"
+'        End If
+'
+'        myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer ERP\" & myMonthYear & "\", vbDirectory)
+'        If myFolderCheck = "" Then
+'            MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer ERP\" & myMonthYear & "\"
+'        End If
+    'Check Folder Availbility
+    myTotalFolder = Workbooks(myMacroFile).Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Workbooks(myMacroFile).Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Workbooks(myMacroFile).Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Workbooks(myMacroFile).Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Workbooks(myMacroFile).Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+    
+'        mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer ERP\" & myMonthYear & "\"
+        Application.EnableEvents = False
+        ActiveWorkbook.SaveAs Filename:=mySavePath & "Buyer ERP Action " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888" 'Password:="888"
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Buyer ERP Action " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888" 'Password:="888"
+        'ActiveWorkbook.Close False
+        Application.EnableEvents = True
+        
+'    With CreateObject("Outlook.Application").CreateItem(0)
+'        .To = "Sing-Yee.Ho@plexus.com"
+'        .CC = "sk.loon@plexus.com"
+'        '.BCC = "sk.loon@plexus.com"
+'        .Subject = "ERP Actions"
+'        .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>Hi Buyer," & _
+'                  "<html><br>Please take neccessary ERP action as per below:" & RangetoHTML(Range("A1:L" & myTotalBuyer)) & _
+'                  "<html><br>" & "<html>File: " & _
+'                  "<html><a href=""" & mySavePath & "Buyer ERP Action " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx"">" & mySavePath & "Buyer ERP Action " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx</a>" & _
+'                  "<html><br><br>Thanks.<br/>" & _
+'                  "This is an auto generated email. No reply required</html>"
+'        '.Display
+'        .Send
+'
+'        'Ver1.1: Close workbook
+'        ActiveWorkbook.Close False
+'
+'    End With
+'    myTotalBuyer = Range("A" & Rows.Count).End(xlUp).Row
+
+    If Dir(myMacroPath & "\Table.jpg", vbNormal) <> "" Then
+        Kill myMacroPath & "\Table.jpg"
+    End If
+    For myA = 1 To 10
+        Sheets("Summary").Select
+        Range("A1:L" & myTotalBuyer).Copy
+        Call SaveTable
+        If Dir(myMacroPath & "\Table.jpg", vbNormal) <> "" Then
+            Exit For
+        End If
+    Next myA
+    If Dir(myMacroPath & "\Table.jpg", vbNormal) = "" Then
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to generate Table image!</html>", _
+            myAttachement(), _
+            0, 0)
+    Else
+        myAttachement(0) = myMacroPath & "\Table.jpg"
+        myBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>******** Automated Reporting *******<br>Hi Buyer," & _
+                "<html><br>Please take neccessary ERP action as per below:<br><img src=cid:Image1><br>" & _
+                "<html><br>" & "File: <br>" & mySavePath & "Buyer ERP Action " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx"
+        
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "Sing-Yee.Ho@plexus.com", _
+                "", _
+                "sk.loon@plexus.com", _
+                "ERP Actions", _
+            myBody, _
+            myAttachement(), _
+            1, 1)
+    End If
+    ActiveWorkbook.Close False
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Function RangetoHTML(rng As Range)
+
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        .Cells(1).PasteSpecial Paste:=8
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        .DrawingObjects.Delete
+        On Error GoTo 0
+    End With
+
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    RangetoHTML = ts.ReadAll
+    ts.Close
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+
+    'Close TempWB
+    Application.EnableEvents = False
+    TempWB.Close savechanges:=False
+    Application.EnableEvents = True
+    'Delete the htm file we used in this function
+    Kill TempFile
+
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, after:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error GoTo Err1
+    'Sheets.Add after:=Sheets(Sheets.Count)
+    Sheets.Add before:=Sheets(1)
+    ActiveSheet.Name = "Temp"
+    For myA = 1 To 5
+        If myA = 1 Then
+            Sheets("Expedite Actions Current").Select
+        ElseIf myA = 2 Then
+            Sheets("Cancel Actions Current").Select
+        ElseIf myA = 3 Then
+            Sheets("PO Reduction Actions Current").Select
+        ElseIf myA = 4 Then
+            Sheets("Push Out Actions Current").Select
+        ElseIf myA = 5 Then
+            Sheets("New Planned Orders Current").Select
+        End If
+        Application.DisplayAlerts = False
+        Rows("1:2").MergeCells = False
+        Application.DisplayAlerts = True
+        mySearchValue = Cells.Find(What:="Buyer", after:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        'If mySearchValue <> 1 Then
+            Cells(1, mySearchValue).EntireColumn.Copy
+            Columns("BA:BA").Insert
+        'End If
+        mySearchValue = Cells.Find(What:="Supplier", after:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        'If mySearchValue <> 2 Then
+            Cells(1, mySearchValue).EntireColumn.Copy
+            Columns("BB:BB").Insert
+        'End If
+        mySearchValue = Cells.Find(What:="MPF", after:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        'If mySearchValue <> 2 Then
+            Cells(1, mySearchValue).EntireColumn.Copy
+            Columns("BB:BB").Insert
+        'End If
+        mySearchValue = Cells.Find(What:="Part", after:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+            Cells(1, mySearchValue).EntireColumn.Copy
+            Columns("BD:BD").Insert
+        Range("BA1:BC" & Range("BA" & Rows.Count).End(xlUp).Row).Copy
+        Sheets("Temp").Range("A" & Sheets("Temp").Range("A" & Rows.Count).End(xlUp).Row + 1).PasteSpecial xlValue
+        ActiveSheet.Range("$BA$1:$BD$" & Range("BA" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=Array(1, 2, 4), Header:=xlNo
+    Next myA
+    Application.CutCopyMode = False
+    Sheets("Temp").Select
+        ActiveSheet.Range("$A$1:$C$" & Range("A" & Rows.Count).End(xlUp).Row).Copy Range("T1")
+        ActiveSheet.Range("$T$1:$V$" & Range("A" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=Array(1, 2, 3), Header:=xlNo
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("C3:C" & myTempTotal).Value = "=IF(OR(A3=""Sum"",A3=""Grand Sum"",A3=""""),""Delete"",Row(A3))"
+    Range("C3:C" & myTempTotal).Value = Range("C3:C" & myTempTotal).Value
+    Range("C3").Value = "Delete"
+    ActiveSheet.Range("$A$3:$C$" & myTempTotal).RemoveDuplicates Columns:=3, Header:=xlNo
+    'Rows("1:1").Insert
+    'Range("A2").Value = "Sum"
+    'Range("A3").Value = "Grand Sum"
+    'Range("A3").ClearContents
+    ActiveSheet.Range("$A$1:$B$" & Range("A" & Rows.Count).End(xlUp).Row).RemoveDuplicates Columns:=Array(1, 2), Header:=xlNo
+    'Rows("1:1").Delete
+    Range("A1:A3").ClearContents
+    Columns("C:C").ClearContents
+    Exit Sub
+Err1:
+    Sheets("Temp").Range("A1").Value = "Error"
+End Sub
+Sub SharePath()
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select a Folder"
+        If .Show = -1 Then ' if OK is pressed
+            Range("B4").Value = .SelectedItems(1)
+        End If
+    End With
+    
+'    If sFolder <> "" Then ' if a file was chosen
+'        ' *********************
+'        ' put your code in here
+'        ' *********************
+'    End If
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .CC = myCc
+        .BCC = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+'Function RangetoHTML(rng As Range)
+'
+'    Dim fso As Object
+'    Dim ts As Object
+'    Dim TempFile As String
+'    Dim TempWB As Workbook
+'
+'    On Error GoTo myQuit
+'    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+'
+'    'Copy the range and create a new workbook to past the data in
+'    rng.Copy
+'    Set TempWB = Workbooks.Add(1)
+'    With TempWB.Sheets(1)
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial Paste:=8
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteValues, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).Select
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        Application.CutCopyMode = False
+'        On Error Resume Next
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Visible = True
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Delete
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        On Error GoTo 0
+'    End With
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Publish the sheet to a htm file
+'    With TempWB.PublishObjects.Add( _
+'         SourceType:=xlSourceRange, _
+'         Filename:=TempFile, _
+'         Sheet:=TempWB.Sheets(1).Name, _
+'         Source:=TempWB.Sheets(1).UsedRange.Address, _
+'         HtmlType:=xlHtmlStatic)
+'        .Publish (True)
+'    End With
+'
+'    'Read all data from the htm file into RangetoHTML
+'    Set fso = CreateObject("Scripting.FileSystemObject")
+'    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = ts.ReadAll
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    ts.Close
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Close TempWB
+'    TempWB.Close savechanges:=False
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Delete the htm file we used in this function
+'    Kill TempFile
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    Set ts = Nothing
+'    Set fso = Nothing
+'    Set TempWB = Nothing
+'myQuit:
+'End Function
+Sub SaveTable()
+    On Error GoTo Err1
+    Sheets.Add
+    Application.Wait (Now + TimeValue("00:00:01"))
+        ActiveSheet.Range("I1").PasteSpecial
+        Application.Wait (Now + TimeValue("00:00:01"))
+        ActiveSheet.Pictures.Paste.Select
+    myObject = Selection.Name
+    Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+    Selection.ShapeRange.PictureFormat.Brightness = 1:
+    Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+    Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+    Selection.ShapeRange.Fill.Visible = msoFalse:
+    Selection.ShapeRange.Line.Visible = msoFalse:
+    Selection.ShapeRange.Rotation = 0#:
+    Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+    Selection.ShapeRange.PictureFormat.CropRight = 0#:
+    Selection.ShapeRange.PictureFormat.CropTop = 0#:
+    Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+    Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+    Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+        'Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+        Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlBMP
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set oDia = ActiveSheet.ChartObjects.Add(0, 0, ActiveSheet.Shapes(1).Width, ActiveSheet.Shapes(1).Height)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set oChartArea = oDia.Chart
+    Application.Wait (Now + TimeValue("00:00:01"))
+    oDia.Activate
+    Application.Wait (Now + TimeValue("00:00:01"))
+    oChartArea.ChartArea.Select
+    Application.Wait (Now + TimeValue("00:00:01"))
+        'oChartArea.Paste
+        oChartArea.Pictures.Paste
+    Application.Wait (Now + TimeValue("00:00:02"))
+    oChartArea.Export (myMacroPath & "\Table.jpg")
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.DisplayAlerts = False
+    ActiveSheet.Delete
+    Application.DisplayAlerts = True
+    mySuccess = "Yes"
+    Exit Sub
+Err1:
+End Sub
