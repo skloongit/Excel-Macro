@@ -1,0 +1,711 @@
+Dim mySuccess  As String
+Dim myAttachement() As String
+Sub FileSelect()
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).Value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).Value = mySelect
+        End If
+End Sub
+Sub FileSelect1()
+    myTarget = 14
+    myMacroFile = ActiveWorkbook.Name
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).Value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).Value = mySelect
+        End If
+    Workbooks.Open Range("B15").Value, , True
+    myBomFile = ActiveWorkbook.Name
+    myBomSheet = ActiveSheet.Name
+    If ActiveSheet.AutoFilterMode = True Then
+       Rows("2:2").AutoFilter
+    End If
+    myTempLast = Range("E" & Rows.Count).End(xlUp).Row
+    Range("E2:E" & myTempLast).RemoveDuplicates Columns:=1, Header:=xlNo
+    myTempLast = Range("E" & Rows.Count).End(xlUp).Row
+    Workbooks(myMacroFile).Activate
+    Sheets("AssyPartList").Columns("A:A").ClearContents
+    Range("B22:B" & Rows.Count).ClearContents
+    Range("B22:B" & Rows.Count).Validation.Delete
+    If Workbooks(myBomFile).Sheets(myBomSheet).Range("E3").Value <> "" Then
+        Sheets("AssyPartList").Range("A1:A" & myTempLast - 2).Value = Workbooks(myBomFile).Sheets(myBomSheet).Range("E3:E" & myTempLast).Value
+        
+        'Range("B22:B" & myTempLast + 19).Select
+        With Range("B22:B" & myTempLast + 19).Validation
+            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:=xlBetween, Formula1:="=AssyPartList!$A$1:$A$" & myTempLast - 2
+            .IgnoreBlank = True
+            .InCellDropdown = True
+            .InputTitle = ""
+            .ErrorTitle = ""
+            .InputMessage = ""
+            .ErrorMessage = ""
+            .ShowInput = True
+            .ShowError = True
+        End With
+    End If
+    'Range("B22:B" & myTempLast + 19).Value = Sheets("AssyPartList").Range("A1:A" & myTempLast - 2).Value
+    Workbooks(myBomFile).Close False
+End Sub
+Sub ReportTer()
+    ReDim myAttachement(0)
+    myTarget = 14
+    
+    'myStrTime = Time
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    
+    '\\pena-dsk-601\ISL_General\03 WOCT
+    '\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneMCC\WOCT\WOCT\
+    
+    myConfigFile = Dir(myMacroPath & "\FF2 WOCT Report Configuration.xlsx")
+    If myConfigFile = "" Then
+        'SendEmail "sk.loon@plexus.com", "", "Error: FF2 WOCT Report Creator", "FF2 WO Aging Report Configuration.xlsx file not found!"
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ThisWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>FF2 WO Aging Report Configuration.xlsx file not found!</html>", _
+                        myAttachement(), _
+                        0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    myMasterFile = Dir(myMacroPath & "\WOCT_Master-All.xlsb")
+    If myMasterFile <> "" Then
+        Kill myMacroPath & "\WOCT_Master-All.xlsb"
+    End If
+    'If myMasterFile = "" Then
+        'myMasterShareFile = Dir("\\pena-dsk-601\ISL_General\03 WOCT\WOCT_Master-All.csv")
+        'myMasterShareFile = Dir("\\pena-dsk-601\ISL_General\03 WOCT\WOCT_Master-All.xlsb")
+        myMasterShareFile = Dir("\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneMCC\WOCT\WOCT\WOCT_Master-All.xlsb")
+        If myMasterShareFile = "" Then
+            'SendEmail "sk.loon@plexus.com", "", "Error: FF2 WOCT Report Creator", "WOCT_Master-All.xlsb file not found!"
+            Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ThisWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>WOCT_Master-All.xlsb</html>", _
+                        myAttachement(), _
+                        0, 0)
+        
+            GoTo myEnd
+        Else
+            Set fso = New Scripting.FileSystemObject
+            'Call fso.CopyFile("\\pena-dsk-601\ISL_General\03 WOCT\WOCT_Master-All.xlsb", myMacroPath & "\WOCT_Master-All.xlsb", False)
+            Call fso.CopyFile("\\ap\mfg\PenaData\ISL\ISL_Operations\MFG_TeradyneMCC\WOCT\WOCT\WOCT_Master-All.xlsb", myMacroPath & "\WOCT_Master-All.xlsb", False)
+        End If
+    'End If
+    Workbooks.Open myMacroPath & "\WOCT_Master-All.xlsb", False, True
+    'Range("A1").Value = "='\\pena-dsk-601\ISL_General\03 WOCT\[WOCT_Master-All.csv]WOCT_Master-All'!$O$1"
+    'Range("A1").Value = Range("A1").Value
+    'Workbooks("WOCT_Master-All.csv").Close False
+    If Format(Range("O1").Value, "m/d/yyyy") <> Format(Date, "m/d/yyyy") Then
+        Workbooks("WOCT_Master-All.xlsb").Close False
+        'SendEmail "sk.loon@plexus.com", "", "Error: FF2 WOCT Report Creator", "WOCT_Master-All.xlsb file latest date is not today!"
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ThisWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>WOCT_Master-All.xlsb file latest date is not today!</html>", _
+                        myAttachement(), _
+                        0, 0)
+                
+        GoTo myEnd
+    End If
+    
+    
+    'Configuration file
+    Workbooks.Open myMacroPath & "\FF2 WOCT Report Configuration.xlsx", False, True
+    'To
+    If Sheets("To").Range("A1").Value <> "" Then
+        If Sheets("To").Range("A2").Value <> "" Then
+            myTempToTotal = Sheets("To").Range("A" & Rows.Count).End(xlUp).Row
+            myTo = Join(Application.WorksheetFunction.Transpose(Sheets("To").Range("A1:A" & myTempToTotal).Value), ";")
+        Else
+            myTo = Sheets("To").Range("A1").Value
+        End If
+    End If
+    'Cc
+    If Sheets("Cc").Range("A1").Value <> "" Then
+        If Sheets("Cc").Range("A2").Value <> "" Then
+            myTempCcTotal = Sheets("Cc").Range("A" & Rows.Count).End(xlUp).Row
+            myCc = Join(Application.WorksheetFunction.Transpose(Sheets("Cc").Range("A1:A" & myTempCcTotal).Value), ";")
+        Else
+            myCc = Sheets("Cc").Range("A1").Value
+        End If
+    End If
+    'Bcc
+    If Sheets("Bcc").Range("A1").Value <> "" Then
+        If Sheets("Bcc").Range("A2").Value <> "" Then
+            myTempCcTotal = Sheets("Bcc").Range("A" & Rows.Count).End(xlUp).Row
+            myBcc = Join(Application.WorksheetFunction.Transpose(Sheets("Bcc").Range("A1:A" & myTempCcTotal).Value), ";")
+        Else
+            myBcc = Sheets("Bcc").Range("A1").Value
+        End If
+    End If
+    If Sheets("Subject").Range("A1").Value <> "" Then
+        mySubject = Sheets("Subject").Range("A1").Value
+    End If
+    If Sheets("Contents").Range("A1").Value <> "" Then
+        myBody = Sheets("Contents").Range("A1").Value
+    End If
+    ActiveWorkbook.Close False
+    
+'    'myRawFile = Range("B3").Value
+'    myTarget = Range("O9").Value
+'    myTo = Range("O13").Value
+'    myCc = Range("O16").Value
+'    mySubject = Range("O19").Value
+'    myBody = Replace(Range("O22").Value, Chr(10), "<br>")
+'    mySignature = Replace(Range("O30").Value, Chr(10), "<br>")
+'    'FileClose
+'    Workbooks("Configuration-TER.xlsx").Close False
+    
+    'Workbooks.Open myRawFile, False, True
+    'Workbooks.Open myMacroPath & "\WOCT_Master-All.xlsb", False, True
+    Workbooks("WOCT_Master-All.xlsb").Activate
+    'ActiveSheet.Copy
+    myRawFilename = ActiveWorkbook.Name
+        'Ver1.4: Change sheetname
+        'myRawSheetname = ActiveSheet.Name
+        ActiveSheet.Name = "WOCT Master"
+        myRawSheetname = "WOCT Master"
+        
+    If ActiveSheet.AutoFilterMode = True Then
+       Rows("5:5").AutoFilter
+    End If
+    
+    'Ver1.4: Get all data include the summary table at the end of the data
+    'myRawTotal = Range("A" & Rows.Count).End(xlUp).Row
+    myRawTotal = Range("J" & Rows.Count).End(xlUp).Row
+
+    'Exclude TER, 006, 875
+    Range("X5:X" & myRawTotal).Value = "=IF(OR(P5=198,P5=260,P5=318,P5=6,P5=875,P5=""16X"",P5="""",P5=""Master Planning Family""),""Delete"",Row(P5))"
+    Range("X5:X" & myRawTotal).Value = Range("X5:X" & myRawTotal).Value
+    Range("A5:X" & myRawTotal).RemoveDuplicates Columns:=24, Header:=xlNo
+    myRawTotal = Range("A" & Rows.Count).End(xlUp).Row
+    
+    'Wrong Year
+    'Range("X5:X" & myRawTotal).Value = "=V5&"" ""&T5"
+    Range("X5:X" & myRawTotal).Value = "=V5&"" ""&YEAR(I5)"
+    Range("X5").Value = "Month Year"
+    
+    'Trim data
+    Range("Y5:Y" & myRawTotal).Value = "=TRIM(R5)"
+    Range("Y5:Y" & myRawTotal).Value = Range("Y5:Y" & myRawTotal).Value
+    Range("R5:R" & myRawTotal).Value = Range("Y5:Y" & myRawTotal).Value
+        
+        'WW Year
+        Range("Y5:Y" & myRawTotal).Value = "=""WW""&S5&""'""&RIGHT(T5,2)"
+        Range("Y5:Y" & myRawTotal).Value = Range("Y5:Y" & myRawTotal).Value
+        
+        'Get MPF
+        Range("Z5:Z" & myRawTotal).Value = "=RIGHT(TRIM(C5),3)"
+        Range("Z5:Z" & myRawTotal).Copy
+        Range("Z5").PasteSpecial xlPasteValues
+        Range("Z5:Z" & myRawTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+        myTotalMpf = Range("z" & Rows.Count).End(xlUp).Row
+        
+    'DeleteTemp
+    'Sheets.Add after:=ActiveSheet
+    Workbooks(myMacroFile).Sheets("FF2 WOCT").Copy after:=ActiveWorkbook.ActiveSheet
+    
+    For myA = 6 To myTotalMpf
+'        If myA > 8 Then
+'            Rows(myA).Insert
+'        End If
+        Sheets("WOCT Master").Range("Z" & myA).Copy Range("B" & myA)
+        Range("A" & myA).Value = Sheets("WOCT Master").Range("Z" & myA).Value
+    Next myA
+
+    Range("C4").Value = Workbooks(myMacroFile).Sheets("Qtr").Range("D1").Value
+    Range("D4").Value = Workbooks(myMacroFile).Sheets("Qtr").Range("D2").Value
+    Range("E4").Value = Workbooks(myMacroFile).Sheets("Qtr").Range("D3").Value
+    Range("C5:E" & myA).Value = "=IFERROR(IF($B5=""Target""," & myTarget & ",IF($B5=""Actual"", AVERAGEIF('WOCT Master'!$W:$W,C$4,'WOCT Master'!$K:$K),AVERAGEIFS('WOCT Master'!$K:$K,'WOCT Master'!$W:$W,C$4,'WOCT Master'!$P:$P,$A5))),0)"
+    
+    myTodayMth = Workbooks(myMacroFile).Sheets("Qtr").Range("G1").Value
+    myTodayYear = Workbooks(myMacroFile).Sheets("Qtr").Range("G2").Value
+    
+    'Ver2.3: Get today minus 7 days years
+    myTodayMinusSevenYear = Year(Date - 1)
+    
+    'Ver16: Add Actual Year
+    myTodayActualYear = Workbooks(myMacroFile).Sheets("Qtr").Range("G4").Value
+    
+    myCol = Application.WorksheetFunction.Match(myTodayMth, Workbooks(myMacroFile).Sheets("Qtr").Range("I1:T1"), 0)
+        'Ver1.7: Wrong Actual year in Ver1.6
+        ''Ver16: Add Actual Year
+        ''Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(1, myCol + 8).Value & " " & myTodayYear
+        'Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(1, myCol + 8).Value & " " & myTodayActualYear
+        'Ver2.1: Change to Actual year
+        'Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(1, myCol + 8).Value & " " & myTodayYear
+            'Ver2.3: Get today minus 7 days years
+            'Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(1, myCol + 8).Value & " " & myTodayActualYear
+            Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(1, myCol + 8).Value & " " & myTodayMinusSevenYear
+        
+    If Workbooks(myMacroFile).Sheets("Qtr").Cells(2, myCol + 8).Value <> "" Then
+        'Ver1.4: Move month column from oldest to newest
+        Range("F4").Copy
+        Range("G4").PasteSpecial xlPasteValues
+        'Range("G4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(2, myCol + 8).Value & " " & myTodayYear
+            'Ver1.7: Wrong Actual year in Ver1.6
+            ''Ver16: Add Actual Year
+            ''Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(2, myCol + 8).Value & " " & myTodayYear
+            'Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(2, myCol + 8).Value & " " & myTodayActualYear
+                'Ver2.3: Get today minus 7 days years
+                'Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(2, myCol + 8).Value & " " & myTodayYear
+                Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(2, myCol + 8).Value & " " & myTodayMinusSevenYear
+        If Workbooks(myMacroFile).Sheets("Qtr").Cells(3, myCol + 8).Value <> "" Then
+            'Ver1.4: Move month column from oldest to newest
+            Range("F4:G4").Copy
+            Range("G4:H4").PasteSpecial xlPasteValues
+            'Range("H4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(3, myCol + 8).Value & " " & myTodayYear
+                'Ver1.7: Wrong Actual year in Ver1.6
+                ''Ver16: Add Actual Year
+                ''Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(3, myCol + 8).Value & " " & myTodayYear
+                'Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(3, myCol + 8).Value & " " & myTodayActualYear
+                    'Ver2.3: Get today minus 7 days years
+                    'Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(3, myCol + 8).Value & " " & myTodayYear
+                    Range("F4").Value = "'" & Workbooks(myMacroFile).Sheets("Qtr").Cells(3, myCol + 8).Value & " " & myTodayMinusSevenYear
+                
+            Range("H3").Value = "To date"
+        Else
+            Range("G3").Value = "To date"
+            Range("H4").ClearContents
+        End If
+    Else
+        Range("F3").Value = "To date"
+        Range("G4").ClearContents
+    End If
+    
+    'Ver2.2: Correcting Year
+    If Range("H4").Value <> "" Then
+        myMonthCheck = Left(Range("H4").Value, 3)
+        If myMonthCheck = "Jan" Then
+            Range("G4").Value = "'" & Left(Range("G4").Value, 4) & Right(Range("H4").Value, 4) - 1
+        Else
+            Range("G4").Value = "'" & Left(Range("G4").Value, 4) & Right(Range("H4").Value, 4)
+        End If
+    End If
+    If Range("G4").Value <> "" Then
+        myMonthCheck = Left(Range("G4").Value, 3)
+        If myMonthCheck = "Jan" Then
+            Range("F4").Value = "'" & Left(Range("F4").Value, 4) & Right(Range("G4").Value, 4) - 1
+        Else
+            Range("F4").Value = "'" & Left(Range("F4").Value, 4) & Right(Range("G4").Value, 4)
+        End If
+    End If
+    
+    Range("F5:H" & myA).Value = "=IFERROR(IF($B5=""Target""," & myTarget & ",IF($B5=""Actual"", AVERAGEIF('WOCT Master'!$X:$X,F$4,'WOCT Master'!$K:$K),AVERAGEIFS('WOCT Master'!$K:$K,'WOCT Master'!$X:$X,F$4,'WOCT Master'!$P:$P,$A5))),0)"
+
+    'Qtr WW Start
+    myWwStr = Workbooks(myMacroFile).Sheets("Qtr").Range("G5").Value
+    myWwEnd = Workbooks(myMacroFile).Sheets("Qtr").Range("G3").Value
+    
+    'Ver2.1 change myA to myC
+    'For myA = myWwStr To myWwEnd
+    For myC = myWwStr To myWwEnd
+        myB = myB + 1
+        'Cells(4, myB + 8).Value = "WW" & myA & "'" & Right(myTodayYear, 2)
+        Cells(4, myB + 8).Value = "WW" & myC & "'" & Right(myTodayYear, 2)
+    Next myC
+    Range("I5:M" & myA).Value = "=IFERROR(IF($B5=""Target""," & myTarget & ",IF($B5=""Actual"", AVERAGEIF('WOCT Master'!$Y:$Y,I$4,'WOCT Master'!$K:$K),AVERAGEIFS('WOCT Master'!$K:$K,'WOCT Master'!$Y:$Y,I$4,'WOCT Master'!$P:$P,$A5))),0)"
+    
+    Rows("5:" & myA - 1).NumberFormat = "0.0"
+    'Rows("9:9").NumberFormat = "0"
+    
+    Columns("C:M").ColumnWidth = 9.7
+    For myA = 39 To 5 Step -1
+        If Left(Cells(myA, 2).Value, 6) = "TERMAG" Then
+            Cells(myA, 1).EntireRow.Hidden = True
+        End If
+    Next myA
+    
+    For myA = 13 To 7 Step -1
+        If Cells(4, myA).Value = "" Then
+            Cells(4, myA).EntireColumn.Delete
+        End If
+    Next myA
+    
+    myLastCol = Cells(4, Columns.Count).End(xlToLeft).Column
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+'    myLastCol = Cells(4, Columns.Count).End(xlToLeft).Column
+'    Application.DisplayAlerts = False
+'        'Ver1.5: Save to share drive
+'        '
+'        myQtrFolderCheck = Dir("\\pena-dsk-601\ISL_General\03 WOCT\" & Year(Date) & "\", vbDirectory)
+'        If myQtrFolderCheck = "" Then
+'            MkDir "\\pena-dsk-601\ISL_General\03 WOCT\" & Year(Date)
+'        End If
+'        ActiveWorkbook.SaveAs Filename:="\\pena-dsk-601\ISL_General\03 WOCT\" & Year(Date) & "\TER WOCT " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    
+    If Dir(myMacroPath & "\Report", vbDirectory) = "" Then
+        MkDir myMacroPath & "\Report"
+    End If
+    Application.DisplayAlerts = False
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Report\FF2 WOCT " & Format(Date, "MMDDYYYY") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    Application.DisplayAlerts = True
+    'Columns("A:A").ColumnWidth = 0.5
+    'Cells(31, myLastCol + 1).EntireColumn.ColumnWidth = 0.5
+    'Range("A3", Cells(31, myLastCol + 1)).Select
+    
+    'Ver:1.8:
+    'Range("B42:M80").Select
+    Range("B42", Cells(80, myLastCol)).Select
+    For myA = 1 To 20
+        ErrorHandler1
+        If mySuccess = "Yes" Then Exit For
+    Next myA
+    If mySuccess = "" Then
+        'SendEmail "sk.loon@plexus.com", "", "Error: FF2 WOCT Report Creator", "Unable to send email!"
+        Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        "sk.loon@plexus.com", _
+                        "", _
+                        "", _
+                        ThisWorkbook.Name & " Error!", _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to send email!</html>", _
+                        myAttachement(), _
+                        0, 0)
+                
+        Workbooks("TER WOCT " & Format(Date, "MMDDYYYY") & ".xlsx").Close False
+        'Workbooks("Configuration-TER.xlsx").Close False
+        Workbooks("WOCT_Master-All.xlsb").Close False
+        GoTo myEnd
+    End If
+    
+    Sheets.Add
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ActiveSheet.Range("I1").PasteSpecial
+    'Application.Range(Cells(4, 1), Cells(myLastRow, myLastCol)).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Application.Wait (Now + TimeValue("00:00:01"))
+    
+    myObject = Selection.Name
+    Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+    Selection.ShapeRange.PictureFormat.Brightness = 0.5:
+    Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+    Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+    Selection.ShapeRange.Fill.Visible = msoFalse:
+    Selection.ShapeRange.Line.Visible = msoFalse:
+    Selection.ShapeRange.Rotation = 0#:
+    Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+    Selection.ShapeRange.PictureFormat.CropRight = 0#:
+    Selection.ShapeRange.PictureFormat.CropTop = 0#:
+    Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+    'Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+    'Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+    Application.Wait (Now + TimeValue("00:00:01"))
+        Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+        Set oDia = ActiveSheet.ChartObjects.Add(0, 0, ActiveSheet.Shapes(1).Width, ActiveSheet.Shapes(1).Height)
+        ActiveSheet.Shapes("Chart 1").Line.Visible = msoFalse
+        Set oChartArea = oDia.Chart
+    oDia.Activate
+    oChartArea.ChartArea.Select
+    oChartArea.Paste
+    'oChartArea.Export (myMacroPath & "\Temp.jpg")
+    oChartArea.Export (myMacroPath & "\Image1.jpg")
+    
+'    With CreateObject("Outlook.Application").CreateItem(0)
+'        .SentOnBehalfOfName = "PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com"
+'        .To = myTo
+'        .Cc = myCc
+'        .Bcc = myBcc
+'        .Subject = Replace(mySubject, "WW", "WW" & myWwEnd)
+'        .Attachments.Add myMacroPath & "\Temp.jpg"
+'        '.Attachments.Add myMacroPath & "\TER WOCT " & Format(Date, "MMDDYYYY") & ".xlsx"
+'        .HTMLBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>" & Replace(myBody, "WW", "WW" & myWwEnd) & _
+'                  "<html><br><br><img src=cid:Temp.jpg></img><br><br>" & _
+'                  "<p>" & _
+'                  mySignature & "</p></BODY>© Copyright Plexus Islandview 2023. All rights reserved. <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Unsubscribe FF2 WOCT Report'>Unsubscribe</a> | <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Subscribe FF2 WOCT Report'>Subscribe</a></html>"
+'                  '.HTMLBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>" & Replace(myBody, "WW", "WW" & myWwEnd) & _
+'                  "<html>" & RangetoHTML(Range("B3", Cells(9, myLastCol))) & _
+'                  "<html><br><br><img src=cid:Temp.jpg></img>" & _
+'                  "<p>" & _
+'                  mySignature & "</p></BODY></html>"
+'
+'        Workbooks("FF2 WOCT " & Format(Date, "MMDDYYYY") & ".xlsx").Close False
+'
+'        'Ver1.9: Add in raw file & WOCT File
+'        .Attachments.Add myMacroPath & "\WOCT_Master-All.xlsb"
+'        .Attachments.Add myMacroPath & "\Report\FF2 WOCT " & Format(Date, "MMDDYYYY") & ".xlsx"
+'
+'        .Display
+'        .Send
+'    End With
+    Workbooks("FF2 WOCT " & Format(Date, "MMDDYYYY") & ".xlsx").Close False
+    ReDim myAttachement(2)
+    myAttachement(0) = myMacroPath & "\Image1.jpg"
+    myAttachement(1) = myMacroPath & "\WOCT_Master-All.xlsb"
+    myAttachement(2) = myMacroPath & "\Report\FF2 WOCT " & Format(Date, "MMDDYYYY") & ".xlsx"
+    
+    Call SendSmtpEmail( _
+                        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                        myTo & "", _
+                        myCc & "", _
+                        "sk.loon@plexus.com", _
+                        Replace(mySubject, "WW", "WW" & myWwEnd), _
+                        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>" & Replace(myBody, "WW", "WW" & myWwEnd) & "<br><br><img src=cid:Image1></img><br><br></p></BODY>© Copyright Plexus Islandview 2023. All rights reserved.</html>", _
+                        myAttachement(), _
+                        2, 1)
+    
+myEnd:
+    'Workbooks("Configuration-198.xlsx").Close False
+    'Workbooks(myMacroFile).Save
+    Application.Quit
+    'myEndTime = Time
+    'MsgBox "Done in " & Format(myEndTime - myStrTime, "HH:MM:SS")
+End Sub
+Sub ErrorHandler1()
+    On Error GoTo myFail
+    Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture 'Need error handler
+    mySuccess = "Yes"
+    Exit Sub
+myFail:
+End Sub
+Sub SendEmail(myTo As String, myCc As String, mySubject As String, myBody As String)
+     With CreateObject("Outlook.Application").CreateItem(0)
+        .To = myTo
+        .Cc = myCc
+        .Subject = mySubject
+        .HTMLBody = "<html><p>" & myBody
+        .Send
+    End With
+End Sub
+Function RangetoHTML(rng As Range)
+
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        .Cells(1).PasteSpecial Paste:=8
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        .DrawingObjects.Delete
+        On Error GoTo 0
+    End With
+
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    RangetoHTML = ts.ReadAll
+    ts.Close
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+
+    'Close TempWB
+    Application.EnableEvents = False
+    TempWB.Close savechanges:=False
+    Application.EnableEvents = True
+
+    'Delete the htm file we used in this function
+    Kill TempFile
+
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+Sub DeleteSum()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheets("Summ").Delete
+    Application.DisplayAlerts = False
+End Sub
+Sub NewFileSelect()
+    On Error GoTo NewError
+    Workbooks(Range("F18").Value).Activate
+    Exit Sub
+NewError:
+    MsgBox Range("F18").Value & " file not found!"
+    End
+End Sub
+Sub FileClose()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Workbooks("FML.xlsx").Close False
+    Application.DisplayAlerts = True
+End Sub
+Sub DeleteCustomer()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheets("Details Shortage_Customer").Delete
+    Application.DisplayAlerts = True
+End Sub
+Sub DeleteTemp()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheets("WOCT").Delete
+    Application.DisplayAlerts = True
+End Sub
+Sub DeleteTempTemp()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheets("TempTemp").Delete
+    Application.DisplayAlerts = True
+End Sub
+Sub MasterFileSelect()
+    On Error GoTo MasterError
+    Workbooks(Sheets("Data").Range("B1").Value).Activate
+    Exit Sub
+MasterError:
+    MsgBox Sheets("Data").Range("B1").Value & " file not found!"
+    End
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+'Function RangetoHTML(rng As Range)
+'
+'    Dim fso As Object
+'    Dim ts As Object
+'    Dim TempFile As String
+'    Dim TempWB As Workbook
+'
+'    On Error GoTo myQuit
+'    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+'
+'    'Copy the range and create a new workbook to past the data in
+'    rng.Copy
+'    Set TempWB = Workbooks.Add(1)
+'    With TempWB.Sheets(1)
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial Paste:=8
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteValues, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .Cells(1).Select
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        Application.CutCopyMode = False
+'        On Error Resume Next
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Visible = True
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        .DrawingObjects.Delete
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        On Error GoTo 0
+'    End With
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Publish the sheet to a htm file
+'    With TempWB.PublishObjects.Add( _
+'         SourceType:=xlSourceRange, _
+'         Filename:=TempFile, _
+'         Sheet:=TempWB.Sheets(1).Name, _
+'         Source:=TempWB.Sheets(1).UsedRange.Address, _
+'         HtmlType:=xlHtmlStatic)
+'        .Publish (True)
+'    End With
+'
+'    'Read all data from the htm file into RangetoHTML
+'    Set fso = CreateObject("Scripting.FileSystemObject")
+'    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = ts.ReadAll
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    ts.Close
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Close TempWB
+'    TempWB.Close savechanges:=False
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    'Delete the htm file we used in this function
+'    Kill TempFile
+'    Application.Wait (Now + TimeValue("00:00:01"))
+'
+'    Set ts = Nothing
+'    Set fso = Nothing
+'    Set TempWB = Nothing
+'myQuit:
+'End Function
+'
