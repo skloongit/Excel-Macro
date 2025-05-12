@@ -1,0 +1,2617 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myMacroFile As String
+Sub NewForecastPpt()
+    myStrTime = Time
+    Dim myQtr As String
+    Dim myNetDoiPara As String
+    myMacroFile = ActiveWorkbook.Name
+    myPptTemplate = Range("B30").value
+    
+    myTm1 = Range("B22").value
+    myOverdrive = Range("B24").value
+    myActPro = Range("B26").value
+    myFcastTrend = Range("B28").value
+    myPptTemplate = Range("B30").value
+    myQtrSelect = Range("G40").value
+    myQtr = Range("G42").value
+    myOriQtr = Range("G42").value
+    myOverdrive1 = Range("D80").value
+    myNetDoiPara = Range("G38").value
+    
+    If Mid(myQtr, 2, 1) = "4" Then
+        myNextQtr = "Q1F" & Right(myQtr, 2) + 1
+    Else
+        myNextQtr = "Q" & Mid(myQtr, 2, 1) + 1 & "F" & Right(myQtr, 2)
+    End If
+    Call ArrowTable(myNetDoiPara, myOverdriveFile)
+     
+    Set pptApp = CreateObject("Powerpoint.application")
+    
+    pptApp.Presentations.Open Filename:=myPptTemplate ', ReadOnly:=False, untitled:=True, withwindow:=True
+    Set myPpt = pptApp.ActivePresentation
+    
+    '***Slide 3 ******************************************************************************************
+    myPpt.Slides(3).Select
+    On Error Resume Next
+    myPpt.Slides(3).Shapes("Slide3a").Delete
+    On Error GoTo 0
+    On Error Resume Next
+    myPpt.Slides(3).Shapes("Slide3b").Delete
+    On Error GoTo 0
+    Workbooks(myMacroFile).Activate
+    Sheets("PptTemp (New)").Select
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide3a")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(3).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 573
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 145
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 100
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 355
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide3b")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(3).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 573
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 245
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 100
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 355
+    'Ver1.8:
+    myPpt.Slides(3).Shapes("TextBox 13").TextFrame.TextRange.Text = Range("A1").value
+    myPpt.Slides(3).Shapes("TextBox 13").TextFrame.TextRange.Select
+    pptApp.ActiveWindow.Selection.ShapeRange.Left = 73
+    pptApp.ActiveWindow.Selection.ShapeRange.Top = 428
+    pptApp.ActiveWindow.Selection.ShapeRange.Height = 30
+    pptApp.ActiveWindow.Selection.ShapeRange.Width = 175
+    myPpt.Slides(1).Shapes("Text PlaceHolder 2").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D34").value
+    myPpt.Slides(3).Shapes("TextBox 12").TextFrame.TextRange.Text = Range("J1").value
+    myPpt.Slides(3).Shapes("TextBox 12").TextFrame.TextRange.Select
+    pptApp.ActiveWindow.Selection.ShapeRange.Left = 315
+    pptApp.ActiveWindow.Selection.ShapeRange.Top = 428
+    pptApp.ActiveWindow.Selection.ShapeRange.Height = 30
+    pptApp.ActiveWindow.Selection.ShapeRange.Width = 175
+    myPpt.Slides(1).Shapes("Text PlaceHolder 2").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D34").value
+    
+    
+    '***Slide 4 ******************************************************************************************
+    myPpt.Slides(4).Select
+    On Error Resume Next
+    myPpt.Slides(4).Shapes("Slide4a").Delete
+    On Error GoTo 0
+    On Error Resume Next
+    myPpt.Slides(4).Shapes("Slide4b").Delete
+    On Error GoTo 0
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide4a")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(4).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 5
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 360
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 150
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 325
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide4b")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(4).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 320
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 360
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 150
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 325
+        
+    '***Slide 5 ******************************************************************************************
+    myPpt.Slides(5).Select
+    On Error Resume Next
+    myPpt.Slides(5).Shapes("Slide5a").Delete
+    On Error GoTo 0
+    On Error Resume Next
+    myPpt.Slides(5).Shapes("Slide5b").Delete
+    On Error GoTo 0
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide5a")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(5).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 5
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 360
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 150
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 325
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide5b")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(5).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 320
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 360
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 150
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 325
+    '***Slide 6 ******************************************************************************************
+    myPpt.Slides(6).Select
+    On Error Resume Next
+    myPpt.Slides(6).Shapes("Slide6a").Delete
+    On Error GoTo 0
+    On Error Resume Next
+    myPpt.Slides(6).Shapes("Slide6b").Delete
+    On Error GoTo 0
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide6a")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(6).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 5
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 300
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 200
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 250
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide6b")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(6).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 320
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 300
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 200
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 250
+        
+    '***Slide 7 ******************************************************************************************
+    myPpt.Slides(7).Select
+    On Error Resume Next
+    myPpt.Slides(7).Shapes("Slide7a").Delete
+    On Error GoTo 0
+    On Error Resume Next
+    myPpt.Slides(7).Shapes("Slide7b").Delete
+    On Error GoTo 0
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide7a")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(7).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 5
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 300
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 200
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 250
+    Sheets("PptTemp (New)").Shapes.Range(Array("Slide7b")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(7).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 320
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 300
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 200
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 250
+    
+    'Getting a screen shot
+    'TakeScreenshot
+    
+    Sheets("Macro (New)").Select
+    AppActivate (myMacroFile)
+    myEndTime = Time
+MsgBox "Done in " & Format(myStrTime - myEndTime, "hh:mm:ss")
+End Sub
+Sub TakeScreenshot()
+    Shell ("C:\Program Files\Google\Chrome\Application\chrome.exe -url https://plexus.planning-analytics.ibmcloud.com/?perspective=dashboard&id=f5d41df5-46a2-44d2-bf16-40e8d2210caf")
+    
+End Sub
+Sub ArrowTable(myNetDoiPara As String, myOverdriveFile)
+    Dim myCusArr(5) As String
+    Dim myCusRow(5) As String
+    Dim myCusCurGro(5) As String
+    Dim myCusPriGro(5) As String
+    Dim myCusDelGro(5) As String
+    Dim myCusCurNet(5) As String
+    Dim myCusPriNet(5) As String
+    Dim myCusDelNet(5) As String
+    Dim myCusCurInv(5) As String
+    Dim myCusPriInv(5) As String
+    Dim myCusDelInv(5) As String
+    Dim myCusCurRev(5) As String
+    Dim myCusPriRev(5) As String
+    Dim myCusDelRev(5) As String
+    
+    
+    myMacroFile = ActiveWorkbook.Name
+    myActPro = Range("B26").value
+    myThisQtr = Range("G42").value
+    If Mid(myThisQtr, 2, 1) = "4" Then
+        myNextQtr = "Q1F" & Right(myThisQtr, 2) + 1
+    Else
+        myNextQtr = "Q" & Mid(myThisQtr, 2, 1) + 1 & "F" & Right(myThisQtr, 2)
+    End If
+    myCusArr(1) = Range("D48").value
+    myCusArr(2) = Range("D49").value
+    myCusArr(3) = Range("D50").value
+    myCusArr(4) = Range("D51").value
+    myCusArr(5) = Range("D52").value
+    
+    Workbooks.Open Filename:=myActPro, ReadOnly:=True, UpdateLinks:=False
+    myActProFile = ActiveWorkbook.Name
+    
+    For myY = 1 To 2
+        'Ver1.6: Sheet exist?
+        Workbooks(myActProFile).Activate
+        SheetSelect myThisQtr & " vs Prior"
+        ConcateHeader
+        SheetSelect myNextQtr & " vs Prior"
+        ConcateHeader
+        SheetSelect myThisQtr & " vs Qtr"
+        ConcateHeader
+        SheetSelect myNextQtr & " vs Qtr"
+        ConcateHeader
+        
+        If myY = 1 Then
+            myVs = "Prior"
+        Else
+            myVs = "Qtr"
+        End If
+        For myX = 1 To 2
+            Workbooks(myActProFile).Activate
+            If myX = 1 Then
+                myQtr = myThisQtr
+                mySheet = myQtr & " vs " & myVs
+            Else
+                myQtr = myNextQtr
+                mySheet = myNextQtr & " vs " & myVs
+            End If
+                        
+            
+            'Site/Customer
+            myPgIslRow = GetRow(myActProFile, mySheet, "Penang-Islandview", "")
+            myNonTerRow = GetRow(myActProFile, mySheet, "Non Teradyne", "")
+            myIslTerRow = GetRow(myActProFile, mySheet, "Teradyne  (ISL)", "")
+            myIslBgkRow = GetRow(myActProFile, mySheet, "Teradyne  (ISL + BGK)", "")
+            For myA = 1 To 5
+                If myCusArr(myA) <> "" Then
+                    myCusRow(myA) = GetRow(myActProFile, mySheet, myCusArr(myA), "")
+                End If
+            Next myA
+
+            'Gross DOI**********************************************************************************************
+            myCurGroCol = GetCol(myActProFile, mySheet, myQtr & "Current FcstINV Days", "")
+            myPriGroCol = GetCol(myActProFile, mySheet, myQtr & myVs & "INV Days", "")
+            myDelGroCol = GetCol(myActProFile, mySheet, myQtr & "DeltaINV Days", "")
+            'Net DOI************************************************************************************************
+            myCurNetCol = GetCol(myActProFile, mySheet, myQtr & "Current Fcst" & myNetDoiPara, "")
+            myPriNetCol = GetCol(myActProFile, mySheet, myQtr & myVs & myNetDoiPara, "")
+            myDelNetCol = GetCol(myActProFile, mySheet, myQtr & "Delta" & myNetDoiPara, "")
+            'Inventory**********************************************************************************************
+            myCurInvCol = GetCol(myActProFile, mySheet, myQtr & "Current FcstInv + FOB ('000)", "")
+            myPriInvCol = GetCol(myActProFile, mySheet, myQtr & myVs & "Inv + FOB ('000)", "")
+            myDelInvCol = GetCol(myActProFile, mySheet, myQtr & "DeltaInv + FOB ('000)", "")
+            'Revenue************************************************************************************************
+            myCurRevCol = GetCol(myActProFile, mySheet, myQtr & "Current FcstSales ('000)", "")
+            myPriRevCol = GetCol(myActProFile, mySheet, myQtr & myVs & "Sales ('000)", "")
+            myDelRevCol = GetCol(myActProFile, mySheet, myQtr & "DeltaSales ('000)", "")
+
+
+            '*****Current*******************************************************************************************************************
+            'Gross DOI**********************************************************************************************
+            myPgIslCurGro = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myCurGroCol).value, 0)
+            myNonTerCurGro = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myCurGroCol).value, 0)
+            myIslTerCurGro = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myCurGroCol).value, 0)
+            myIslBgkCurGro = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myCurGroCol).value, 0)
+            For myZ = 1 To 5
+                If myCusArr(myZ) <> "" Then
+                    myCusCurGro(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myCurGroCol).value, 0)
+                End If
+            Next myZ
+            'Net DOI************************************************************************************************
+            myPgIslCurNet = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myCurNetCol).value, 0)
+            myNonTerCurNet = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myCurNetCol).value, 0)
+            myIslTerCurNet = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myCurNetCol).value, 0)
+            myIslBgkCurNet = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myCurNetCol).value, 0)
+            For myZ = 1 To 5
+                If myCusArr(myZ) <> "" Then
+                    myCusCurNet(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myCurNetCol).value, 0)
+                End If
+            Next myZ
+            'Inventory***************************************************************************************************************
+            myPgIslCurInv = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myCurInvCol).value)
+            myNonTerCurInv = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myCurInvCol).value)
+            myIslTerCurInv = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myCurInvCol).value)
+            myIslBgkCurInv = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myCurInvCol).value)
+            For myZ = 1 To 5
+                If myCusArr(myZ) <> "" Then
+                    myCusCurInv(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myCurInvCol).value, 0)
+                End If
+            Next myZ
+            'Revenue******************************************************************************************************************
+            myPgIslCurRev = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myCurRevCol).value)
+            myNonTerCurRev = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myCurRevCol).value)
+            myIslTerCurRev = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myCurRevCol).value)
+            myIslBgkCurRev = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myCurRevCol).value)
+            For myZ = 1 To 5
+                If myCusArr(myZ) <> "" Then
+                    myCusCurRev(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myCurRevCol).value, 0)
+                End If
+            Next myZ
+                '*****Prior*******************************************************************************************************************
+                'Gross DOI**********************************************************************************************
+                myPgIslPriGro = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myPriGroCol).value, 0)
+                myNonTerPriGro = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myPriGroCol).value, 0)
+                myIslTerPriGro = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myPriGroCol).value, 0)
+                myIslBgkPriGro = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myPriGroCol).value, 0)
+                For myZ = 1 To 5
+                    If myCusArr(myZ) <> "" Then
+                        myCusPriGro(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myPriGroCol).value, 0)
+                    End If
+                Next myZ
+                'Net DOI************************************************************************************************
+                myPgIslPriNet = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myPriNetCol).value, 0)
+                myNonTerPriNet = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myPriNetCol).value, 0)
+                myIslTerPriNet = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myPriNetCol).value, 0)
+                myIslBgkPriNet = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myPriNetCol).value, 0)
+                For myZ = 1 To 5
+                    If myCusArr(myZ) <> "" Then
+                        myCusPriNet(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myPriNetCol).value, 0)
+                    End If
+                Next myZ
+                'Inventory***************************************************************************************************************
+                myPgIslPriInv = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myPriInvCol).value)
+                myNonTerPriInv = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myPriInvCol).value)
+                myIslTerPriInv = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myPriInvCol).value)
+                myIslBgkPriInv = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myPriInvCol).value)
+                For myZ = 1 To 5
+                    If myCusArr(myZ) <> "" Then
+                        myCusPriInv(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myPriInvCol).value, 0)
+                    End If
+                Next myZ
+                'Revenue******************************************************************************************************************
+                myPgIslPriRev = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myPriRevCol).value)
+                myNonTerPriRev = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myPriRevCol).value)
+                myIslTerPriRev = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myPriRevCol).value)
+                myIslBgkPriRev = ConvertToMillionOrThousand(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myPriRevCol).value)
+                For myZ = 1 To 5
+                    If myCusArr(myZ) <> "" Then
+                        myCusPriRev(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myPriRevCol).value, 0)
+                    End If
+                Next myZ
+                    '*****Delta*******************************************************************************************************************
+                    'Gross DOI**********************************************************************************************
+                    myPgIslDelGro = ConvertDay(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myCurGroCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myPriGroCol).value, 0))
+                    myNonTerDelGro = ConvertDay(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myCurGroCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myPriGroCol).value, 0))
+                    myIslTerDelGro = ConvertDay(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myCurGroCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myPriGroCol).value, 0))
+                    myIslBgkDelGro = ConvertDay(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myCurGroCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myPriGroCol).value, 0))
+                    For myZ = 1 To 5
+                        If myCusArr(myZ) <> "" Then
+                            myCusDelGro(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myDelGroCol).value, 0)
+                        End If
+                    Next myZ
+                    'Net DOI************************************************************************************************
+                    myPgIslDelNet = ConvertDay(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myCurNetCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myPriNetCol).value, 0))
+                    myNonTerDelNet = ConvertDay(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myCurNetCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myPriNetCol).value, 0))
+                    myIslTerDelNet = ConvertDay(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myCurNetCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myPriNetCol).value, 0))
+                    myIslBgkDelNet = ConvertDay(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myCurNetCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myPriNetCol).value, 0))
+                    For myZ = 1 To 5
+                        If myCusArr(myZ) <> "" Then
+                            myCusDelNet(myZ) = Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myDelNetCol).value, 0)
+                        End If
+                    Next myZ
+                    'Inventory***************************************************************************************************************
+                    myPgIslDelInv = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myCurInvCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myPriInvCol).value, 0))
+                    myNonTerDelInv = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myCurInvCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myPriInvCol).value, 0))
+                    myIslTerDelInv = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myCurInvCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myPriInvCol).value, 0))
+                    myIslBgkDelInv = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myCurInvCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myPriInvCol).value, 0))
+                    For myZ = 1 To 5
+                        If myCusArr(myZ) <> "" Then
+                            myCusDelInv(myZ) = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myDelInvCol).value, 0))
+                        End If
+                    Next myZ
+                    'Revenue******************************************************************************************************************
+                    myPgIslDelRev = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myCurRevCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myPgIslRow, myPriRevCol).value, 0))
+                    myNonTerDelRev = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myCurRevCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myNonTerRow, myPriRevCol).value, 0))
+                    myIslTerDelRev = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myCurRevCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslTerRow, myPriRevCol).value, 0))
+                    myIslBgkDelRev = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myCurRevCol).value, 0) - Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myIslBgkRow, myPriRevCol).value, 0))
+                    For myZ = 1 To 5
+                        If myCusArr(myZ) <> "" Then
+                            myCusDelRev(myZ) = CalDollarDelta(Round(Workbooks(myActProFile).Sheets(mySheet).Cells(myCusRow(myZ), myDelRevCol).value, 0))
+                        End If
+                    Next myZ
+                    
+                    
+            Workbooks(myMacroFile).Activate
+            Sheets("PptTemp (New)").Select
+            'Slide 3: ISL
+            'Ver1.9:
+            ''Ver1.8:
+            ''If myY = 1 Then
+            'If myY = 2 Then
+            If myY = 1 Then
+                'Ver2.0:
+                ''Ver1.9:
+                'If myY = 2 Then
+                '    If myX = 1 Then
+                '        ActiveSheet.Shapes.Range(Array("Slide3a")).Select
+                '    Else
+                '        ActiveSheet.Shapes.Range(Array("Slide3b")).Select
+                '    End If
+                '
+                '    Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = _
+                '        myQtr & ":" & Chr(13) & _
+                '        "Gross DOI " & myPgIslPriGro & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPgIslCurGro & " " & myPgIslDelGro & Chr(13) & _
+                '        "Net DOI " & myPgIslPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPgIslCurNet & " " & myPgIslDelNet & Chr(13) & _
+                '        "Inventory " & myPgIslPriInv & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPgIslCurInv & " " & myPgIslDelInv & Chr(13) & _
+                '        "Revenue " & myPgIslPriRev & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPgIslCurRev & " " & myPgIslDelRev & Chr(13) & _
+                '        "FF1 Net " & myIslTerPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurNet & " " & myIslTerDelNet & Chr(13) & _
+                '        "FF2 Net " & myNonTerPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurNet & " " & myNonTerDelNet & myNonNetDoiVar
+                '    'Coloring
+                '    ColoringSlide3
+                '
+                '    'Ver1.8:
+                '    If myX = 1 Then
+                '        Range("A1").value = Replace("$" & myPgIslPriInv, "$-", "-$") & "  " & myPgIslPriGro & "DOI"
+                '    'Else
+                '        Range("J1").value = Replace("$" & myPgIslCurInv, "$-", "-$") & "  " & myPgIslCurGro & "DOI"
+                '    End If
+                'End If
+                
+                'Slide 4: Non-TER
+                If myX = 1 Then
+                    ActiveSheet.Shapes.Range(Array("Slide4a")).Select
+                Else
+                    ActiveSheet.Shapes.Range(Array("Slide4b")).Select
+                End If
+                
+                myText = ""
+                For myZ = 1 To 5
+                    If myCusArr(myZ) <> "" Then
+                        myCustomer = myCusArr(myZ)
+                        myShortCus = InStr(1, myCustomer, "(", vbBinaryCompare)
+                        If myShortCus > 0 Then
+                            myShortCus = Left(myCustomer, myShortCus - 2)
+                        Else
+                            myShortCus = myCustomer
+                        End If
+                        myText = myText & Chr(10) & "  " & Chr(149) & " " & myShortCus & " Net " & myCusPriNet(myZ) & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myCusCurNet(myZ) & ", rev " & myCusDelRev(myZ) & ", inv " & myCusDelInv(myZ)
+                    End If
+                Next myZ
+                myText = Replace(Replace(myText, "(", ""), ")", "")
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = _
+                    myQtr & Chr(13) & _
+                    "Gross DOI " & myNonTerPriGro & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurGro & " " & myNonTerDelGro & Chr(13) & _
+                    "Net DOI " & myNonTerPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurNet & " " & myNonTerDelNet & Chr(13) & _
+                    "Inventory " & myNonTerPriInv & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurInv & " " & myNonTerDelInv & Chr(13) & _
+                    "Revenue " & myNonTerPriRev & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurRev & " " & myNonTerDelRev & Chr(13) & myText
+                Coloring
+                
+                'Slide 6: Teradyne  (ISL + BGK) & Teradyne  (ISL)
+                If myX = 1 Then
+                    ActiveSheet.Shapes.Range(Array("Slide6a")).Select
+                Else
+                    ActiveSheet.Shapes.Range(Array("Slide6b")).Select
+                End If
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = myQtr & Chr(10) & _
+                        "Teradyne  (ISL + BGK)" & Chr(10) & _
+                        " Gross DOI " & myIslBgkPriGro & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslBgkCurGro & " " & myIslBgkDelGro & Chr(13) & _
+                        " Net DOI " & myIslBgkPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslBgkCurNet & " " & myIslBgkDelNet & Chr(13) & _
+                        " Inventory " & myIslBgkPriInv & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslBgkCurInv & " " & myIslBgkDelInv & Chr(13) & _
+                        " Revenue " & myIslBgkPriRev & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslBgkCurRev & " " & myIslBgkDelRev & Chr(13) & Chr(13) & _
+                        "Teradyne  (ISL)" & Chr(10) & _
+                        " Gross DOI " & myIslTerPriGro & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurGro & " " & myIslTerDelGro & Chr(13) & _
+                        " Net DOI " & myIslTerPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurNet & " " & myIslTerDelNet & Chr(13) & _
+                        " Inventory " & myIslTerPriInv & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurInv & " " & myIslTerDelInv & Chr(13) & _
+                        " Revenue " & myIslTerPriRev & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurRev & " " & myIslTerDelRev & Chr(13)
+                Coloring
+            Else
+                'Ver2.0:
+                If myX = 1 Then
+                    ActiveSheet.Shapes.Range(Array("Slide3a")).Select
+                Else
+                    ActiveSheet.Shapes.Range(Array("Slide3b")).Select
+                End If
+                
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = _
+                    myQtr & ":" & Chr(13) & _
+                    "Gross DOI " & myPgIslPriGro & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPgIslCurGro & " " & myPgIslDelGro & Chr(13) & _
+                    "Net DOI " & myPgIslPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPgIslCurNet & " " & myPgIslDelNet & Chr(13) & _
+                    "Inventory " & myPgIslPriInv & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPgIslCurInv & " " & myPgIslDelInv & Chr(13) & _
+                    "Revenue " & myPgIslPriRev & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPgIslCurRev & " " & myPgIslDelRev & Chr(13) & _
+                    "FF1 Net " & myIslTerPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurNet & " " & myIslTerDelNet & Chr(13) & _
+                    "FF2 Net " & myNonTerPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurNet & " " & myNonTerDelNet & myNonNetDoiVar
+                'Coloring
+                ColoringSlide3
+                
+                'Ver1.8:
+                If myX = 1 Then
+                    Range("A1").value = Replace("$" & myPgIslPriInv, "$-", "-$") & "  " & myPgIslPriGro & "DOI"
+                'Else
+                    Range("J1").value = Replace("$" & myPgIslCurInv, "$-", "-$") & "  " & myPgIslCurGro & "DOI"
+                End If
+                
+                'Slide 5: Non-TER
+                If myX = 1 Then
+                    ActiveSheet.Shapes.Range(Array("Slide5a")).Select
+                Else
+                    ActiveSheet.Shapes.Range(Array("Slide5b")).Select
+                End If
+                
+                myText = ""
+                For myZ = 1 To 5
+                    If myCusArr(myZ) <> "" Then
+                        myCustomer = myCusArr(myZ)
+                        myShortCus = InStr(1, myCustomer, "(", vbBinaryCompare)
+                        If myShortCus > 0 Then
+                            myShortCus = Left(myCustomer, myShortCus - 2)
+                        Else
+                            myShortCus = myCustomer
+                        End If
+                        myText = myText & Chr(10) & "  " & Chr(149) & " " & myShortCus & " Net " & myCusPriNet(myZ) & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myCusCurNet(myZ) & ", rev " & myCusDelRev(myZ) & ", inv " & myCusDelInv(myZ)
+                    End If
+                Next myZ
+                myText = Replace(Replace(myText, "(", ""), ")", "")
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = _
+                    myQtr & Chr(13) & _
+                    "Gross DOI " & myNonTerPriGro & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurGro & " " & myNonTerDelGro & Chr(13) & _
+                    "Net DOI " & myNonTerPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurNet & " " & myNonTerDelNet & Chr(13) & _
+                    "Inventory " & myNonTerPriInv & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurInv & " " & myNonTerDelInv & Chr(13) & _
+                    "Revenue " & myNonTerPriRev & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonTerCurRev & " " & myNonTerDelRev & Chr(13) & myText
+                Coloring
+                
+                'Slide 7: Teradyne  (ISL + BGK) & Teradyne  (ISL)
+                If myX = 1 Then
+                    ActiveSheet.Shapes.Range(Array("Slide7a")).Select
+                Else
+                    ActiveSheet.Shapes.Range(Array("Slide7b")).Select
+                End If
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = myQtr & Chr(10) & _
+                        "Teradyne  (ISL + BGK)" & Chr(10) & _
+                        " Gross DOI " & myIslBgkPriGro & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslBgkCurGro & " " & myIslBgkDelGro & Chr(13) & _
+                        " Net DOI " & myIslBgkPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslBgkCurNet & " " & myIslBgkDelNet & Chr(13) & _
+                        " Inventory " & myIslBgkPriInv & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslBgkCurInv & " " & myIslBgkDelInv & Chr(13) & _
+                        " Revenue " & myIslBgkPriRev & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslBgkCurRev & " " & myIslBgkDelRev & Chr(13) & Chr(13) & _
+                        "Teradyne  (ISL)" & Chr(10) & _
+                        " Gross DOI " & myIslTerPriGro & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurGro & " " & myIslTerDelGro & Chr(13) & _
+                        " Net DOI " & myIslTerPriNet & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurNet & " " & myIslTerDelNet & Chr(13) & _
+                        " Inventory " & myIslTerPriInv & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurInv & " " & myIslTerDelInv & Chr(13) & _
+                        " Revenue " & myIslTerPriRev & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myIslTerCurRev & " " & myIslTerDelRev & Chr(13)
+                Coloring
+                
+            End If
+
+        Next myX
+    Next myY
+    Workbooks(myActProFile).Close False
+    'Sheets("Macro (New)").Select
+End Sub
+Sub Coloring()
+    'Coloring
+    Selection.ShapeRange.TextFrame2.TextRange.Font.Bold = msoFalse
+    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(1, 5).Font.Bold = msoTrue
+    myCheck = 1
+    Do Until myCheck = 0
+        myStarter = InStr(myCheck, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, Chr(10), vbBinaryCompare)
+        If myStarter > 0 Then
+            myStarter = UCase(Mid(Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, myStarter + 1, 3))
+        End If
+        myArrow = InStr(myCheck, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, ChrW(&H27A4), vbBinaryCompare)
+        If myArrow = 0 Then Exit Do
+        myOpen = InStr(myArrow, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, "(", vbBinaryCompare)
+        If myOpen = 0 Then
+            myOpen = InStr(myArrow, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, ",", vbBinaryCompare) + 1
+        End If
+        mySign = Mid(Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, myOpen + 1, 1)
+        mySign2 = Mid(Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, myOpen + 1, 2)
+        If myStarter = "REV" Or myStarter = " RE" Then
+            If mySign = "-" Then
+                mySign = "+"
+            Else
+                mySign = "-"
+            End If
+        End If
+        Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myArrow + 2, myOpen - myArrow - 3).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+        myClose = InStr(myArrow, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, ")", vbBinaryCompare)
+        If myClose > 0 Then
+            If mySign = "-" Or mySign2 = "+0" Then
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myOpen, myClose - myOpen + 1).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+            Else
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myOpen, myClose - myOpen + 1).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+            End If
+            myCheck = myClose
+        Else
+            myCheck = myOpen
+        End If
+    Loop
+End Sub
+Sub ColoringSlide3()
+    'Coloring
+    Selection.ShapeRange.TextFrame2.TextRange.Font.Bold = msoFalse
+    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(1, 5).Font.Bold = msoTrue
+    myCheck = 1
+    Do Until myCheck = 0
+        myStarter = InStr(myCheck, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, Chr(10), vbBinaryCompare)
+        If myStarter > 0 Then
+            myStarter = UCase(Mid(Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, myStarter + 1, 3))
+        End If
+        myArrow = InStr(myCheck, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, ChrW(&H27A4), vbBinaryCompare)
+        If myArrow = 0 Then Exit Do
+        myOpen = InStr(myArrow, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, "(", vbBinaryCompare)
+        If myOpen = 0 Then
+            myOpen = InStr(myArrow, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, ",", vbBinaryCompare) + 1
+        End If
+        mySign = Mid(Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, myOpen + 1, 1)
+        mySign2 = Mid(Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, myOpen + 1, 2)
+        If myStarter = "REV" Or myStarter = " RE" Then
+            If mySign = "-" Then
+                mySign = "+"
+            Else
+                mySign = "-"
+            End If
+        End If
+        Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myArrow + 2, myOpen - myArrow - 3).Font.Fill.ForeColor.RGB = RGB(0, 0, 255) 'Blue
+        myClose = InStr(myArrow, Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text, ")", vbBinaryCompare)
+        If myClose > 0 Then
+            If mySign = "-" Or mySign2 = "+0" Then
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myOpen, myClose - myOpen + 1).Font.Fill.ForeColor.RGB = RGB(0, 255, 0) 'Green
+            Else
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myOpen, myClose - myOpen + 1).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+            End If
+            myCheck = myClose
+        Else
+            myCheck = myOpen
+        End If
+    Loop
+End Sub
+Sub ForecastPpt()
+    myStrTime = Time
+    Dim myQtr As String
+    Dim myNetDoiPara As String
+    myMacroFile = ActiveWorkbook.Name
+    myTm1 = Range("B22").value
+    myOverdrive = Range("B24").value
+    myActPro = Range("B26").value
+    myFcastTrend = Range("B28").value
+    myPptTemplate = Range("B30").value
+    myQtrSelect = Range("G40").value
+    myQtr = Range("G42").value
+    myOriQtr = Range("G42").value
+    myOverdrive1 = Range("D80").value
+    myNetDoiPara = Range("G38").value
+    
+    If Mid(myQtr, 2, 1) = "4" Then
+        myNextQtr = "Q1F" & Right(myQtr, 2) + 1
+    Else
+        myNextQtr = "Q" & Mid(myQtr, 2, 1) + 1 & "F" & Right(myQtr, 2)
+    End If
+    Workbooks.Open Filename:=myTm1, ReadOnly:=True, UpdateLinks:=False
+    myTm1File = ActiveWorkbook.Name
+    SheetSelect Replace(myQtr, "F", "") & " vs Prior"
+    If ActiveSheet.Name <> Replace(myQtr, "F", "") & " vs Prior" Then
+        MsgBox Replace(myQtr, "F", "") & " sheet not found! " & vbNewLine & "The Macro will stop here..."
+        End
+    End If
+    If Workbooks(myMacroFile).Sheets("Macro").Range("E111").value = "Include" Then
+        SheetSelect Replace(myQtr, "F", "") & " vs Qtr"
+        If ActiveSheet.Name <> Replace(myQtr, "F", "") & " vs Qtr" Then
+            MsgBox Replace(myQtr, "F", "") & " sheet not found! " & vbNewLine & "The Macro will stop here..."
+            End
+        End If
+    End If
+    SheetSelect Replace(myNextQtr, "F", "") & " vs Prior"
+    If ActiveSheet.Name <> Replace(myNextQtr, "F", "") & " vs Prior" Then
+        MsgBox Replace(myNextQtr, "F", "") & " sheet not found! " & vbNewLine & "The Macro will stop here..."
+        End
+    End If
+    If Workbooks(myMacroFile).Sheets("Macro").Range("E131").value = "Include" Then
+        SheetSelect Replace(myNextQtr, "F", "") & " vs Qtr"
+        If ActiveSheet.Name <> Replace(myNextQtr, "F", "") & " vs Qtr" Then
+            MsgBox Replace(myNextQtr, "F", "") & " sheet not found! " & vbNewLine & "The Macro will stop here..."
+            End
+        End If
+    End If
+    
+    
+    Workbooks.Open Filename:=myOverdrive, ReadOnly:=True, UpdateLinks:=False
+    myOverdriveFile = ActiveWorkbook.Name
+    For Each mySlide In Sheets
+        If UCase(Left(mySlide.Name, 9)) = "OVERDRIVE" Then
+            Sheets(mySlide.Name).Select
+            ActiveSheet.Name = "Overdrive"
+            Exit For
+        End If
+    Next
+    If ActiveSheet.Name <> "Overdrive" Then
+        MsgBox "Overdrive Sheet not found!"
+        End
+    End If
+    
+    Workbooks.Open Filename:=myActPro, ReadOnly:=True, UpdateLinks:=False
+    myActProFile = ActiveWorkbook.Name
+    Call Slide3TextFormatting(myQtr, myNetDoiPara, myOverdriveFile)
+    
+    Workbooks.Open Filename:=myFcastTrend, ReadOnly:=True, UpdateLinks:=False
+    myFcastTrendFile = ActiveWorkbook.Name
+    
+    SheetSelect "Trend vs Qtr"
+    If ActiveSheet.Name <> "Trend vs Qtr" Then
+        MsgBox "Trend vs Qtr sheet not found! " & vbNewLine & "The Macro will stop here..."
+        End
+    End If
+    SheetSelect "Trend vs Prior"
+    If ActiveSheet.Name <> "Trend vs Prior" Then
+        MsgBox "Trend vs Prior sheet not found! " & vbNewLine & "The Macro will stop here..."
+        End
+    End If
+    
+    SheetSelect "Current Forecast"
+    If ActiveSheet.Name <> "Current Forecast" Then
+        MsgBox "Current Forecast sheet not found! " & vbNewLine & "The Macro will stop here..."
+        End
+    End If
+    myLastCurrent = Range("A" & Rows.Count).End(xlUp).Row
+    ErrHnd1
+    'myLastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+    myLastColumnAlpha1 = Cells.SpecialCells(xlCellTypeLastCell).Address(1, 0)
+    myLastColumnAlpha1 = Left(myLastColumnAlpha1, InStr(myLastColumnAlpha1, "$") - 1)
+    
+    Set pptApp = CreateObject("Powerpoint.application")
+    
+    pptApp.Presentations.Open Filename:=myPptTemplate ', ReadOnly:=False, untitled:=True, withwindow:=True
+    Set myPpt = pptApp.ActivePresentation
+    
+    myPpt.Slides(1).Shapes("Text PlaceHolder 1").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D32").value
+    myPpt.Slides(1).Shapes("Text PlaceHolder 2").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D34").value
+    
+    myPpt.Slides(2).Select
+    myPpt.Slides(2).Shapes("Title 3").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D36").value
+    myPpt.Slides(2).Shapes("Title 3").Top = 35
+    If Workbooks(myMacroFile).Sheets("Macro").Range("D38").value = "" Then
+        myPpt.Slides(2).Shapes("Content PlaceHolder 1").Delete
+    Else
+        myPpt.Slides(2).Shapes("Content PlaceHolder 1").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D38").value
+    End If
+    Workbooks(myFcastTrendFile).Sheets("Current Forecast").Range("A3:" & myLastColumnAlpha1 & myLastCurrent).Copy
+    myPpt.Slides(2).Shapes.PasteSpecial(DataType:=ppPasteEnhancedMetafile).Select 'Picture format
+    LockAspectRatio = 1
+    pptApp.ActiveWindow.Selection.ShapeRange.Left = 163.2
+    pptApp.ActiveWindow.Selection.ShapeRange.Top = 93.93
+    pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+    pptApp.ActiveWindow.Selection.ShapeRange.Height = 430.64
+    pptApp.ActiveWindow.Selection.ShapeRange.Width = 633.6
+
+    
+    myVar = 40
+    For myA = 3 To 5
+        If myA = 5 Then
+            myVar = myVar + 11
+        End If
+        Set NewSlide = myPpt.Slides.Add(Index:=myA, Layout:=ppLayoutText) 'Create new slide
+        myPpt.Slides(myA).Select
+        myPpt.Slides(myA).Shapes("Title 1").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D" & myVar).value
+        myPpt.Slides(myA).Shapes("Title 1").Top = 35
+        If Workbooks(myMacroFile).Sheets("Macro").Range("D" & myVar + 2).value = "" Then
+            myPpt.Slides(myA).Shapes("Text PlaceHolder 2").Delete
+        Else
+            myPpt.Slides(myA).Shapes("Text PlaceHolder 2").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D" & myVar + 2).value
+        End If
+        If myA = 3 Then
+            Workbooks(myFcastTrendFile).Sheets("Trend vs Prior").ChartObjects("Chart 3").Activate
+        ElseIf myA = 4 Then
+            Workbooks(myFcastTrendFile).Sheets("Trend vs Prior").ChartObjects("Chart 9").Activate
+        ElseIf myA = 5 Then
+            Workbooks(myFcastTrendFile).Sheets("Trend vs Prior").ChartObjects("Chart 4").Activate
+        End If
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteEnhancedMetafile).Select 'Picture format
+        On Error GoTo 0
+        
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 21.28
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 93
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 193
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 504
+        
+        myLastColumn1 = Workbooks(myFcastTrendFile).Sheets("Trend vs Prior").Cells(2, Columns.Count).End(xlToLeft).Address(1, 0)
+        myTrendVsPriorLastCol = Left(myLastColumn1, InStr(myLastColumn1, "$") - 1)
+        If myA = 3 Then
+            Workbooks(myFcastTrendFile).Sheets("Trend vs Prior").Range("B1:" & myTrendVsPriorLastCol & "11").Copy
+        ElseIf myA = 4 Then
+            Workbooks(myFcastTrendFile).Sheets("Trend vs Prior").Range("B23:" & myTrendVsPriorLastCol & "31").Copy
+        ElseIf myA = 5 Then
+            'Ver1.2: Wrong row
+            'Workbooks(myFcastTrendFile).Sheets("Trend vs Prior").Range("B33:" & myTrendVsPriorLastCol & "39").Copy
+            Workbooks(myFcastTrendFile).Sheets("Trend vs Prior").Range("B33:" & myTrendVsPriorLastCol & "40").Copy
+        End If
+        On Error Resume Next
+        myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteEnhancedMetafile).Select
+        On Error GoTo 0
+        
+        If myA = 5 And myQtrSelect = "Yes" Then
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 21.28
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 290
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Height = 70
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 504
+        Else
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 21.28
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 311.24
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Height = 84.14
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 504
+        End If
+        
+        If myQtrSelect = "Yes" Then
+            myLastColumn1 = Workbooks(myFcastTrendFile).Sheets("Trend vs Qtr").Cells(2, Columns.Count).End(xlToLeft).Address(1, 0)
+            myTrendVsQtrLastCol = Left(myLastColumn1, InStr(myLastColumn1, "$") - 1)
+            If myA = 3 Then
+            Workbooks(myFcastTrendFile).Sheets("Trend vs Qtr").Range("B1:" & myTrendVsQtrLastCol & "11").Copy
+            ElseIf myA = 4 Then
+                Workbooks(myFcastTrendFile).Sheets("Trend vs Qtr").Range("B23:" & myTrendVsQtrLastCol & "31").Copy
+            ElseIf myA = 5 Then
+                Workbooks(myFcastTrendFile).Sheets("Trend vs Qtr").Range("B33:" & myTrendVsQtrLastCol & "39").Copy
+            End If
+            'Workbooks(myFcastTrendFile).Sheets("Trend vs Qtr").Range("B1:S11").Copy
+            Application.Wait (Now + TimeValue("00:00:01"))
+            On Error Resume Next
+            myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteEnhancedMetafile).Select
+            On Error GoTo 0
+            
+            If myA = 5 Then
+                pptApp.ActiveWindow.Selection.ShapeRange.Left = 21.28
+                pptApp.ActiveWindow.Selection.ShapeRange.Top = 450
+                pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Height = 70
+                pptApp.ActiveWindow.Selection.ShapeRange.Width = 504
+            Else
+                pptApp.ActiveWindow.Selection.ShapeRange.Left = 21.28
+                pptApp.ActiveWindow.Selection.ShapeRange.Top = 405.82
+                pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Height = 84.14
+                pptApp.ActiveWindow.Selection.ShapeRange.Width = 504
+            End If
+            
+        End If
+        
+        If myA = 5 Then
+            Workbooks(myFcastTrendFile).Sheets("Trend vs Prior").Range("B13:" & myTrendVsPriorLastCol & "21").Copy
+            Application.Wait (Now + TimeValue("00:00:01"))
+            On Error Resume Next
+            myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteEnhancedMetafile).Select
+            On Error GoTo 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 21.28
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Height = 80
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 504
+            If myQtrSelect = "Yes" Then
+                pptApp.ActiveWindow.Selection.ShapeRange.Top = 365
+            Else
+                pptApp.ActiveWindow.Selection.ShapeRange.Top = 410
+            End If
+        End If
+        
+        Workbooks(myMacroFile).Activate
+        Sheets("PptTemp").Select
+        Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "a")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        
+        If myA = 3 Then
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 539.64
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 93
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Height = 123.48
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 420
+        ElseIf myA = 4 Then
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 539.64
+            'pptApp.ActiveWindow.Selection.ShapeRange.Top = 93
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 65
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Height = 230
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 420
+            'Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "aa")).Select
+            'Selection.Copy
+            'On Error Resume Next
+            'myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+            'On Error GoTo 0
+            'pptApp.ActiveWindow.Selection.ShapeRange.Left = 550
+            'pptApp.ActiveWindow.Selection.ShapeRange.Top = 130
+            'pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            'pptApp.ActiveWindow.Selection.ShapeRange.Width = 410
+        ElseIf myA = 5 Then
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 539.64
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 93
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Height = 25
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 420
+            Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "aa")).Select
+            Selection.Copy
+            On Error Resume Next
+            myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+            On Error GoTo 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 550
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 105
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 410
+                Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "a-1")).Select
+                Selection.Copy
+                On Error Resume Next
+                myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+                On Error GoTo 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Left = 540
+                pptApp.ActiveWindow.Selection.ShapeRange.Top = 160
+                pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Width = 410
+                Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "aa-1")).Select
+                Selection.Copy
+                On Error Resume Next
+                myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+                On Error GoTo 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Left = 550
+                pptApp.ActiveWindow.Selection.ShapeRange.Top = 173
+                pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Width = 410
+        End If
+        
+        
+        Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "b")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        If myA = 3 Then
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 539.64
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 193
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Height = 123.48
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 420
+        ElseIf myA = 4 Then
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 539.64
+            'pptApp.ActiveWindow.Selection.ShapeRange.Top = 200
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 290
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Height = 230
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 420
+            'Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "bb")).Select
+            'Selection.Copy
+            'On Error Resume Next
+            'myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+            'On Error GoTo 0
+            'pptApp.ActiveWindow.Selection.ShapeRange.Left = 550
+            'pptApp.ActiveWindow.Selection.ShapeRange.Top = 240
+            'pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            ''pptApp.ActiveWindow.Selection.ShapeRange.Height = 50.48
+            'pptApp.ActiveWindow.Selection.ShapeRange.Width = 410
+        Else
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 539.64
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 250
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Height = 25
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 420
+            Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "bb")).Select
+            Selection.Copy
+            On Error Resume Next
+            myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+            On Error GoTo 0
+            pptApp.ActiveWindow.Selection.ShapeRange.Left = 550
+            pptApp.ActiveWindow.Selection.ShapeRange.Top = 265
+            pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+            'pptApp.ActiveWindow.Selection.ShapeRange.Height = 50.48
+            pptApp.ActiveWindow.Selection.ShapeRange.Width = 410
+                Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "b-1")).Select
+                Selection.Copy
+                On Error Resume Next
+                myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+                On Error GoTo 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Left = 540
+                pptApp.ActiveWindow.Selection.ShapeRange.Top = 315
+                pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Width = 410
+                Sheets("PptTemp").Shapes.Range(Array("Slide" & myA & "bb-1")).Select
+                Selection.Copy
+                On Error Resume Next
+                myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+                On Error GoTo 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Left = 550
+                pptApp.ActiveWindow.Selection.ShapeRange.Top = 330
+                pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+                pptApp.ActiveWindow.Selection.ShapeRange.Width = 410
+        End If
+        myVar = myVar + 4
+    Next myA
+    
+    'Slide 6
+    Set NewSlide = myPpt.Slides.Add(Index:=6, Layout:=ppLayoutText)
+    myPpt.Slides(6).Select
+    myPpt.Slides(6).Shapes("Title 1").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D76").value
+    myPpt.Slides(6).Shapes("Title 1").Top = 35
+    If Workbooks(myMacroFile).Sheets("Macro").Range("D78").value = "" Then
+        myPpt.Slides(6).Shapes("Text PlaceHolder 2").Delete
+    Else
+        myPpt.Slides(6).Shapes("Text PlaceHolder 2").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D78").value
+    End If
+    myTotalOverdrive = Workbooks(myOverdriveFile).Sheets("Overdrive").Range("A" & Rows.Count).End(xlUp).Row
+    Workbooks(myOverdriveFile).Sheets("Overdrive").Range("A1:U" & myTotalOverdrive).Copy
+    Application.Wait (Now + TimeValue("00:00:01"))
+    On Error Resume Next
+    'myPpt.Slides(6).Shapes.PasteSpecial(DataType:=ppPasteEnhancedMetafile).Select
+    myPpt.Slides(6).Shapes.PasteSpecial(DataType:=1).Select
+    'ppPasteDefault
+    On Error GoTo 0
+    pptApp.ActiveWindow.Selection.ShapeRange.Left = 10
+    pptApp.ActiveWindow.Selection.ShapeRange.Top = 90
+    pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+    pptApp.ActiveWindow.Selection.ShapeRange.Height = 355
+    pptApp.ActiveWindow.Selection.ShapeRange.Width = 940
+    Workbooks(myMacroFile).Sheets("PptTemp").Shapes.Range(Array("Slide6a")).Select
+    Selection.Copy
+    On Error Resume Next
+    myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+    On Error GoTo 0
+    pptApp.ActiveWindow.Selection.ShapeRange.Left = 10
+    pptApp.ActiveWindow.Selection.ShapeRange.Top = 445
+    pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+    pptApp.ActiveWindow.Selection.ShapeRange.Height = 80
+    pptApp.ActiveWindow.Selection.ShapeRange.Width = 505
+        Workbooks(myMacroFile).Sheets("PptTemp").Shapes.Range(Array("Slide6b")).Select
+        Selection.Copy
+        On Error Resume Next
+        myPpt.Slides(myA).Shapes.PasteSpecial(DataType:=ppPasteDefault).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 510
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 445
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 80
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 445
+    
+    'Slide 7
+    Set NewSlide = myPpt.Slides.Add(Index:=7, Layout:=ppLayoutText)
+    myPpt.Slides(7).Select
+    myPpt.Slides(7).Shapes("Title 1").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D100").value
+    myPpt.Slides(7).Shapes("Title 1").Left = 35
+    myPpt.Slides(7).Shapes("Title 1").Top = 35
+    If Workbooks(myMacroFile).Sheets("Macro").Range("D102").value = "" Then
+        myPpt.Slides(7).Shapes("Text PlaceHolder 2").Delete
+    Else
+        myPpt.Slides(7).Shapes("Text PlaceHolder 2").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D102").value
+    End If
+    'Ver1.1: Wrong Sheet
+    'myTotalRowCopy = Workbooks(myTm1File).Sheets(Replace(myQtr, "F", "") & " vs Prior").Range("J" & Rows.Count).End(xlUp).Row
+    'myTotalColCopy = Workbooks(myTm1File).Sheets(Replace(myQtr, "F", "") & " vs Prior").Range("AAA3").End(xlToLeft).Column
+    myTotalRowCopy = Workbooks(myTm1File).Sheets(Replace(myOriQtr, "F", "") & " vs Prior").Range("J" & Rows.Count).End(xlUp).Row
+    myTotalColCopy = Workbooks(myTm1File).Sheets(Replace(myOriQtr, "F", "") & " vs Prior").Range("AAA3").End(xlToLeft).Column
+    myAddress = Range(Cells(2, 10), Cells(myTotalRowCopy, myTotalColCopy)).Address
+    'Ver1.2: Wrong Qtr
+    'Workbooks(myTm1File).Sheets(Replace(myQtr, "F", "") & " vs Prior").Range(myAddress).Copy
+    Workbooks(myTm1File).Sheets(Replace(myOriQtr, "F", "") & " vs Prior").Range(myAddress).Copy
+    On Error Resume Next
+    myPpt.Slides(7).Shapes.PasteSpecial(DataType:=2).Select
+    On Error GoTo 0
+    pptApp.ActiveWindow.Selection.ShapeRange.Left = 10
+    pptApp.ActiveWindow.Selection.ShapeRange.Top = 85
+    pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+    pptApp.ActiveWindow.Selection.ShapeRange.Height = 440
+    pptApp.ActiveWindow.Selection.ShapeRange.Width = 940
+    
+    'Slide 8
+    Set NewSlide = myPpt.Slides.Add(Index:=8, Layout:=ppLayoutText)
+    myPpt.Slides(8).Select
+    If Workbooks(myMacroFile).Sheets("Macro").Range("E111").value = "Include" Then
+        myPpt.Slides(8).Shapes("Title 1").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D111").value
+        myPpt.Slides(8).Shapes("Title 1").Left = 35
+        myPpt.Slides(8).Shapes("Title 1").Top = 35
+        If Workbooks(myMacroFile).Sheets("Macro").Range("D113").value = "" Then
+            myPpt.Slides(8).Shapes("Text PlaceHolder 2").Delete
+        Else
+            myPpt.Slides(8).Shapes("Text PlaceHolder 2").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D113").value
+        End If
+        'Ver1.1: Wrong Sheet
+        'myTotalRowCopy = Workbooks(myTm1File).Sheets(Replace(myQtr, "F", "") & " vs Qtr").Range("J" & Rows.Count).End(xlUp).Row
+        'myTotalColCopy = Workbooks(myTm1File).Sheets(Replace(myQtr, "F", "") & " vs Qtr").Range("AAA3").End(xlToLeft).Column
+        myTotalRowCopy = Workbooks(myTm1File).Sheets(Replace(myOriQtr, "F", "") & " vs Qtr").Range("J" & Rows.Count).End(xlUp).Row
+        myTotalColCopy = Workbooks(myTm1File).Sheets(Replace(myOriQtr, "F", "") & " vs Qtr").Range("AAA3").End(xlToLeft).Column
+        myAddress = Range(Cells(2, 10), Cells(myTotalRowCopy, myTotalColCopy)).Address
+        Workbooks(myTm1File).Sheets(Replace(myQtr, "F", "") & " vs Qtr").Range(myAddress).Copy
+        On Error Resume Next
+        myPpt.Slides(8).Shapes.PasteSpecial(DataType:=2).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 10
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 85
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 440
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 940
+    End If
+    
+    'Slide 9
+    Set NewSlide = myPpt.Slides.Add(Index:=9, Layout:=ppLayoutText)
+    myPpt.Slides(9).Select
+    myPpt.Slides(9).Shapes("Title 1").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D121").value
+    myPpt.Slides(9).Shapes("Title 1").Left = 35
+    myPpt.Slides(9).Shapes("Title 1").Top = 35
+    If Workbooks(myMacroFile).Sheets("Macro").Range("D123").value = "" Then
+        myPpt.Slides(9).Shapes("Text PlaceHolder 2").Delete
+    Else
+        myPpt.Slides(9).Shapes("Text PlaceHolder 2").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D123").value
+    End If
+    myTotalRowCopy = Workbooks(myTm1File).Sheets(Replace(myNextQtr, "F", "") & " vs Prior").Range("J" & Rows.Count).End(xlUp).Row
+    myTotalColCopy = Workbooks(myTm1File).Sheets(Replace(myNextQtr, "F", "") & " vs Prior").Range("AAA3").End(xlToLeft).Column
+    myAddress = Range(Cells(2, 10), Cells(myTotalRowCopy, myTotalColCopy)).Address
+    Workbooks(myTm1File).Sheets(Replace(myNextQtr, "F", "") & " vs Prior").Range(myAddress).Copy
+    On Error Resume Next
+    myPpt.Slides(9).Shapes.PasteSpecial(DataType:=2).Select
+    On Error GoTo 0
+    pptApp.ActiveWindow.Selection.ShapeRange.Left = 10
+    pptApp.ActiveWindow.Selection.ShapeRange.Top = 85
+    pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+    pptApp.ActiveWindow.Selection.ShapeRange.Height = 440
+    pptApp.ActiveWindow.Selection.ShapeRange.Width = 940
+    
+    'Slide 10
+    If Workbooks(myMacroFile).Sheets("Macro").Range("E131").value = "Include" Then
+        Set NewSlide = myPpt.Slides.Add(Index:=10, Layout:=ppLayoutText)
+        myPpt.Slides(10).Select
+        myPpt.Slides(10).Shapes("Title 1").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D131").value
+        myPpt.Slides(10).Shapes("Title 1").Left = 35
+        myPpt.Slides(10).Shapes("Title 1").Top = 35
+        If Workbooks(myMacroFile).Sheets("Macro").Range("D133").value = "" Then
+            myPpt.Slides(10).Shapes("Text PlaceHolder 2").Delete
+        Else
+            myPpt.Slides(10).Shapes("Text PlaceHolder 2").TextFrame.TextRange.Text = Workbooks(myMacroFile).Sheets("Macro").Range("D133").value
+        End If
+        myTotalRowCopy = Workbooks(myTm1File).Sheets(Replace(myNextQtr, "F", "") & " vs Qtr").Range("J" & Rows.Count).End(xlUp).Row
+        myTotalColCopy = Workbooks(myTm1File).Sheets(Replace(myNextQtr, "F", "") & " vs Qtr").Range("AAA3").End(xlToLeft).Column
+        myAddress = Range(Cells(2, 10), Cells(myTotalRowCopy, myTotalColCopy)).Address
+        Workbooks(myTm1File).Sheets(Replace(myNextQtr, "F", "") & " vs Qtr").Range(myAddress).Copy
+        On Error Resume Next
+        myPpt.Slides(10).Shapes.PasteSpecial(DataType:=2).Select
+        On Error GoTo 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Left = 10
+        pptApp.ActiveWindow.Selection.ShapeRange.Top = 85
+        pptApp.ActiveWindow.Selection.ShapeRange.LockAspectRatio = 0
+        pptApp.ActiveWindow.Selection.ShapeRange.Height = 440
+        pptApp.ActiveWindow.Selection.ShapeRange.Width = 940
+    End If
+    
+    If Workbooks(myMacroFile).Sheets("Macro").Range("E111").value <> "Include" Then
+        myPpt.Slides(8).Delete
+    End If
+    
+    Application.CutCopyMode = False
+    Workbooks(myTm1File).Close False
+    Workbooks(myOverdriveFile).Close False
+    Workbooks(myActProFile).Close False
+    Workbooks(myFcastTrendFile).Close False
+    
+    '
+    Sheets("Macro").Select
+    AppActivate (myMacroFile)
+    myEndTime = Time
+    MsgBox "Done in " & Format(myStrTime - myEndTime, "hh:mm:ss")
+    
+End Sub
+Sub ErrHnd1()
+    On Error Resume Next
+    ActiveSheet.Outline.ShowLevels RowLevels:=0, ColumnLevels:=1
+End Sub
+Function ConvertDay(myDay)
+    If Round(myDay, 0) = 1 Then
+        ConvertDay = "(+1day)"
+    ElseIf Round(myDay, 0) = -1 Then
+        ConvertDay = "(-1day)"
+    ElseIf Round(myDay, 0) < 0 Then
+        ConvertDay = "(" & Round(myDay, 0) & "days)"
+    Else
+        ConvertDay = "(+" & Round(myDay, 0) & "days)"
+    End If
+End Function
+Function ConvertToMillionOrThousand(ByVal myValue As Double) As String
+    Dim absValue As Double
+    absValue = Abs(myValue) ' Get the absolute value of the input
+    If absValue >= 1000000 Then
+        ConvertToMillionOrThousand = IIf(myValue < 0, "-", "") & Format(absValue / 1000000, "0.0") & "M"
+    ElseIf absValue >= 1000 Then
+        ConvertToMillionOrThousand = IIf(myValue < 0, "-", "") & Format(absValue / 1000, "0.0") & "K"
+    Else
+        ConvertToMillionOrThousand = IIf(myValue < 0, "-", "") & Format(absValue, "0.0")
+    End If
+End Function
+Function CalDollarDelta(ByVal myValue As Double)
+    absValue = Abs(myValue) ' Get the absolute value of the input
+    If absValue >= 1000000 Then
+        CalDollarDelta = IIf(myValue < 0, "(-$", "(+$") & Format(absValue / 1000000, "0.0") & "M" & ")"
+    ElseIf absValue >= 1000 Then
+        CalDollarDelta = IIf(myValue < 0, "(-$", "(+$") & Format(absValue / 1000, "0.0") & "K" & ")"
+    Else
+        CalDollarDelta = IIf(myValue < 0, "(-$", "(+$") & Format(absValue, "0.0") & ")"
+    End If
+End Function
+
+Function GetRow(myWorkbook, mySheet, myHeader, myCol)
+    If myRow = "" Then
+        Set mySearchValue = Workbooks(myWorkbook).Sheets(mySheet).Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    Else
+        GetRow = Workbooks(myWorkbook).Sheets(mySheet).Columns(myCol).Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    End If
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " row not found!" & vbNewLine & "The Macro will stop here..."
+        End
+    Else
+        If myRow = "" Then
+            GetRow = Workbooks(myWorkbook).Sheets(mySheet).Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+        Else
+            GetRow = Workbooks(myWorkbook).Sheets(mySheet).Columns(myCol).Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+        End If
+    End If
+End Function
+Function GetCol(myWorkbook, mySheet, myHeader, myRow)
+    If myRow = "" Then
+        Set mySearchValue = Workbooks(myWorkbook).Sheets(mySheet).Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByColumns, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    Else
+        Set mySearchValue = Workbooks(myWorkbook).Sheets(mySheet).Rows(myRow).Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByColumns, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    End If
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+        End
+    Else
+        If myRow = "" Then
+            GetCol = Workbooks(myWorkbook).Sheets(mySheet).Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByColumns, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        Else
+            GetCol = Workbooks(myWorkbook).Sheets(mySheet).Rows(myRow).Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByColumns, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        End If
+    End If
+End Function
+Sub ConcateHeader()
+    myFirRow = Range("B1").End(xlDown).Row
+    myTotalCol = Cells(myFirRow, Columns.Count).End(xlToLeft).Column
+    Range("A1", Cells(1, myTotalCol)).value = "=SUBSTITUTE(R[" & myFirRow - 1 & "]C,"" "","""")&R[" & myFirRow & "]C&R[" & myFirRow + 1 & "]C"
+    Range("A1", Cells(1, myTotalCol)).value = Range("A1", Cells(1, myTotalCol)).value
+End Sub
+Sub Slide3TextFormatting(myQtr As String, myNetDoiPara As String, myOverdriveFile)
+    myOriQtr = myQtr
+    
+    myActProFile = ActiveWorkbook.Name
+    
+    For myY = 1 To 2
+        myQtr = myOriQtr
+        myThisQtr = myQtr
+        If Mid(myQtr, 2, 1) = "4" Then
+            myNextQtr = "Q1F" & Right(myQtr, 2) + 1
+        Else
+            myNextQtr = "Q" & Mid(myQtr, 2, 1) + 1 & "F" & Right(myQtr, 2)
+        End If
+        
+    
+        For myX = 1 To 2
+            Workbooks(myActProFile).Activate
+            If myX = 2 Then
+                myQtr = myNextQtr
+            End If
+            SheetSelect myQtr & " vs Prior"
+            If ActiveSheet.Name <> myQtr & " vs Prior" Then
+                MsgBox myQtr & " vs Prior sheet not found! " & vbNewLine & "The Macro will stop here..."
+                End
+            End If
+            'If myY = 1 Then
+            '    myHeader = "Penang-Islandview"
+            'ElseIf myY = 2 Then
+            '    myHeader = "Non Teradyne"
+            'ElseIf myY = 3 Then
+            '    myHeader = "Teradyne  (ISL)"
+            'End If
+            
+            myHeader = "Penang-Islandview"
+            Set mySearchValue = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+            If mySearchValue Is Nothing Then
+                MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                End
+            Else
+                myPgIslRow = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+            End If
+                myHeader = "Non Teradyne"
+                Set mySearchValue = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                    End
+                Else
+                    myNonTerRow = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+                End If
+                    myHeader = "Teradyne  (ISL)"
+                    Set mySearchValue = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                    If mySearchValue Is Nothing Then
+                        MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                        End
+                    Else
+                        myTerIslRow = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+                    End If
+            
+            
+            
+            
+'            Set mySearchValue = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+'            If mySearchValue Is Nothing Then
+'                MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+'                End
+'            Else
+'                myPgIslRow = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+                If myY = 1 Then
+                    myTotalCol = Cells(myPgIslRow, Columns.Count).End(xlToLeft).Column
+                    Range("A1", Cells(1, myTotalCol)).value = "=SUBSTITUTE(R[" & myPgIslRow - 4 & "]C,"" "","""")&R[" & myPgIslRow - 3 & "]C&R[" & myPgIslRow - 2 & "]C"
+                    Range("A1", Cells(1, myTotalCol)).value = Range("A1", Cells(1, myTotalCol)).value
+                End If
+                myHeader = myQtr & "Current FcstINV Days"
+                Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                If mySearchValue Is Nothing Then
+                    MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                    End
+                Else
+                    myGrossInvCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                    myGrossInv = Round(Cells(myPgIslRow, myGrossInvCol).value, 0)
+                    myGrossInvTer = Round(Cells(myTerIslRow, myGrossInvCol).value, 0)
+                    myGrossInvNon = Round(Cells(myNonTerRow, myGrossInvCol).value, 0)
+                End If
+                    myHeader = myQtr & "PriorINV Days"
+                    Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                    If mySearchValue Is Nothing Then
+                        MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                        End
+                    Else
+                        myPriorInvCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                        myPriorInv = Round(Cells(myPgIslRow, myPriorInvCol).value, 0)
+                        myPriorInvTer = Round(Cells(myTerIslRow, myPriorInvCol).value, 0)
+                        myPriorInvNon = Round(Cells(myNonTerRow, myPriorInvCol).value, 0)
+                    End If
+                        'Inventory
+                        myHeader = myQtr & "DeltaInv + FOB ('000)"
+                        Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                        If mySearchValue Is Nothing Then
+                            MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                            End
+                        Else
+                            myInvFromCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                            myInvFrom = Cells(myPgIslRow, myInvFromCol).value
+                            'Ver1.5: Cater for negative
+                            'If myInvFrom < 0 Then
+                            '    myInvSign = ""
+                            'Else
+                            '    myInvSign = "+"
+                            'End If
+                            'If Abs(myInvFrom) = 0 Then
+                            '    myInvFrom = " remain"
+                            'ElseIf Abs(myInvFrom) < 1000 Then
+                            '    myInvFrom = myInvSign & Format(myInvFrom, "$#")
+                            'ElseIf Abs(myInvFrom) < 1000000 Then
+                            '    myInvFrom = myInvSign & Format(myInvFrom / 1000, "$###K")
+                            'Else
+                            '    myInvFrom = myInvSign & Format(myInvFrom / 1000000, "$#.0M")
+                            'End If
+                        End If
+                            myHeader = myQtr & "Current FcstInv + FOB ('000)"
+                            Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                            If mySearchValue Is Nothing Then
+                                MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                                End
+                            Else
+                                myInvToCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                myInvTo = Cells(myPgIslRow, myInvToCol).value
+'                                If myInvTo < 0 Then
+'                                    myInvSign = ""
+'                                Else
+'                                    myInvSign = "+"
+'                                End If
+                                'Ver1.5: Cater for negative
+                                'If Abs(myInvTo) = 0 Then
+                                '    myInvTo = " remain"
+                                'ElseIf Abs(myInvTo) < 1000 Then
+                                '    myInvTo = myInvSign & Format(myInvTo, "$#")
+                                'ElseIf Abs(myInvTo) < 1000000 Then
+                                '    myInvTo = Format(myInvTo / 1000, "$###K")
+                                'Else
+                                '    myInvTo = Format(myInvTo / 1000000, "$#.0M")
+                                'End If
+                            End If
+                                myHeader = myQtr & "PriorInv + FOB ('000)"
+                                Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                                If mySearchValue Is Nothing Then
+                                    MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                                    End
+                                Else
+                                    myInvPriorCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                    myInvPrior = Cells(myPgIslRow, myInvPriorCol).value
+'                                    If myInvPrior < 0 Then
+'                                        myInvSign = ""
+'                                    Else
+'                                        myInvSign = "+"
+'                                    End If
+'                                    If Abs(myInvPrior) = 0 Then
+'                                        myInvPrior = " remain"
+'                                    ElseIf Abs(myInvPrior) < 1000 Then
+'                                        myInvPrior = myInvSign & Format(myInvPrior, "$#")
+'                                    ElseIf Abs(myInvPrior) < 1000000 Then
+'                                        myInvPrior = Format(myInvPrior / 1000, "$###K")
+'                                    Else
+'                                        myInvPrior = Format(myInvPrior / 1000000, "$#.0M")
+'                                    End If
+                                End If
+'                                    myHeader = myQtr & "DeltaSales ('000)"
+'                                    Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+'                                    If mySearchValue Is Nothing Then
+'                                        MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+'                                        End
+'                                    Else
+'                                        myRevenueCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+'                                        myRevenue = Cells(myPgIslRow, myRevenueCol).value
+'                                        If myRevenue < 0 Then
+'                                            myInvSign = ""
+'                                        Else
+'                                            myInvSign = "+"
+'                                        End If
+'                                        If Abs(myRevenue) = 0 Then
+'                                            myRevenue = " remain"
+'                                        ElseIf Abs(myRevenue) < 1000 Then
+'                                            myRevenue = myInvSign & Format(myRevenue, "$#")
+'                                        ElseIf Abs(myRevenue) < 1000000 Then
+'                                            myRevenue = myInvSign & Format(myRevenue / 1000, "$###K")
+'                                        Else
+'                                            myRevenue = myInvSign & Format(myRevenue / 1000000, "$#.0M")
+'                                        End If
+'                                    End If
+                                        'myHeader = "Teradyne  (ISL)"
+                                        ''myHeader = "Micron (830148)"
+                                        'Set mySearchValue = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                                        'If mySearchValue Is Nothing Then
+                                        '    MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                                        '    End
+                                        'Else
+                                        '    myTerIslRow = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+'                                            myTerRevenue = Cells(myTerIslRow, myRevenueCol).value
+                                        'End If
+                                            'myHeader = "Non Teradyne"
+                                            'Set mySearchValue = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                                            'If mySearchValue Is Nothing Then
+                                            '    MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                                            '    End
+                                            'Else
+                                            '    myNonTerRow = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+'                                                myNonTerRevenue = Cells(myNonTerRow, myRevenueCol).value
+                                            'End If
+                                    'Ver2.5:
+                                    myHeader = myQtr & "Current FcstSales ('000)"
+                                    Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                                    If mySearchValue Is Nothing Then
+                                        MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                                        End
+                                    Else
+                                        myRevCurCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                        myRevCur = Cells(myPgIslRow, myRevCurCol).value
+                                    End If
+                                        myHeader = myQtr & "PriorSales ('000)"
+                                        Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                                        If mySearchValue Is Nothing Then
+                                            MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                                            End
+                                        Else
+                                            myRevPriCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                            myRevPri = Cells(myPgIslRow, myRevPriCol).value
+                                        End If
+                                                
+                                            
+'Ver1.5: No longer needed
+'                                                'Get top 3 MPF
+'                                                myTopRev = ""
+'                                                'If myNonTerRevenue > 0 Then
+'                                                    Range(Cells(myPgIslRow, 1), Cells(myTerIslRow - 1, 1)).Copy
+'                                                    Workbooks.Add
+'                                                    myTempWorkbook = ActiveWorkbook.Name
+'                                                    Range("A1").PasteSpecial xlPasteAll
+'                                                    Workbooks(myActProFile).Activate
+'                                                    Range(Cells(myPgIslRow, myRevenueCol), Cells(myTerIslRow - 1, myRevenueCol)).Copy
+'                                                    Workbooks(myTempWorkbook).Activate
+'                                                    Range("B1").PasteSpecial xlValues
+'                                                        'Rename MPF
+'                                                        Columns("A:A").Replace What:="Nextest ", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+'                                                        Columns("A:A").Replace What:="HDD ", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+'                                                        Columns("A:A").Replace What:="Omneon ", Replacement:="Harmonic ", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+'                                                        myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+'                                                        Range("D2:D" & myTempTotal).Value = "=IF(COUNTIF(A2,""*930*"")>0,""Delete"",ROW(A2))"
+'                                                        Range("D2:D" & myTempTotal).Value = Range("D2:D" & myTempTotal).Value
+'                                                        Range("D1").Value = "Delete"
+'                                                        ActiveSheet.Range("$A$1:$D$" & myTempTotal).RemoveDuplicates Columns:=4, Header:=xlNo
+'
+'                                                    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+'                                                    Range("C2:C" & myTempTotal).Value = "=LEFT(A2,FIND("" ("",A2))"
+'                                                    Range("C2:C" & myTempTotal).Value = Range("C2:C" & myTempTotal).Value
+'                                                    Range("D2:D" & myTempTotal).Value = "=SUMIF(C:C,C2,B:B)"
+'                                                    Range("D2:D" & myTempTotal).Value = Range("D2:D" & myTempTotal).Value
+'                                                    'Range("E2:E" & myTempTotal).Value = "=IF(LEFT(C2,8)=""Teradyne"",""Delete"",Row(C2))"
+'                                                    'Range("E2:E" & myTempTotal).Value = Range("E2:E" & myTempTotal).Value
+'                                                    'Range("E1").Value = "Delete"
+'                                                    'ActiveSheet.Range("$C$1:$E$" & myTempTotal).RemoveDuplicates Columns:=3, Header:=xlNo
+'                                                    ActiveSheet.Range("$C$1:$E$" & myTempTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+'                                                    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+'                                                    ActiveWorkbook.Worksheets(ActiveSheet.Name).Sort.SortFields.Clear
+'                                                    ActiveWorkbook.Worksheets(ActiveSheet.Name).Sort.SortFields.Add Key:=Range("D1"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+'                                                    ActiveWorkbook.Worksheets(ActiveSheet.Name).Sort.SetRange Range("C1:D" & myTempTotal)
+'                                                    ActiveWorkbook.Worksheets(ActiveSheet.Name).Sort.Header = xlYes
+'                                                    ActiveWorkbook.Worksheets(ActiveSheet.Name).Sort.MatchCase = False
+'                                                    ActiveWorkbook.Worksheets(ActiveSheet.Name).Sort.Orientation = xlTopToBottom
+'                                                    ActiveWorkbook.Worksheets(ActiveSheet.Name).Sort.SortMethod = xlPinYin
+'                                                    ActiveWorkbook.Worksheets(ActiveSheet.Name).Sort.Apply
+'
+'                                                    For myA = 2 To 4
+'                                                        'If Range("D" & myA).Value > 0 Then
+'                                                            If myTopRev = "" Then
+'                                                                myTopRev = Trim(Range("C" & myA).Value)
+'                                                            Else
+'                                                                myTopRev = myTopRev & ", " & Trim(Range("C" & myA).Value)
+'                                                            End If
+'                                                        'End If
+'                                                    Next myA
+'                                                    Workbooks(myTempWorkbook).Close False
+                                                'End If
+                                                
+                                                    'myHeader = myQtr & "Current FcstNET DOI"
+                                                    myHeader = myQtr & "Current Fcst" & myNetDoiPara
+                                                    Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                                                    If mySearchValue Is Nothing Then
+                                                        MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                                                        End
+                                                    Else
+                                                        myNetDoiCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                                        myNetDoi = Round(Cells(myPgIslRow, myNetDoiCol).value, 0)
+                                                        myTerNetDoi = Round(Cells(myTerIslRow, myNetDoiCol).value, 0)
+                                                        myNonNetDoi = Round(Cells(myNonTerRow, myNetDoiCol).value, 0)
+                                                    End If
+                                                        'myHeader = myQtr & "PriorNET DOI"
+                                                        myHeader = myQtr & "Prior" & myNetDoiPara
+                                                        Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                                                        If mySearchValue Is Nothing Then
+                                                            MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                                                            End
+                                                        Else
+                                                            myPriorDoiCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                                                            myPriorDoi = Round(Cells(myPgIslRow, myPriorDoiCol).value, 0)
+                                                            myTerPriorDoi = Round(Cells(myTerIslRow, myPriorDoiCol).value, 0)
+                                                            myNonPriorDoi = Round(Cells(myNonTerRow, myPriorDoiCol).value, 0)
+                                                        End If
+'            End If
+            Workbooks(myMacroFile).Activate
+            Sheets("PptTemp").Select
+            'ISL
+            If myX = 1 Then
+                ActiveSheet.Shapes.Range(Array("Slide3a")).Select
+            Else
+                ActiveSheet.Shapes.Range(Array("Slide3b")).Select
+            End If
+            'Ver1.5: Gross DOI
+            If myGrossInv = myPriorInv Then
+                myGrossVar = "(remain)"
+            ElseIf myGrossInv - myPriorInv < 0 Then
+                'Ver1.5
+                'myInvSign = "-"
+                If myGrossInv - myPriorInv = -1 Then
+                    myGrossVar = "(-1day)"
+                Else
+                    myGrossVar = "(" & myGrossInv - myPriorInv & "days)"
+                End If
+            Else
+                'Ver1.5
+                'myInvSign = "+"
+                If myGrossInv - myPriorInv = 1 Then
+                    myGrossVar = "(+1day)"
+                Else
+                    myGrossVar = "(+" & myGrossInv - myPriorInv & "days)"
+                End If
+            End If
+                'Ver1.5:
+                If myNetDoi = myPriorDoi Then
+                    myNetDoiVar = "(remain)"
+                ElseIf myNetDoi - myPriorDoi < 0 Then
+                    If myNetDoi - myPriorDoi = -1 Then
+                        myNetDoiVar = "(-1day)"
+                    Else
+                        myNetDoiVar = "(" & myNetDoi - myPriorDoi & "days)"
+                    End If
+                Else
+                    If myNetDoi - myPriorDoi = 1 Then
+                        myNetDoiVar = "(+1day)"
+                    Else
+                        myNetDoiVar = "(+" & myNetDoi - myPriorDoi & "days)"
+                    End If
+                End If
+                    'Ver1.5: TER Net DOI
+                    'If myTerNetDoi - myTerPriorDoi < 0 Then
+                    '    myTerDoiSign = "-"
+                    'Else
+                    '    myTerDoiSign = "+"
+                    'End If
+                    If myTerNetDoi = myTerPriorDoi Then
+                        myTerNetDoiVar = "(remain)"
+                    ElseIf myTerNetDoi - myTerPriorDoi < 0 Then
+                        If myTerNetDoi - myTerPriorDoi = -1 Then
+                            myTerNetDoiVar = "(-1day)"
+                        Else
+                            myTerNetDoiVar = "(" & myTerNetDoi - myTerPriorDoi & "days)"
+                        End If
+                    Else
+                        If myTerNetDoi - myTerPriorDoi = 1 Then
+                            myTerNetDoiVar = "(+1day)"
+                        Else
+                            myTerNetDoiVar = "(+" & myTerNetDoi - myTerPriorDoi & "days)"
+                        End If
+                    End If
+                        'Ver1.5: Non TER Net DOI
+                        'If myNonNetDoi - myNonPriorDoi < 0 Then
+                        '    myNonDoiSign = "-"
+                        'Else
+                        '    myNonDoiSign = "+"
+                        'End If
+                        If myNonNetDoi = myNonPriorDoi Then
+                            myNonNetDoiVar = "(remain)"
+                        ElseIf myNonNetDoi - myNonPriorDoi < 0 Then
+                            If myNonNetDoi - myNonPriorDoi = -1 Then
+                                myNonNetDoiVar = "(-1day)"
+                            Else
+                                myNonNetDoiVar = "(-" & myNonNetDoi - myNonPriorDoi & "days)"
+                            End If
+                        Else
+                            If myNonNetDoi - myNonPriorDoi = 1 Then
+                                myNonNetDoiVar = "(+1day)"
+                            Else
+                                myNonNetDoiVar = "(+" & myNonNetDoi - myNonPriorDoi & "days)"
+                            End If
+                        End If
+            'Ver1.5: ConvertToMillionOrThousand
+            If myInvTo = myInvFrom Then
+                myInvVar = "(remain)"
+            ElseIf myInvTo - myInvFrom < 0 Then
+                myInvVar = "(-$" & ConvertToMillionOrThousand(Abs(myInvTo - myInvFrom)) & ")"
+            Else
+                myInvVar = "(+$" & ConvertToMillionOrThousand(Abs(myInvTo - myInvFrom)) & ")"
+            End If
+            If myInvFrom < 0 Then
+                myInvFrom = "-$" & ConvertToMillionOrThousand(Abs(myInvFrom))
+            Else
+                myInvFrom = "$" & ConvertToMillionOrThousand(Abs(myInvFrom))
+            End If
+            If myInvTo < 0 Then
+                myInvTo = "-$" & ConvertToMillionOrThousand(Abs(myInvTo))
+            Else
+                myInvTo = "$" & ConvertToMillionOrThousand(Abs(myInvTo))
+            End If
+'                If myInvTo = myInvFrom Then
+'                    myInvVar = "(remain)"
+'                ElseIf myInvTo - myInvFrom < 0 Then
+'                    myInvVar = "(-" & ConvertToMillionOrThousand(Abs(myInvTo - myInvFrom)) & ")"
+'                Else
+'                    myInvVar = "(+" & ConvertToMillionOrThousand(Abs(myInvTo - myInvFrom)) & ")"
+'                End If
+'                If myInvFrom < 0 Then
+'                    myInvFrom = "-$" & ConvertToMillionOrThousand(Abs(myInvFrom))
+'                Else
+'                    myInvFrom = "+$" & ConvertToMillionOrThousand(Abs(myInvFrom))
+'                End If
+'                If myInvTo < 0 Then
+'                    myInvTo = "(-$" & ConvertToMillionOrThousand(Abs(myInvTo))
+'                Else
+'                    myInvTo = "(+$" & ConvertToMillionOrThousand(Abs(myInvTo))
+'                End If
+            If myRevCur = myRevPri Then
+                myRevVar = "(remain)"
+            ElseIf myRevCur - myRevPri < 0 Then
+                myRevVar = "(-$" & ConvertToMillionOrThousand(Abs(myRevCur - myRevPri)) & ")"
+            Else
+                myRevVar = "(+$" & ConvertToMillionOrThousand(Abs(myRevCur - myRevPri)) & ")"
+            End If
+            If myRevCur < 0 Then
+                myRevCur = "-$" & ConvertToMillionOrThousand(Abs(myRevCur))
+            Else
+                myRevCur = "$" & ConvertToMillionOrThousand(Abs(myRevCur))
+            End If
+            If myRevPri < 0 Then
+                myRevPri = "-$" & ConvertToMillionOrThousand(Abs(myRevPri))
+            Else
+                myRevPri = "$" & ConvertToMillionOrThousand(Abs(myRevPri))
+            End If
+            
+            
+            'Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = _
+                myQtr & ":" & Chr(13) & _
+                Chr(149) & " Gross " & myGrossInv & " vs prior " & myPriorInv & " (" & myInvSign & Abs(myGrossInv - myPriorInv) & "days)" & Chr(13) & _
+                Chr(149) & " Inventory " & myInvFrom & " to " & myInvTo & " (" & myInvPrior & ")" & Chr(13) & _
+                Chr(149) & " Revenue " & myRevenue & myRevenueText & "(" & myTopRev & ")" & Chr(13) & _
+                Chr(149) & " Net " & myNetDoi & " vs. prior " & myPriorDoi & Chr(13) & _
+                Chr(149) & " FF1 Net " & myTerNetDoi & " vs. prior " & myTerPriorDoi & " (" & myTerDoiSign & Abs(myTerNetDoi - myTerPriorDoi) & "days)" & Chr(13) & _
+                Chr(149) & " FF2 Net " & myNonNetDoi & " vs. prior " & myNonPriorDoi & " (" & myNonDoiSign & Abs(myNonNetDoi - myNonPriorDoi) & "days)" & Chr(13)
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = _
+                myQtr & ":" & Chr(13) & _
+                "Gross DOI " & myGrossInv & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPriorInv & " " & myGrossVar & Chr(13) & _
+                "Net DOI   " & myNetDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myPriorDoi & myNetDoiVar & Chr(13) & _
+                "Inventory " & myInvFrom & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myInvTo & " " & myInvVar & Chr(13) & _
+                "Revenue " & myRevPri & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myRevCur & " " & myRevVar & Chr(13) & _
+                "FF1 Net " & myTerNetDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myTerPriorDoi & " " & myTerNetDoiVar & Chr(13) & _
+                "FF2 Net " & myNonNetDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonPriorDoi & " " & myNonDoiSign & myNonNetDoiVar & Chr(13)
+    
+            Selection.ShapeRange.TextFrame2.TextRange.Font.Bold = msoFalse
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(1, 6).Font.Bold = msoTrue
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(16, Len(myGrossInv)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            'Ver1.1: change new format of reading
+            'myStrLen = 27 + Len(myGrossInv) + Len(myPriorInv)
+            myStrLen = Len(myQtr & ":" & Chr(13) & Chr(149) & " Gross " & myGrossInv & " vs prior " & myPriorInv & " ") + 1
+            If myGrossInv - myPriorInv < 0 Then
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(Abs(myGrossInv - myPriorInv)) + 7).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+            Else
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(Abs(myGrossInv - myPriorInv)) + 7).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+            End If
+            'Ver1.1: change new format of reading
+            'myStrLen = myStrLen + 20 + Len(Abs(myGrossInv - myPriorInv))
+            myStrLen = Len(myQtr & ":" & Chr(13) & Chr(149) & " Gross " & myGrossInv & " vs prior " & myPriorInv & " (" & myInvSign & Abs(myGrossInv - myPriorInv) & "days)" & Chr(13) & Chr(149) & " Inventory ") + 1
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myInvFrom)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            'Ver1.1: change new format of reading
+            'myStrLen = myStrLen + 24 + Len(myInvTo) + Len(myInvPrior)
+            myStrLen = Len(myQtr & ":" & Chr(13) & Chr(149) & " Gross " & myGrossInv & " vs prior " & myPriorInv & " (" & myInvSign & Abs(myGrossInv - myPriorInv) & "days)" & Chr(13) & Chr(149) & " Inventory " & myInvFrom & " to " & myInvTo & " (" & myInvPrior & ")" & Chr(13) & Chr(149) & " Revenue ") + 1
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myRevenue)).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+            'Ver1.1: change new format of reading
+            'myStrLen = myStrLen + 9 + Len(myRevenue) + Len(myRevenueText) + Len(myTopRev)
+            myStrLen = Len(myQtr & ":" & Chr(13) & Chr(149) & " Gross " & myGrossInv & " vs prior " & myPriorInv & " (" & myInvSign & Abs(myGrossInv - myPriorInv) & "days)" & Chr(13) & Chr(149) & " Inventory " & myInvFrom & " to " & myInvTo & " (" & myInvPrior & ")" & Chr(13) & Chr(149) & " Revenue " & myRevenue & myRevenueText & "(" & myTopRev & ")" & Chr(13) & Chr(149) & " Net ") + 1
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNetDoi)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            'Ver1.1: change new format of reading
+            'myStrLen = myStrLen + 22 + Len(myNetDoi) + Len(myPriorDoi)
+            myStrLen = Len(myQtr & ":" & Chr(13) & Chr(149) & " Gross " & myGrossInv & " vs prior " & myPriorInv & " (" & myInvSign & Abs(myGrossInv - myPriorInv) & "days)" & Chr(13) & Chr(149) & " Inventory " & myInvFrom & " to " & myInvTo & " (" & myInvPrior & ")" & Chr(13) & Chr(149) & " Revenue " & myRevenue & myRevenueText & "(" & myTopRev & ")" & Chr(13) & Chr(149) & " Net " & myNetDoi & " vs. prior " & myPriorDoi & Chr(13) & Chr(149) & " FF1 Net ") + 1
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonNetDoi)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            'Ver1.1: change new format of reading
+            'myStrLen = myStrLen + 12 + Len(myNonNetDoi) + Len(myTerPriorDoi)
+            myStrLen = Len(myQtr & ":" & Chr(13) & Chr(149) & " Gross " & myGrossInv & " vs prior " & myPriorInv & " (" & myInvSign & Abs(myGrossInv - myPriorInv) & "days)" & Chr(13) & Chr(149) & " Inventory " & myInvFrom & " to " & myInvTo & " (" & myInvPrior & ")" & Chr(13) & Chr(149) & " Revenue " & myRevenue & myRevenueText & "(" & myTopRev & ")" & Chr(13) & Chr(149) & " Net " & myNetDoi & " vs. prior " & myPriorDoi & Chr(13) & Chr(149) & " FF1 Net " & myTerNetDoi & " vs. prior " & myTerPriorDoi & " ") + 1
+            If myTerNetDoi - myTerPriorDoi < 0 Then
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myTerDoiSign & Abs(myTerNetDoi - myTerPriorDoi)) + 6).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+            Else
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myTerDoiSign & Abs(myTerNetDoi - myTerPriorDoi)) + 6).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+            End If
+            'Ver1.1: change new format of reading
+            'myStrLen = myStrLen + 21 + Len(myTerDoiSign & Abs(myTerNetDoi - myTerPriorDoi))
+            myStrLen = Len(myQtr & ":" & Chr(13) & Chr(149) & " Gross " & myGrossInv & " vs prior " & myPriorInv & " (" & myInvSign & Abs(myGrossInv - myPriorInv) & "days)" & Chr(13) & Chr(149) & " Inventory " & myInvFrom & " to " & myInvTo & " (" & myInvPrior & ")" & Chr(13) & Chr(149) & " Revenue " & myRevenue & myRevenueText & "(" & myTopRev & ")" & Chr(13) & Chr(149) & " Net " & myNetDoi & " vs. prior " & myPriorDoi & Chr(13) & Chr(149) & " FF1 Net " & myTerNetDoi & " vs. prior " & myTerPriorDoi & " (" & myTerDoiSign & Abs(myTerNetDoi - myTerPriorDoi) & "days)" & Chr(13) & Chr(149) & " FF2 Net ") + 1
+            'Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myTerNetDoi)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonNetDoi)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            
+            'Ver1.1: change new format of reading
+            'myStrLen = myStrLen + 14 + Len(myTerNetDoi)
+            myStrLen = Len(myQtr & ":" & Chr(13) & Chr(149) & " Gross " & myGrossInv & " vs prior " & myPriorInv & " (" & myInvSign & Abs(myGrossInv - myPriorInv) & "days)" & Chr(13) & Chr(149) & " Inventory " & myInvFrom & " to " & myInvTo & " (" & myInvPrior & ")" & Chr(13) & Chr(149) & " Revenue " & myRevenue & myRevenueText & "(" & myTopRev & ")" & Chr(13) & Chr(149) & " Net " & myNetDoi & " vs. prior " & myPriorDoi & Chr(13) & Chr(149) & " FF1 Net " & myTerNetDoi & " vs. prior " & myTerPriorDoi & " (" & myTerDoiSign & Abs(myTerNetDoi - myTerPriorDoi) & "days)" & Chr(13) & Chr(149) & " FF2 Net " & myNonNetDoi & " vs. prior " & myNonPriorDoi & " ") + 1
+            If myNonDoiSign = "-" Then
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonDoiSign & Abs(myNonNetDoi - myNonPriorDoi)) + 6).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+            Else
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonDoiSign & Abs(myNonNetDoi - myNonPriorDoi)) + 6).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+            End If
+            
+            'Non-TER
+            If myX = 1 Then
+                ActiveSheet.Shapes.Range(Array("Slide4a")).Select
+            Else
+                ActiveSheet.Shapes.Range(Array("Slide4b")).Select
+            End If
+            
+'Ver1.4: Move down
+'            If myGrossInvNon - myPriorInvNon < 0 Then
+'                myInvSign = "-"
+'            Else
+'                myInvSign = "+"
+'            End If
+''                If myTerNetDoi - myTerPriorDoi < 0 Then
+''                    myTerDoiSign = "-"
+''                Else
+''                    myTerDoiSign = "+"
+''                End If
+''                    If myNonNetDoi - myNonPriorDoi < 0 Then
+''                        myNonDoiSign = "-"
+''                    Else
+''                        myNonDoiSign = "+"
+''                    End If
+'            If myTerRevenue > 0 And myNonTerRevenue > 0 Then
+'                myRevenueText = " from Teradyne & Non TER "
+'            ElseIf myTerRevenue > 0 Then
+'                myRevenueText = " from Teradyne "
+'            ElseIf myNonTerRevenue > 0 Then
+'                myRevenueText = " from Non TER "
+'            Else
+'                myRevenueText = ""
+'            End If
+'            Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = _
+'                myQtr & Chr(13) & _
+'                "Gross DOI " & myPriorInvNon & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myGrossInvNon & " (" & myInvSign & Abs(myGrossInvNon - myPriorInvNon) & "days)" & Chr(13) & _
+'                "Net DOI " & myNonPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonNetDoi & " (" & myNonDoiSign & Abs(myNonNetDoi - myNonPriorDoi) & "days)"
+'
+'            Selection.ShapeRange.TextFrame2.TextRange.Font.Bold = msoFalse
+'            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(1, 5).Font.Bold = msoTrue
+'            'Selection.ShapeRange(1).TextFrame2.TextRange.Characters(17, Len(myGrossInv)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+'            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(24, Len(myGrossInvNon)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+'            myStrLen = 22 + Len(myGrossInv) + Len(myPriorInv)
+'            If myGrossInv - myPriorInv < 0 Then
+'                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(Abs(myGrossInv - myPriorInv)) + 7).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+'            Else
+'                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(Abs(myGrossInv - myPriorInv)) + 7).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+'            End If
+'            myStrLen = myStrLen + 22 + Len(Abs(myGrossInv - myPriorInv))
+'            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonNetDoi)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+'            myStrLen = myStrLen + 1 + Len(myNonNetDoi)
+'            If myNonNetDoi - myNonPriorDoi < 0 Then
+'                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonNetDoi - myNonPriorDoi) + 7).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+'            Else
+'                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonNetDoi - myNonPriorDoi) + 7).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+'            End If
+            
+            'Slide 4
+            myText = ""
+            For myZ = 1 To 5
+                If Workbooks(myMacroFile).Sheets("Macro").Range("D" & 47 + myZ).value <> "" Then
+                    myCus = Workbooks(myMacroFile).Sheets("Macro").Range("D" & 47 + myZ).value
+                    myCusCheck = Application.WorksheetFunction.CountIf(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Columns("A:A"), myCus)
+                    If myCusCheck > 0 Then
+                        'DOI
+                        myShortCus = InStr(1, myCus, "(", vbBinaryCompare)
+                        If myShortCus > 0 Then
+                            myShortCus = Left(myCus, myShortCus - 2) & " Net "
+                        Else
+                            myShortCus = myCus & " Net "
+                        End If
+                        myCusIndex = Application.WorksheetFunction.Match(myCus, Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Columns("A:A"), 0)
+                        myCusPriorDoi = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myPriorDoiCol).value, 0)
+                        myCusNetDoi = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myNetDoiCol).value, 0)
+                            'Revenue
+                            myCusRevenue = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myRevenueCol).value, 0)
+                            If myCusRevenue < 0 Then
+                                myRevSign = ""
+                            Else
+                                myRevSign = "+"
+                            End If
+                            If Abs(myCusRevenue) = 0 Then
+                                myCusRevenue = " remain"
+                            ElseIf Abs(myCusRevenue) < 1000 Then
+                                myCusRevenue = myRevSign & Format(myCusRevenue, "$#")
+                            ElseIf Abs(myCusRevenue) < 1000000 Then
+                                myCusRevenue = myRevSign & Format(myCusRevenue / 1000, "$###K")
+                            Else
+                                myCusRevenue = myRevSign & Format(myCusRevenue / 1000000, "$#.0M")
+                            End If
+                                'Inventory
+                                myCusInventory = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myInvFromCol).value, 0)
+                                If myCusInventory < 0 Then
+                                    myInvSign = ""
+                                Else
+                                    myInvSign = "+"
+                                End If
+                                If Abs(myCusInventory) = 0 Then
+                                    myCusInventory = " remain"
+                                ElseIf Abs(myCusInventory) < 1000 Then
+                                    myCusInventory = myInvSign & Format(myCusInventory, "$#")
+                                ElseIf Abs(myCusInventory) < 1000000 Then
+                                    myCusInventory = myInvSign & Format(myCusInventory / 1000, "$###K")
+                                Else
+                                    myCusInventory = myInvSign & Format(myCusInventory / 1000000, "$#.0M")
+                                End If
+                        If myText = "" Then
+                            myText = "  " & Chr(149) & " " & myShortCus & " " & myCusPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myCusNetDoi & ", revenue " & myCusRevenue & ", inventory " & myCusInventory & Chr(10) & "     " & Chr(187) & Chr(10) & "     " & Chr(187)
+                        Else
+                            'Ver1.4:
+                            'myText = myText & Chr(10) & myShortCus & " " & myCusPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myCusNetDoi & ", revenue " & myCusRevenue & ", inventory " & myCusInventory
+                            myText = myText & Chr(10) & "  " & Chr(149) & " " & myShortCus & " " & myCusPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myCusNetDoi & ", revenue " & myCusRevenue & ", inventory " & myCusInventory & Chr(10) & "     " & Chr(187) & Chr(10) & "     " & Chr(187)
+                        
+                            ' myText & Chr(10) & "  " & Chr(149) & " " &
+                        End If
+                    End If
+                End If
+            Next myZ
+            
+            'Ver1.4: Move from top to here
+            If myGrossInvNon - myPriorInvNon < 0 Then
+                myInvSign = "-"
+            Else
+                myInvSign = "+"
+            End If
+            If myTerRevenue > 0 And myNonTerRevenue > 0 Then
+                myRevenueText = " from Teradyne & Non TER "
+            ElseIf myTerRevenue > 0 Then
+                myRevenueText = " from Teradyne "
+            ElseIf myNonTerRevenue > 0 Then
+                myRevenueText = " from Non TER "
+            Else
+                myRevenueText = ""
+            End If
+            
+            
+            'Ver1.4:
+            'Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = _
+                myQtr & Chr(13) & _
+                "Gross DOI " & myPriorInvNon & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myGrossInvNon & " (" & myInvSign & Abs(myGrossInvNon - myPriorInvNon) & "days)" & Chr(13) & _
+                "Net DOI " & myNonPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonNetDoi & " (" & myNonDoiSign & Abs(myNonNetDoi - myNonPriorDoi) & "days)"
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = _
+                myQtr & Chr(13) & _
+                "Gross DOI " & myPriorInvNon & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myGrossInvNon & " (" & myInvSign & Abs(myGrossInvNon - myPriorInvNon) & "days)" & Chr(13) & _
+                "Net DOI " & myNonPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonNetDoi & " (" & myNonDoiSign & Abs(myNonNetDoi - myNonPriorDoi) & "days)" & Chr(10) & myText
+    
+            Selection.ShapeRange.TextFrame2.TextRange.Font.Bold = msoFalse
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(1, 5).Font.Bold = msoTrue
+            'Selection.ShapeRange(1).TextFrame2.TextRange.Characters(17, Len(myGrossInv)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(24, Len(myGrossInvNon)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            myStrLen = 22 + Len(myGrossInv) + Len(myPriorInv)
+            If myGrossInv - myPriorInv < 0 Then
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(Abs(myGrossInv - myPriorInv)) + 7).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+            Else
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(Abs(myGrossInv - myPriorInv)) + 7).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+            End If
+            myStrLen = myStrLen + 22 + Len(Abs(myGrossInv - myPriorInv))
+            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonNetDoi)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            myStrLen = myStrLen + 1 + Len(myNonNetDoi)
+            If myNonNetDoi - myNonPriorDoi < 0 Then
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonNetDoi - myNonPriorDoi) + 7).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+            Else
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myNonNetDoi - myNonPriorDoi) + 7).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+            End If
+            'If myX = 1 Then
+            '    ActiveSheet.Shapes.Range(Array("Slide4aa")).Select
+            'Else
+            '    ActiveSheet.Shapes.Range(Array("Slide4bb")).Select
+            'End If
+            'Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = myText
+            'Selection.ShapeRange(1).TextFrame2.TextRange.ParagraphFormat.Bullet.Type = msoBulletUnnumbered
+            
+            'myNetStr = 1
+            
+            'VEr1.4:
+            'myNetStr = 0
+            myNetStr = Len(myQtr & Chr(13) & _
+                "Gross DOI " & myPriorInvNon & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myGrossInvNon & " (" & myInvSign & Abs(myGrossInvNon - myPriorInvNon) & "days)" & Chr(13) & _
+                "Net DOI " & myNonPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonNetDoi & " (" & myNonDoiSign & Abs(myNonNetDoi - myNonPriorDoi) & "days)" & Chr(10)) + 6
+            myText = myQtr & Chr(13) & _
+                    "Gross DOI " & myPriorInvNon & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myGrossInvNon & " (" & myInvSign & Abs(myGrossInvNon - myPriorInvNon) & "days)" & Chr(13) & _
+                    "Net DOI " & myNonPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myNonNetDoi & " (" & myNonDoiSign & Abs(myNonNetDoi - myNonPriorDoi) & "days)" & Chr(10) & myText
+            For myZ = 1 To 5
+                'myNetStr = InStr(myNetStr + 1, myText, ", revenue", vbBinaryCompare)
+                'myNetStp = InStr(myNetStr, myText, ChrW(&H2500) & ChrW(&H27A4), vbBinaryCompare)
+                'Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myNetStr + 5, myNetStp - myNetStr - 6).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+                myNetStr = InStr(myNetStr + 1, myText, ChrW(&H27A4), vbBinaryCompare)
+                    'Ver1.4:
+                    If myNetStr = 0 Then Exit For
+                myNetStp = InStr(myNetStr, myText, ", revenue", vbBinaryCompare)
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myNetStr + 2, myNetStp - myNetStr - 2).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+            Next myZ
+            
+            'Slide 5
+            myText = ""
+            For myZ = 1 To 5
+                If Workbooks(myMacroFile).Sheets("Macro").Range("D" & 62 + myZ).value <> "" Then
+                    myCus = Workbooks(myMacroFile).Sheets("Macro").Range("D" & 62 + myZ).value
+                    myCusCheck = Application.WorksheetFunction.CountIf(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Columns("A:A"), myCus)
+                    If myCusCheck > 0 Then
+                        'DOI
+                        'myShortCus = InStr(1, myCus, "(", vbBinaryCompare)
+                        'If myShortCus > 0 Then
+                        '    myShortCus = Left(myCus, myShortCus - 2) & " Net "
+                        'Else
+                        '    myShortCus = myCus & " Net "
+                        'End If
+                        myCusIndex = Application.WorksheetFunction.Match(myCus, Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Columns("A:A"), 0)
+                        
+                        'myGrossInvCol
+                        myCusGross = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myGrossInvCol).value, 0)
+                        myCusPrior = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myPriorInvCol).value, 0)
+                        
+                        myCusPriorDoi = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myPriorDoiCol).value, 0)
+                        myCusNetDoi = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myNetDoiCol).value, 0)
+                            'Revenue
+                            myCusRevenue = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myRevenueCol).value, 0)
+                            If myCusRevenue < 0 Then
+                                myRevSign = ""
+                            Else
+                                myRevSign = "+"
+                            End If
+                            If Abs(myCusRevenue) = 0 Then
+                                myCusRevenue = " remain"
+                            ElseIf Abs(myCusRevenue) < 1000 Then
+                                myCusRevenue = myRevSign & Format(myCusRevenue, "$#")
+                            ElseIf Abs(myCusRevenue) < 1000000 Then
+                                myCusRevenue = myRevSign & Format(myCusRevenue / 1000, "$###K")
+                            Else
+                                myCusRevenue = myRevSign & Format(myCusRevenue / 1000000, "$#.0M")
+                            End If
+                                'Inventory
+                                myCusInvFrom = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myInvFromCol).value, 0)
+                                If myCusInvFrom < 0 Then
+                                    myInvFromSign = ""
+                                Else
+                                    myInvFromSign = "+"
+                                End If
+                                If Abs(myCusInvFrom) = 0 Then
+                                    myCusInvFrom = " remain"
+                                ElseIf Abs(myCusInvFrom) < 1000 Then
+                                    myCusInvFrom = myInvFromSign & Format(myCusInvFrom, "$#")
+                                ElseIf Abs(myCusInvFrom) < 1000000 Then
+                                    myCusInvFrom = myInvFromSign & Format(myCusInvFrom / 1000, "$###K")
+                                Else
+                                    myCusInvFrom = myInvFromSign & Format(myCusInvFrom / 1000000, "$#.0M")
+                                End If
+                                myCusInvto = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myInvToCol).value, 0)
+                                'If myCusInvto < 0 Then
+                                '    myInvToSign = ""
+                                'Else
+                                '    myInvToSign = "+"
+                                'End If
+                                If Abs(myCusInvto) = 0 Then
+                                    myCusInvto = " remain"
+                                ElseIf Abs(myCusInvto) < 1000 Then
+                                    myCusInvto = Format(myCusInvto, "$#")
+                                ElseIf Abs(myCusInvto) < 1000000 Then
+                                    myCusInvto = Format(myCusInvto / 1000, "$###K")
+                                Else
+                                    myCusInvto = Format(myCusInvto / 1000000, "$#.0M")
+                                End If
+                                myCusInvTotal = Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myInvToCol).value, 0) - Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myInvFromCol).value, 0)
+                                'If myCusInvTotal < 0 Then
+                                '    myInvTotalSign = ""
+                                'Else
+                                '    myInvTotalSign = "+"
+                                'End If
+                                If Abs(myCusInvTotal) = 0 Then
+                                    myCusInvTotal = " remain"
+                                ElseIf Abs(myCusInvTotal) < 1000 Then
+                                    myCusInvTotal = Format(myCusInvTotal, "$#")
+                                ElseIf Abs(myCusInvTotal) < 1000000 Then
+                                    myCusInvTotal = Format(myCusInvTotal / 1000, "$###K")
+                                Else
+                                    myCusInvTotal = Format(myCusInvTotal / 1000000, "$#.0M")
+                                End If
+                        'If myText = "" Then
+                        '    myText = myShortCus & " " & myCusPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myCusNetDoi & ", revenue " & myCusRevenue & ", inventory " & myCusInventory
+                        'Else
+                        '    myText = myText & Chr(10) & myShortCus & " " & myCusPriorDoi & " " & ChrW(&H2500) & ChrW(&H27A4) & " " & myCusNetDoi & ", revenue " & myCusRevenue & ", inventory " & myCusInventory
+                        'End If
+                    End If
+                    If myZ = 1 Then
+                        If myX = 1 Then
+                            ActiveSheet.Shapes.Range(Array("Slide5a")).Select
+                            Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = myQtr & " " & myCus
+                            ActiveSheet.Shapes.Range(Array("Slide5aa")).Select
+                        Else
+                            ActiveSheet.Shapes.Range(Array("Slide5b")).Select
+                            Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = myQtr & " " & myCus
+                            ActiveSheet.Shapes.Range(Array("Slide5bb")).Select
+                        End If
+                    Else
+                        If myX = 1 Then
+                            ActiveSheet.Shapes.Range(Array("Slide5a-1")).Select
+                            Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = myCus
+                            ActiveSheet.Shapes.Range(Array("Slide5aa-1")).Select
+                        Else
+                            ActiveSheet.Shapes.Range(Array("Slide5b-1")).Select
+                            Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = myCus
+                            ActiveSheet.Shapes.Range(Array("Slide5bb-1")).Select
+                        End If
+                    End If
+                    Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = "Gross DOI at " & myCusGross & " days vs prior " & myCusPrior & " days (" & myCusGross - myCusPrior & " days)" & Chr(10) & "Inventory " & myCusInvFrom & " to " & myCusInvto & " (" & myCusInvTotal & ")" & Chr(10) & "Revenue " & myCusRevenue & Chr(10) & "Net DOI " & myCusNetDoi & " days vs prior " & myCusPriorDoi & " days"
+                    Selection.ShapeRange(1).TextFrame2.TextRange.ParagraphFormat.Bullet.Type = msoBulletUnnumbered
+                    'Color Font
+                    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(14, Len(myCusGross) + 5).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+                        myStrLen = Len("Gross DOI at " & myCusGross & " days vs prior " & myCusPrior & " days (")
+                        If myCusGross - myCusPrior < 0 Then
+                            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myCusGross - myCusPrior) + 7).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+                        Else
+                            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myCusGross - myCusPrior) + 7).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+                        End If
+                        myStrLen = Len("Gross DOI at " & myCusGross & " days vs prior " & myCusPrior & " days (" & myCusGross - myCusPrior & " days)" & Chr(10) & "Inventory ") + 1
+                        If Left(myCusInvFrom, 1) = "-" Then
+                            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myCusInvFrom)).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+                        Else
+                            Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myCusInvFrom)).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+                        End If
+                            myStrLen = Len("Gross DOI at " & myCusGross & " days vs prior " & myCusPrior & " days (" & myCusGross - myCusPrior & " days)" & Chr(10) & "Inventory " & myCusInvFrom & " to " & myCusInvto & " (") + 1
+                            'If Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myInvToCol).Value, 0) - Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myInvFromCol).Value, 0) < 0 Then
+                            '    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myCusInvTotal)).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+                            'Else
+                            '    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myCusInvTotal)).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+                            'End If
+                                myStrLen = Len("Gross DOI at " & myCusGross & " days vs prior " & myCusPrior & " days (" & myCusGross - myCusPrior & " days)" & Chr(10) & "Inventory " & myCusInvFrom & " to " & myCusInvto & " (" & myCusInvTotal & ")" & Chr(10) & "Revenue ") + 1
+                                If Round(Workbooks(myActProFile).Sheets(myQtr & " vs Prior").Cells(myCusIndex, myRevenueCol).value, 0) < 0 Then
+                                    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myCusRevenue)).Font.Fill.ForeColor.RGB = RGB(192, 0, 0) 'Red
+                                Else
+                                    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myCusRevenue)).Font.Fill.ForeColor.RGB = RGB(0, 176, 80) 'Green
+                                End If
+                                    myStrLen = Len("Gross DOI at " & myCusGross & " days vs prior " & myCusPrior & " days (" & myCusGross - myCusPrior & " days)" & Chr(10) & "Inventory " & myCusInvFrom & " to " & myCusInvto & " (" & myCusInvTotal & ")" & Chr(10) & "Revenue " & myCusRevenue & Chr(10) & "Net DOI ") + 1
+                                    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myStrLen, Len(myCusNetDoi) + 5).Font.Fill.ForeColor.RGB = RGB(0, 112, 192) 'Blue
+                End If
+            Next myZ
+        
+            'Slide 6
+            Workbooks(myOverdriveFile).Activate
+            myTotalOverdrive = Range("A" & Rows.Count).End(xlUp).Row
+        
+            myHeader = "Cummulative Overdrive $'000"
+            Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+            If mySearchValue Is Nothing Then
+                MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                End
+            Else
+                myCumCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+            End If
+            myHeader = myOriQtr
+            Set mySearchValue = Range(Cells(3, myCumCol - 1), Cells(3, Columns.Count)).Find(What:=myHeader, After:=Cells(3, myCumCol - 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+            If mySearchValue Is Nothing Then
+                MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                End
+            Else
+                myOverdriveQtrCol = Range(Cells(3, myCumCol - 1), Cells(3, Columns.Count)).Find(What:=myOriQtr, After:=Cells(3, myCumCol - 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+            End If
+            
+            myText = ""
+            For myZ = 1 To 5
+                If myX = 1 Then
+                    myChar = "D"
+                Else
+                    myChar = "I"
+                End If
+                If Workbooks(myMacroFile).Sheets("Macro").Range(myChar & 80 + myZ).value <> "" Then
+                    myCus = Workbooks(myMacroFile).Sheets("Macro").Range(myChar & 80 + myZ).value
+                    'Overdrive
+                    Workbooks(myOverdriveFile).Activate
+                    myCusCheck = Application.WorksheetFunction.CountIf(Columns("A:A"), myCus)
+                    If myCusCheck > 0 Then
+                        myHeader = myCus
+                        Set mySearchValue = Columns("A:A").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                        If mySearchValue Is Nothing Then
+                            MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                            End
+                        Else
+                            myCusRow = Columns("A:A").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+                        End If
+                        myCusOverDrive1 = Cells(myCusRow, myOverdriveQtrCol).value
+                        If myCusOverDrive1 < 1000 Then
+                            myCusOverDrive1 = Format(myCusOverDrive1, "$#")
+                        ElseIf myCusOverDrive1 < 1000000 Then
+                            myCusOverDrive1 = Format(myCusOverDrive1 / 1000, "$###K")
+                        Else
+                            myCusOverDrive1 = Format(myCusOverDrive1 / 1000000, "$#.0M")
+                        End If
+                        myCusOverDrive2 = Cells(myCusRow, myOverdriveQtrCol + 1).value
+                        If myCusOverDrive2 < 1000 Then
+                            myCusOverDrive2 = Format(myCusOverDrive2, "$#")
+                        ElseIf myCusOverDrive2 < 1000000 Then
+                            myCusOverDrive2 = Format(myCusOverDrive2 / 1000, "$###K")
+                        Else
+                            myCusOverDrive2 = Format(myCusOverDrive2 / 1000000, "$#.0M")
+                        End If
+                    End If
+                    'Cash Deposit
+                    Workbooks(myActProFile).Activate
+                    Sheets(myOriQtr & " vs Prior").Select
+                    myHeader = myOriQtr & "Current FcstCD ('000)"
+                    Set mySearchValue = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+                    If mySearchValue Is Nothing Then
+                        MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+                        End
+                    Else
+                        myCdCol = Rows("1:1").Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+                        If myX = 1 Then
+                            myCusCd = Workbooks(myMacroFile).Sheets("Macro").Range("E" & 80 + myZ).value
+                            myPrefCusCd = Workbooks(myMacroFile).Sheets("Macro").Range("F" & 80 + myZ).value
+                        Else
+                            myCusCd = Workbooks(myMacroFile).Sheets("Macro").Range("J" & 80 + myZ).value
+                            myPrefCusCd = Workbooks(myMacroFile).Sheets("Macro").Range("K" & 80 + myZ).value
+                        End If
+                        myCusCdRow = Columns("A:A").Find(What:=myCusCd, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+                        myTerCd = Cells(myCusCdRow, myCdCol).value
+                        If Abs(myTerCd) < 1000 Then
+                            myTerCd = Format(myTerCd, "$#")
+                        ElseIf Abs(myTerCd) < 1000000 Then
+                            myTerCd = Format(myTerCd / 1000, "$###K")
+                        Else
+                            myTerCd = Format(myTerCd / 1000000, "$#.0M")
+                        End If
+'                            myNonCd = Cells(myNonTerRow, myCdCol).Value
+'                            If Abs(myNonCd) < 1000 Then
+'                                myNonCd = Format(myNonCd, "$#")
+'                            ElseIf Abs(myNonCd) < 1000000 Then
+'                                myNonCd = Format(myNonCd / 1000, "$###K")
+'                            Else
+'                                myNonCd = Format(myNonCd / 1000000, "$#.0M")
+'                            End If
+                    End If
+                    If myText = "" Then
+                        If myX = 1 Then
+                            myText = "Teradyne"
+                        Else
+                            myText = "Non-Teradyne"
+                        End If
+                    End If
+                    If myCusOverDrive1 = "$" Then
+                        myOdText1 = " no overdrive"
+                    Else
+                        myOdText1 = " overdrive " & myCusOverDrive1
+                    End If
+                        If myCusOverDrive2 = "$" Then
+                            myOdText2 = " no overdrive"
+                        Else
+                            myOdText2 = " cumm overdrive " & myCusOverDrive2
+                        End If
+                    If myX = 1 Then
+                        If myZ = 1 Then
+                            myText = myText & Chr(10) & "  " & Chr(149) & " " & Left(myOriQtr, 2) & myOdText1 & ", " & Left(myNextQtr, 2) & myOdText2 & " covered with current on hand cash deposit of " & myTerCd
+                        Else
+                            myText = myText & Chr(10) & "  " & Chr(149) & " " & myPrefCusCd & " " & Left(myOriQtr, 2) & myOdText1 & ", " & Left(myNextQtr, 2) & myOdText2 & " covered with current on hand cash deposit of " & myTerCd
+                        End If
+                    Else
+                        If myZ = 1 Then
+                            myText = myText & Chr(10) & "  " & Chr(149) & " " & Left(myOriQtr, 2) & myOdText1 & ", " & Left(myNextQtr, 2) & myOdText2 & " vs " & myTerCd & " cash deposit"
+                        Else
+                            myText = myText & Chr(10) & "  " & Chr(149) & " " & myPrefCusCd & " " & Left(myOriQtr, 2) & myOdText1 & ", " & Left(myNextQtr, 2) & myOdText2 & " vs " & myTerCd & " cash deposit"
+                        End If
+                    End If
+                End If
+            Next myZ
+            Workbooks(myMacroFile).Activate
+            myOdStr = 0
+            If myX = 1 Then
+                ActiveSheet.Shapes.Range(Array("Slide6a")).Select
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = myText & Chr(10) & "  " & Chr(149) & " Program and CDCM continuously working with customer on guidance to refresh the upside models and readjust the loading timely."
+                For myZ = 1 To 5
+                    myOdStr = InStr(myOdStr + 1, myText, Left(myQtr, 2), vbBinaryCompare)
+                    If myOdStr = 0 Then Exit For
+                    myOdStp = InStr(myOdStr, myText, ",", vbBinaryCompare)
+                    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myOdStr + 2, myOdStp - myOdStr - 2).Font.Fill.ForeColor.RGB = RGB(255, 102, 0) 'Orange
+                Next myZ
+            Else
+                ActiveSheet.Shapes.Range(Array("Slide6b")).Select
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = myText
+                Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Font.Bold = msoFalse
+                For myZ = 1 To 5
+                    myOdStr = InStr(myOdStr + 1, myText, Left(myOriQtr, 2), vbBinaryCompare)
+                    If myOdStr = 0 Then Exit For
+                    myOdStp = InStr(myOdStr, myText, ",", vbBinaryCompare)
+                    Selection.ShapeRange(1).TextFrame2.TextRange.Characters(myOdStr + 2, myOdStp - myOdStr - 2).Font.Fill.ForeColor.RGB = RGB(255, 102, 0) 'Orange
+                Next myZ
+            End If
+        Next myX
+        
+        
+    Next myY
+    Sheets("Macro").Select
+End Sub
+Sub PptCreator()
+    myStrTime = Time
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    myIslProInvFile = Range("B4").value
+    myTerProInvFile = Range("B6").value
+    
+    Workbooks.Open Filename:=myTerProInvFile, ReadOnly:=True, UpdateLinks:=False
+    myTerProInvFilename = ActiveWorkbook.Name
+    SheetSelect "Inventory Projection"
+    If ActiveSheet.Name <> "Inventory Projection" Then
+        MsgBox "Inventory Projection sheet not found! " & vbNewLine & "The Macro will stop here..."
+        End
+    End If
+    myHeader = "ISL"
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+        End
+    Else
+        myIslRow = Cells.Find(What:=myHeader, After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+        myHeader = "Site"
+        Set mySearchValue = Cells.Find(What:=myHeader, After:=Cells(myIslRow, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+        If mySearchValue Is Nothing Then
+            MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+            End
+        Else
+            mySiteRow = Cells.Find(What:=myHeader, After:=Cells(myIslRow, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+            myLastCol = Cells(mySiteRow, Columns.Count).End(xlToLeft).Column
+            Rows(mySiteRow).Insert
+            Rows(mySiteRow).Insert
+            Range(Cells(mySiteRow, 2), Cells(mySiteRow, myLastCol)).value = "=IF(R[-1]C="""",RC[-1],R[-1]C)"
+            Range(Cells(mySiteRow + 1, 1), Cells(mySiteRow + 1, myLastCol)).value = "=R[-1]C&R[1]C"
+            Rows("1:" & myIslRow).Delete
+            Dim myMpf() As String ' Declare dynamic array.
+            Dim myMpfRow() As String
+            myTotalMpf = Range("B3").End(xlDown).Row
+            ReDim myMpf(myTotalMpf - 5)
+            ReDim myMpfRow(myTotalMpf - 5)
+            For myB = 0 To UBound(myMpf)
+                myMpf(myB) = Range("B" & myB + 5).value
+            Next myB
+        End If
+    End If
+    
+    Workbooks.Open Filename:=myIslProInvFile, ReadOnly:=True, UpdateLinks:=False
+    myIslProInvFilename = ActiveWorkbook.Name
+    SheetSelect "Inventory Projection"
+    If ActiveSheet.Name <> "Inventory Projection" Then
+        MsgBox "Inventory Projection sheet not found! " & vbNewLine & "The Macro will stop here..."
+        End
+    End If
+    
+    myHeader = "Site"
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Cells(1, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found!" & vbNewLine & "The Macro will stop here..."
+        End
+    Else
+        mySiteRow = Cells.Find(What:=myHeader, After:=Cells(myIslRow, 1), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+        myLastCol = Cells(mySiteRow, Columns.Count).End(xlToLeft).Column
+        For myB = 0 To UBound(myMpf)
+            myCheck = Application.WorksheetFunction.CountIf(Columns("B:B"), myMpf(myB))
+            If myCheck = 0 Then
+                MsgBox myMpf(myB) & " MPF not found in this file!"
+                End
+            Else
+                myMpfRow(myB) = Columns("B:B").Find(What:=myMpf(myB), After:=Cells(1, 2), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+            End If
+        Next myB
+        For myA = 1 To myLastCol
+            If Cells(mySiteRow, myA).value = "Adjust In" Then
+                myMonth = Range(Cells(mySiteRow - 1, myA).MergeArea.Address).Cells(1, 1).value
+                If myMonth <> "" Then
+                    myTerCheck = Application.WorksheetFunction.CountIf(Workbooks(myTerProInvFilename).Sheets("Inventory Projection").Rows("3:3"), myMonth & "Adjust In")
+                    If myTerCheck > 0 Then
+                        myTerCol = Application.WorksheetFunction.Match(myMonth & "Adjust In", Workbooks(myTerProInvFilename).Sheets("Inventory Projection").Rows("3:3"), 0)
+                        For myB = 0 To UBound(myMpf)
+                            If Workbooks(myTerProInvFilename).Sheets("Inventory Projection").Cells(myB + 5, myTerCol).value = "" Then
+                                Cells(myMpfRow(myB), myA).ClearContents
+                            Else
+                                Workbooks(myTerProInvFilename).Sheets("Inventory Projection").Cells(myB + 5, myTerCol).Copy
+                                Cells(myMpfRow(myB), myA).PasteSpecial xlAll
+                                a = 0
+                            End If
+                        Next myB
+                    Else
+                        MsgBox "Adjust In for " & myMonth & " not found in " & myTerProInvFilename & " file!"
+                        End
+                    End If
+                End If
+            End If
+        Next myA
+    End If
+    
+    asd = Range("N1").value
+    asdf = Range("N1").MergeCells
+    asds = Range("N1").MergeArea.Address
+    assss = Range(asds).Cells(1, 1).value
+    
+    
+    mySharePath = Range("B4").value
+    myPrefix = Range("B6").value
+    myTodayDate = Format(Date, "MMDDYYYY")
+    
+    myTotalFolder = Workbooks(myMacroFile).Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Workbooks(myMacroFile).Sheets("SavePath").Range("A2").value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Workbooks(myMacroFile).Sheets("SavePath").Range("A" & myCountA).value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Workbooks(myMacroFile).Sheets("SavePath").Range("A" & myCountA).value
+        End If
+        mySavePath = mySavePath & Workbooks(myMacroFile).Sheets("SavePath").Range("A" & myCountA).value
+    Next myCountA
+    
+    '********830_Item Branch.************************************
+    For myA = 0 To 30
+        If Dir(mySharePath & "830_Item Branch." & Format(Date - myA, "YYYYMMDD") & "*", vbNormal) <> "" Then
+            Workbooks.Open Filename:=mySharePath & Dir(mySharePath & "830_Item Branch." & Format(Date - myA, "YYYYMMDD") & "*", vbNormal)
+            ActiveSheet.Name = "Temp"
+            myIbFilename = ActiveWorkbook.Name
+            Exit For
+        End If
+    Next myA
+
+    '********830_ERP Actions ISL.************************************
+   
+    Workbooks.Open Filename:=mySharePath & Dir(mySharePath & "830_ERP Actions ISL." & Format(Date - 1, "YYYYMMDD") & "*", vbNormal)
+    myErpFilename = ActiveWorkbook.Name
+
+    Workbooks(myMacroFile).Sheets(Array("Expedite Actions Current", "New Planned Orders Current", "Summary", "Calendar", "MFG")).Copy
+    myNewFile = ActiveWorkbook.Name
+    Sheets("Summary").Range("A21").value = Date
+    Sheets("Expedite Actions Current").Select
+    Workbooks(myErpFilename).Sheets("Expedite Actions Current").Range("A4:AO" & Workbooks(myErpFilename).Sheets("Expedite Actions Current").Range("A" & Rows.Count).End(xlUp).Row).Copy
+    Range("A5").PasteSpecial xlPasteAll
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("AR5:AV5").Copy
+    Range("AR6:AV" & myTempTotal).PasteSpecial xlPasteAll
+    Range("AR6:AV" & myTempTotal).value = Range("AR6:AV" & myTempTotal).value
+    ActiveSheet.Range("$A$4:$AW$" & myTempTotal).RemoveDuplicates Columns:=46, Header:=xlNo
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("AP5:AP" & myTempTotal).value = "=IFERROR(VLOOKUP(G5,'[" & myIbFilename & "]Temp'!$D:$AM,35,0),0)"
+    'Range("AP5:AP" & myTempTotal).Value = Range("AP5:AP" & myTempTotal).Value
+    Range("AP5:AP" & myTempTotal).Copy
+    Range("AP5").PasteSpecial xlPasteAll
+    Range("AQ5:AQ" & myTempTotal).value = "=AP5*Z5"
+    
+    Sheets("New Planned Orders Current").Select
+    Workbooks(myErpFilename).Sheets("New Planned Orders Current").Range("A4:AD" & Workbooks(myErpFilename).Sheets("New Planned Orders Current").Range("A" & Rows.Count).End(xlUp).Row).Copy
+    Range("A5").PasteSpecial xlPasteAll
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("AE5:AH5").Copy
+    Range("AE6:AH" & myTempTotal).PasteSpecial xlPasteAll
+    Range("AE6:AH" & myTempTotal).value = Range("AE6:AH" & myTempTotal).value
+    Range("AE5:AE" & myTempTotal).value = "=IFERROR(IF(G5=G4,AE4,VLOOKUP(G5,'[" & myIbFilename & "]Temp'!$D:$AM,35,0)),0)"
+    Range("AE5:AE" & myTempTotal).value = Range("AE5:AE" & myTempTotal).value
+    
+    myTempTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("AE3:AE" & myTempTotal).value = "=IF(OR(A3=""Sum"",A3=""Grand Sum"",A3=""""),""Delete"",ROW(A3))"
+    Range("AE3:AE" & myTempTotal).value = Range("AE3:AE" & myTempTotal).value
+    Range("AE3").value = "Delete"
+    ActiveSheet.Range("$A$3:$AE$" & myTempTotal).RemoveDuplicates Columns:=31, Header:=xlNo
+    Sheets("Expedite Actions Current").Select
+    
+    Rows("1:1").Delete
+    myTotalBuyer = Range("A" & Rows.Count).End(xlUp).Row
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("A3"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    With ActiveWorkbook.Worksheets("Temp").Sort
+        .SetRange Range("A3:B" & myTotalBuyer)
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    Range("C1:J1").value = "=SUBTOTAL(9,C4:C" & myTotalBuyer & ")"
+    Range("C2:E2").Merge
+    Range("F2:J2").Merge
+    Range("B1").value = "Sub Total"
+    Range("C2").value = "Active Part"
+    Range("F2").value = "ERP Actions Count"
+    Range("C3").value = "Discrete"
+    Range("D3").value = "SCM"
+    Range("E3").value = "Total"
+    Range("F3").value = "Cancel"
+    Range("G3").value = "Reduction"
+    Range("H3").value = "Expedite"
+    Range("I3").value = "New Planned"
+    Range("J3").value = "Push Out"
+    Range("K3").value = "Total ERP Actions"
+    Range("L3").value = "No. of Suppliers"
+    Range("C2:L3").Interior.ThemeColor = xlThemeColorAccent5
+    Range("C2:L3").Interior.TintAndShade = 0.599993896298105
+    Range("C2:L3").Font.Bold = True
+    Columns("C:L").HorizontalAlignment = xlCenter
+    Range("B1:J2").Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("B1:J2").Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    
+    Range("A3:L" & myTotalBuyer).Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("A3:L" & myTotalBuyer).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    Range("C4:E" & myTotalBuyer).Interior.ThemeColor = xlThemeColorAccent6
+    Range("C4:E" & myTotalBuyer).Interior.TintAndShade = 0.599993896298105
+    Range("F4:L" & myTotalBuyer).Interior.ThemeColor = xlThemeColorAccent2
+    Range("F4:L" & myTotalBuyer).Interior.TintAndShade = 0.599993896298105
+    Range("C4:C" & myTotalBuyer).FormulaR1C1 = _
+        "=COUNTIFS('Cancel Actions Current'!C[50],RC[-2],'Cancel Actions Current'!C[51],RC[-1],'Cancel Actions Current'!C[7],"""")" & _
+        "+COUNTIFS('Cancel Actions Current'!C[50],RC[-2],'Cancel Actions Current'!C[51],RC[-1],'Cancel Actions Current'!C[7],""830*"")" & Chr(10) & _
+        "+COUNTIFS('PO Reduction Actions Current'!C[50],RC[-2],'PO Reduction Actions Current'!C[51],RC[-1],'PO Reduction Actions Current'!C[7],"""")" & _
+        "+COUNTIFS('PO Reduction Actions Current'!C[50],RC[-2],'PO Reduction Actions Current'!C[51],RC[-1],'PO Reduction Actions Current'!C[7],""830*"")" & Chr(10) & _
+        "+COUNTIFS('Expedite Actions Current'!C[50],RC[-2],'Expedite Actions Current'!C[51],RC[-1],'Expedite Actions Current'!C[7],"""")" & _
+        "+COUNTIFS('Expedite Actions Current'!C[50],RC[-2],'Expedite Actions Current'!C[51],RC[-1],'Expedite Actions Current'!C[7],""830*"")" & Chr(10) & _
+        "+COUNTIFS('New Planned Orders Current'!C[50],RC[-2],'New Planned Orders Current'!C[51],RC[-1],'New Planned Orders Current'!C[6],"""")" & _
+        "+COUNTIFS('New Planned Orders Current'!C[50],RC[-2],'New Planned Orders Current'!C[51],RC[-1],'New Planned Orders Current'!C[6],""830*"")" & Chr(10) & _
+        "+COUNTIFS('Push Out Actions Current'!C[50],RC[-2],'Push Out Actions Current'!C[51],RC[-1],'Push Out Actions Current'!C[7],"""")" & _
+        "+COUNTIFS('Push Out Actions Current'!C[50],RC[-2],'Push Out Actions Current'!C[51],RC[-1],'Push Out Actions Current'!C[7],""830*"")"
+    Range("D4:D" & myTotalBuyer) = "=RC[1]-RC[-1]"
+    Range("E4:E" & myTotalBuyer).FormulaR1C1 = _
+        "=COUNTIFS('Cancel Actions Current'!C[48],RC[-4],'Cancel Actions Current'!C[49],RC[-3])" & Chr(10) & _
+        "+COUNTIFS('PO Reduction Actions Current'!C[48],RC[-4],'PO Reduction Actions Current'!C[49],RC[-3])+" & Chr(10) & _
+        "+COUNTIFS('Expedite Actions Current'!C[48],RC[-4],'Expedite Actions Current'!C[49],RC[-3])" & Chr(10) & _
+        "+COUNTIFS('New Planned Orders Current'!C[48],RC[-4],'New Planned Orders Current'!C[49],RC[-3])" & Chr(10) & _
+        "+COUNTIFS('Push Out Actions Current'!C[48],RC[-4],'Push Out Actions Current'!C[49],RC[-3])"
+    Range("F4:F" & myTotalBuyer) = "=COUNTIFS('Cancel Actions Current'!C[47],RC[-5],'Cancel Actions Current'!C[48],RC[-4])"
+    Range("G4:G" & myTotalBuyer) = "=COUNTIFS('PO Reduction Actions Current'!C[46],RC[-6],'PO Reduction Actions Current'!C[47],RC[-5])"
+    Range("H4:H" & myTotalBuyer) = "=COUNTIFS('Expedite Actions Current'!C[45],RC[-7],'Expedite Actions Current'!C[46],RC[-6])"
+    Range("I4:I" & myTotalBuyer) = "=COUNTIFS('New Planned Orders Current'!C[44],RC[-8],'New Planned Orders Current'!C[45],RC[-7])"
+    Range("J4:J" & myTotalBuyer) = "=COUNTIFS('Push Out Actions Current'!C[43],RC[-9],'Push Out Actions Current'!C[44],RC[-8])"
+    Range("K4:K" & myTotalBuyer) = "=SUM(RC[-5]:RC[-1])"
+    Range("L4:L" & myTotalBuyer) = "=COUNTIFS(C[8],RC[-11],C[9],RC[-10])"
+    Range("C4:L" & myTotalBuyer).value = Range("C4:L" & myTotalBuyer).value
+    
+    Columns("T:V").ClearContents
+        Sheets("Expedite Actions Current").Columns("BA:BD").ClearContents
+        Sheets("Cancel Actions Current").Columns("BA:BD").ClearContents
+        Sheets("PO Reduction Actions Current").Columns("BA:BD").ClearContents
+        Sheets("Push Out Actions Current").Columns("BA:BD").ClearContents
+        Sheets("New Planned Orders Current").Columns("BA:BD").ClearContents
+        
+    Range("A3:L3").AutoFilter
+    Columns("A:L").AutoFit
+    Range("A1").ClearContents
+    Range("A1").Select
+    ActiveSheet.Name = "Summary"
+    
+    myCounter = 4
+    Range("A4:L4").Interior.ThemeColor = xlThemeColorAccent & myCounter
+    Range("A4:L4").Interior.TintAndShade = 0.599993896298105
+   
+    For myA = 5 To myTotalBuyer
+        If Range("A" & myA - 1).value <> Range("A" & myA).value Then
+            myCounter = myCounter + 1
+            If myCounter = 12 Then
+                myCounter = 4
+            End If
+        End If
+        Range("A" & myA & ":L" & myA).Interior.ThemeColor = xlThemeColorAccent & myCounter
+        Range("A" & myA & ":L" & myA).Interior.TintAndShade = 0.599993896298105
+    Next myA
+    
+
+    'Check Folder Availbility
+    myTotalFolder = Workbooks(myMacroFile).Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Workbooks(myMacroFile).Sheets("SavePath").Range("A2").value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Workbooks(myMacroFile).Sheets("SavePath").Range("A" & myCountA).value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Workbooks(myMacroFile).Sheets("SavePath").Range("A" & myCountA).value
+        End If
+        mySavePath = mySavePath & Workbooks(myMacroFile).Sheets("SavePath").Range("A" & myCountA).value
+    Next myCountA
+    
+'        mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Buyer ERP\" & myMonthYear & "\"
+        Application.EnableEvents = False
+        ActiveWorkbook.SaveAs Filename:=mySavePath & "Buyer ERP Action " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888" 'Password:="888"
+        ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Buyer ERP Action " & Format(Date, "MMDDYYYY") & myPrefix, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888" 'Password:="888"
+        'ActiveWorkbook.Close False
+        Application.EnableEvents = True
+        
+    With CreateObject("Outlook.Application").CreateItem(0)
+        .To = "Sing-Yee.Ho@plexus.com"
+        .CC = "sk.loon@plexus.com"
+        '.BCC = "sk.loon@plexus.com"
+        .Subject = "ERP Actions"
+        .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>Hi Buyer," & _
+                  "<html><br>Please take neccessary ERP action as per below:" & _
+                  "<html><br>" & "<html>File: " & _
+                  "<html><a href=""" & mySavePath & "Buyer ERP Action " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx"">" & mySavePath & "Buyer ERP Action " & Format(Date, "MMDDYYYY") & myPrefix & ".xlsx</a>" & _
+                  "<html><br><br>Thanks.<br/>" & _
+                  "This is an auto generated email. No reply required</html>"
+        '.Display
+        .Send
+        
+        'Ver1.1: Close workbook
+        ActiveWorkbook.Close False
+        
+    End With
+    'ActiveWorkbook.Close False
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub FileSelect()
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename(, , "Please select " & Range("A" & myRow).value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).value = mySelect
+        End If
+End Sub
+Sub PptFileSelect()
+    myRow = ActiveSheet.Shapes(Application.Caller).BottomRightCell.Row
+    myGetFile = Application.GetOpenFilename("PowerPoint files, *.pptx", 1, "Please select " & Range("A" & myRow).value & " file:")
+        If myGetFile = False Then
+            End
+        Else
+            mySelect = myGetFile
+            Range("B" & myRow).value = mySelect
+        End If
+End Sub
+Sub SheetSelect(mySheet As String)
+    On Error Resume Next
+    Sheets(mySheet).Select
+    If ActiveSheet.Name <> mySheet Then
+        MsgBox mySheet & " sheet not found! " & vbNewLine & "The Macro will stop here..."
+        End
+    End If
+End Sub
