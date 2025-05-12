@@ -1,0 +1,823 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Dim myMacroPath As String
+Dim myAttachement() As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub SupplierSpend()
+    ReDim myAttachement(0)
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySharePath = Range("B4").Value
+        'Ver1.6: Add in additional Path
+        mySharePath2 = Range("B6").Value
+    myYear = Year(Date)
+    
+    'Ver1.4: Check Folder Availbility
+    'Check Folder Availbility
+    myTotalFolder = Sheets("SavePath").Range("A" & Rows.Count).End(xlUp).Row
+    mySavePath = Sheets("SavePath").Range("A2").Value
+    For myCountA = 3 To myTotalFolder
+        myFolderCheck = Dir(mySavePath & Sheets("SavePath").Range("A" & myCountA).Value, vbDirectory)
+        If myFolderCheck = "" Then
+            MkDir mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+        End If
+        mySavePath = mySavePath & Sheets("SavePath").Range("A" & myCountA).Value
+    Next myCountA
+    
+    'Calendar File
+    'Ver1.4: Changing path
+    'myCalendarFile = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Calender Days.xlsx"
+    myCalendarFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Materials\" & myYear & "\MISC\Site_Reports\MTM\Dashboard\Calender Days.xlsx"
+    If Dir(myCalendarFile) = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Supplier Spend Macro: Calendar file not found!"
+        '    .HTMLBody = "Calendar file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Calendar file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    'Harmonic Product Model List
+    'Ver1.4: Changing path
+    'myHarmonicFile = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Harmonic Product Model List.xlsx"
+    myHarmonicFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Materials\" & myYear & "\MISC\Site_Reports\MTM\Dashboard\Harmonic Product Model List.xlsx"
+    
+    If Dir(myHarmonicFile) = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Supplier Spend Macro: Harmonic Product Model List file not found!"
+        '    .HTMLBody = "Harmonic Product Model List file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Harmonic Product Model List file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    'Micron Product Model List
+    'Ver1.4: Changing path
+    'myMicronFile = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Micron Product Model List.xlsx"
+    myMicronFile = "\\ap\mfg\PenaData\ISL\Purchasing_Mat_Planning\_Operations\Materials\" & myYear & "\MISC\Site_Reports\MTM\Dashboard\Micron Product Model List.xlsx"
+    
+    If Dir(myMicronFile) = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Supplier Spend Macro: Micron Product Model List file not found!"
+        '    .HTMLBody = "Micron Product Model List file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Micron Product Model List file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    'ROP File
+    myRopFile = mySharePath & "830_ROP MPF148_Weekly." & Format(Date - 1, "YYYYMMDD") & "*.xlsx"
+    If Dir(myRopFile) = "" Then
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Supplier Spend Macro: 830_ROP MPF148_Weekly file not found!"
+        '    .HTMLBody = "830_ROP MPF148_Weekly file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_ROP MPF148_Weekly file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    End If
+    
+    'This Week
+        'Ver1.6: Change to new path
+        'myThisWeek = mySharePath & "830_16 Buckets Report_Monthly (Buy)." & Format(Date - 1, "YYYYMMDD") & "*.xlsx"
+        myThisWeek = mySharePath2 & "830_16 Buckets Report_Monthly (Buy)." & Format(Date - 1, "YYYYMMDD") & "*.xlsx"
+    If Dir(myThisWeek) = "" Then 'Yesterday date
+        'With CreateObject("Outlook.Application").CreateItem(0)
+        '    .To = "sk.loon@plexus.com"
+        '    .CC = "Sing-Yee.Ho@plexus.com"
+        '    .Subject = "Supplier Spend Macro: 830_16 Buckets Report_Monthly (Buy) file not found!"
+        '    .HTMLBody = "830_16 Buckets Report_Monthly (Buy) file not found!"
+        '    '.Display
+        '    .Send
+        'End With
+        Call SendSmtpEmail( _
+            "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+            "sk.loon@plexus.com", _
+            "", _
+            "", _
+            ActiveWorkbook.Name & " Error!", _
+            "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>830_16 Buckets Report_Monthly (Buy) file not found!</html>", _
+            myAttachement(), _
+            0, 0)
+        
+        GoTo myEnd
+    Else
+        Workbooks.Open Filename:=myCalendarFile, ReadOnly:=True
+        myCalendarFilename = ActiveWorkbook.Name
+        ActiveSheet.Name = "temp"
+        Set mySearchValue = Columns("A:A").Find(What:=Date, After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+            If mySearchValue Is Nothing Then
+                Workbooks(myCalendarFilename).Close False
+                'With CreateObject("Outlook.Application").CreateItem(0)
+                '    .To = "sk.loon@plexus.com"
+                '    .CC = "Sing-Yee.Ho@plexus.com"
+                '    .Subject = "Supplier Spend Macro: Calendar file not up to date!"
+                '    .HTMLBody = "Calendar file not up to date!"
+                '    '.Display
+                '    .Send
+                'End With
+                Call SendSmtpEmail( _
+                    "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                    "sk.loon@plexus.com", _
+                    "", _
+                    "", _
+                    ActiveWorkbook.Name & " Error!", _
+                    "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Calendar file not up to date!</html>", _
+                    myAttachement(), _
+                    0, 0)
+                
+                GoTo myEnd
+            Else
+                mySearchValue = Cells.Find(What:=Date, After:=Range("A1"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Row
+                myQtr = Range("G" & mySearchValue).Value
+                Workbooks(myCalendarFilename).Close False
+            End If
+        Workbooks.Open myHarmonicFile, ReadOnly:=True
+        myHarmonic = ActiveWorkbook.Name
+        ActiveSheet.Name = "temp"
+        Workbooks.Open myMicronFile, ReadOnly:=True
+        myMicron = ActiveWorkbook.Name
+        ActiveSheet.Name = "temp"
+        Workbooks.Open Filename:=myRopFile, ReadOnly:=True
+        myRopFilename = ActiveWorkbook.Name
+        ActiveSheet.Name = "temp"
+        Workbooks.Open Filename:=myThisWeek, ReadOnly:=True
+        myThisWeekFilename = ActiveWorkbook.Name
+        myActiveSheet = ActiveSheet.Name
+        myTotal = Range("A" & Rows.Count).End(xlUp).Row
+        Set mySearchValue = Rows("3:3").Find(What:="Treated as Demand", After:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+        If mySearchValue Is Nothing Then
+            MsgBox myHeader & " column not found! The Macro will stop here!"
+            End
+        Else
+            mySearchValue = Rows("3:3").Find(What:="Treated as Demand", After:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+            Cells(3, mySearchValue + 1).Value = "Total Demand Qty"
+        End If
+
+        Columns("E:E").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("E3").Value = "Family"
+        Range("E3").Interior.Color = 65535
+            'Ver1.2: Change header from . to Family
+            'Range("E4:E" & myTotal).Value = "=IF(OR(B4=""006"",B4=""875""),""."",Row(B4))"
+            Range("E4:E" & myTotal).Value = "=IF(OR(B4=""006"",B4=""875""),""Family"",Row(B4))"
+        Range("E4:E" & myTotal).Value = Range("E4:E" & myTotal).Value
+        myLastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+        myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(3, 1), Cells(myLastRow, myLastCol)).RemoveDuplicates Columns:=5, Header:=xlNo
+        myTotal = Range("A" & Rows.Count).End(xlUp).Row
+        Range("E4:E" & myTotal).Value = "=IF(RIGHT(F4,4)=""-148"",VLOOKUP(F4,'[" & myMicron & "]temp'!$A:$B,2,0),IF(OR(RIGHT(F4,4)=""-586"",RIGHT(F4,4)=""-321""),VLOOKUP(F4,'[" & myHarmonic & "]temp'!$A:$B,2,0),""""))"
+        Range("E4:E" & myTotal).Value = Range("E4:E" & myTotal).Value
+                
+        'Sheets.Add After:=ActiveSheet
+        'ActiveSheet.Name = "SC Program"
+        Sheets(myActiveSheet).Select
+        Columns("N:O").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("N3").Value = "ROP (Micron)"
+        Range("O3").Value = "ROP On?"
+        Range("N3:O3").Interior.Color = 65535
+        Range("N4:N" & myTotal).Value = "=IF(B4=""148"",IFERROR(VLOOKUP(F4,'[" & myRopFilename & "]temp'!A:E,5,0),0),"""")"
+        Range("N4:N" & myTotal).Value = Range("N4:N" & myTotal).Value
+        Range("O4:O" & myTotal).Value = "=IF(B4=""148"",IF(N4>0,""ROP On"",""ROP Off""),"""")"
+        Columns("N:O").EntireColumn.AutoFit
+        
+        'Check which month of the Qtr
+        If Range("AO1").Value = "Fiscal Mar" Or Range("AO1").Value = "Fiscal Jun" Or Range("AO1").Value = "Fiscal Sep" Or Range("AO1").Value = "Fiscal Dec" Then
+            Columns("AO:AX").Insert
+            Columns("BB:BB").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+            Range("BB3").Interior.Color = 65535
+            Range("BB3").Value = myQtr & " Dmd Amt"
+            Columns("BB:BB").EntireColumn.AutoFit
+            Columns("BB:BB").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+            Range("BB4:BB" & myTotal).Value = "=(BA4+AL4)*AG4"
+            Columns("BB:BB").Font.ColorIndex = xlAutomatic
+        ElseIf Range("AO1").Value = "Fiscal Feb" Or Range("AO1").Value = "Fiscal May" Or Range("AO1").Value = "Fiscal Aug" Or Range("AO1").Value = "Fiscal Nov" Then
+            Columns("AO:AS").Insert
+            Columns("BB:BB").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+            Range("BB3").Interior.Color = 65535
+            Range("BB3").Value = myQtr & " Dmd Amt"
+            Columns("BB:BB").EntireColumn.AutoFit
+            Columns("BB:BB").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+                'Ver1.2: Wrong Formula VA instead of AV
+                'Range("BB4:BB" & myTotal).Value = "=(BA4+VA4+AL4)*AG4"
+                Range("BB4:BB" & myTotal).Value = "=(BA4+AV4+AL4)*AG4"
+            Columns("BB:BB").Font.ColorIndex = xlAutomatic
+        ElseIf Range("AO1").Value = "Fiscal Jan" Or Range("AO1").Value = "Fiscal Apr" Or Range("AO1").Value = "Fiscal Jul" Or Range("AO1").Value = "Fiscal Oct" Then
+            Columns("BB:BB").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+            Range("BB3").Interior.Color = 65535
+            Range("BB3").Value = myQtr & " Dmd Amt"
+            Columns("BB:BB").EntireColumn.AutoFit
+            Columns("BB:BB").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+            Range("BB4:BB" & myTotal).Value = "=(BA4+AV4+AQ4+AL4)*AG4"
+            Columns("BB:BB").Font.ColorIndex = xlAutomatic
+        End If
+        
+        '2nd Qtr
+        'Get next Qtr
+        If Mid(myQtr, 2, 1) = 4 Then
+            myNextQtr = "Q1" & "F" & Right(myQtr, 2) + 1
+        Else
+            myNextQtr = "Q" & Mid(myQtr, 2, 1) + 1 & "F" & Right(myQtr, 2)
+        End If
+        myQtr2 = myNextQtr
+        Columns("BR:BR").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("BR3").Interior.Color = 65535
+        Range("BR3").Value = myNextQtr & " Dmd Amt"
+        Columns("BR:BR").EntireColumn.AutoFit
+        Columns("BR:BR").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        Range("BR4:BR" & myTotal).Value = "=(BQ4+BL4+BG4)*AG4"
+        Columns("BR:BR").Font.ColorIndex = xlAutomatic
+        
+        '3rd Qtr
+        'Get next Qtr
+        If Mid(myNextQtr, 2, 1) = 4 Then
+            myNextQtr = "Q1" & "F" & Right(myNextQtr, 2) + 1
+        Else
+            myNextQtr = "Q" & Mid(myNextQtr, 2, 1) + 1 & "F" & Right(myNextQtr, 2)
+        End If
+        myQtr3 = myNextQtr
+        Columns("CH:CH").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("CH3").Interior.Color = 65535
+        Range("CH3").Value = myNextQtr & " Dmd Amt"
+        Columns("CH:CH").EntireColumn.AutoFit
+        Columns("CH:CH").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        Range("CH4:CH" & myTotal).Value = "=(CG4+CB4+BW4)*AG4"
+        Columns("CH:CH").Font.ColorIndex = xlAutomatic
+            
+        '4th Qtr
+        'Get next Qtr
+        If Mid(myNextQtr, 2, 1) = 4 Then
+            myNextQtr = "Q1" & "F" & Right(myNextQtr, 2) + 1
+        Else
+            myNextQtr = "Q" & Mid(myNextQtr, 2, 1) + 1 & "F" & Right(myNextQtr, 2)
+        End If
+        myQtr4 = myNextQtr
+        Columns("CX:CX").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("CX3").Interior.Color = 65535
+        Range("CX3").Value = myNextQtr & " Dmd Amt"
+        Columns("CX:CX").EntireColumn.AutoFit
+        Columns("CX:CX").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        Range("CX4:CX" & myTotal).Value = "=(CW4+CR4+CM4)*AG4"
+        Columns("CX:CX").Font.ColorIndex = xlAutomatic
+            
+        '5th Qtr
+        'Get next Qtr
+        If Mid(myNextQtr, 2, 1) = 4 Then
+            myNextQtr = "Q1" & "F" & Right(myNextQtr, 2) + 1
+        Else
+            myNextQtr = "Q" & Mid(myNextQtr, 2, 1) + 1 & "F" & Right(myNextQtr, 2)
+        End If
+        myQtr5 = myNextQtr
+        Columns("DN:DN").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("DN3").Interior.Color = 65535
+        Range("DN3").Value = myNextQtr & " Dmd Amt"
+        Columns("DN:DN").EntireColumn.AutoFit
+        Columns("DN:DN").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        Range("DN4:DN" & myTotal).Value = "=(DM4+DH4+DC4)*AG4"
+        Columns("DN:DN").Font.ColorIndex = xlAutomatic
+            
+        ''6th Qtr
+        ''Get next Qtr
+        'If Mid(myNextQtr, 2, 1) = 4 Then
+        '    myNextQtr = "Q1" & "F" & Right(myNextQtr, 2) + 1
+        'Else
+        '    myNextQtr = "Q" & Mid(myNextQtr, 2, 1) + 1 & "F" & Right(myNextQtr, 2)
+        'End If
+        'myQtr6 = myNextQtr
+        'Columns("ED:ED").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        'Range("ED3").Interior.Color = 65535
+        'Range("ED3").Value = myNextQtr & " Dmd Amt"
+        'Columns("ED:ED").EntireColumn.AutoFit
+        'Columns("ED:ED").NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        'Range("ED4:ED" & myTotal).Value = "=(EC4+DX4+DS4)*AG4"
+        'Columns("ED:ED").Font.ColorIndex = xlAutomatic
+        
+        If Range("AO1").Value = "" Then
+            Columns("AO:AS").Delete
+        End If
+        If Range("AO1").Value = "" Then
+            Columns("AO:AS").Delete
+        End If
+        
+        myLastCol = Sheets(myActiveSheet).Cells(3, Columns.Count).End(xlToLeft).Column
+        Columns(myLastCol + 1).Insert
+        Cells(3, myLastCol + 1).Value = "Type2_2"
+        Range(Cells(4, myLastCol + 1), Cells(myTotal, myLastCol + 1)).Value = "=IF(OR(L4=""830G"",L4=""830O"",L4=""""),""Discrete"",L4)"
+        Range(Cells(4, myLastCol + 1), Cells(myTotal, myLastCol + 1)).Value = Range(Cells(4, myLastCol + 1), Cells(myTotal, myLastCol + 1)).Value
+        
+        '***********Supplier Spend**********************************************************************************************************
+        Sheets.Add After:=ActiveSheet
+        ActiveSheet.Name = "Supplier Spend"
+        Range("A3").Select
+        myCol = Sheets(myActiveSheet).Cells(3, Columns.Count).End(xlToLeft).Column
+        
+        For myAa = myCol To 1 Step -1
+            If Sheets(myActiveSheet).Cells(3, myAa).Value = "" Then
+                Sheets(myActiveSheet).Cells(3, myAa).Value = "."
+            End If
+        Next myAa
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myActiveSheet & "!R3C1:R" & myTotal & "C" & myCol).CreatePivotTable TableDestination:="'Supplier Spend'!R3C1", TableName:="PivotTable2"
+        ActiveWorkbook.ShowPivotTableFieldList = True
+        ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable2").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable2").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Name2").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields(myQtr & " Dmd Amt"), "Sum of " & myQtr & " Dmd Amt", xlSum
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields(myQtr2 & " Dmd Amt"), "Sum of " & myQtr2 & " Dmd Amt", xlSum
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields(myQtr3 & " Dmd Amt"), "Sum of " & myQtr3 & " Dmd Amt", xlSum
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields(myQtr4 & " Dmd Amt"), "Sum of " & myQtr4 & " Dmd Amt", xlSum
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields(myQtr5 & " Dmd Amt"), "Sum of " & myQtr5 & " Dmd Amt", xlSum
+        'ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields(myQtr6 & " Dmd Amt"), "Sum of " & myQtr6 & " Dmd Amt", xlSum
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").Orientation = xlPageField
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Name2").AutoSort xlDescending, "Sum of " & myQtr & " Dmd Amt", ActiveSheet.PivotTables("PivotTable2").PivotColumnAxis.PivotLines(1), 1
+        myPivotCol = Cells(4, Columns.Count).End(xlToLeft).Column
+        myPivotrow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(5, 2), Cells(myPivotrow, myPivotCol)).NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        
+        '*************SC Program*************************************************************************************************************
+        Sheets.Add After:=ActiveSheet
+        ActiveSheet.Name = "SC Program"
+        Range("A3").Select
+        
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myActiveSheet & "!R3C1:R" & myTotal & "C" & myCol).CreatePivotTable TableDestination:="'SC Program'!R3C1", TableName:="PivotTable2"
+        ActiveWorkbook.ShowPivotTableFieldList = True
+        ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable2").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable2").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields("Item No"), "Count of Item No", xlCount
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Type2_2").Orientation = xlColumnField
+        ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").Orientation = xlPageField
+        mySearchValue = Sheets(myActiveSheet).Rows("3:3").Find(What:="Total Demand Qty", After:=Range("A3"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Columns(mySearchValue), 0) > 0 Then
+            ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").PivotItems("0").Visible = False
+        End If
+        myPivotCol = Cells(4, Columns.Count).End(xlToLeft).Column
+        myPivotrow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(5, 2), Cells(myPivotrow, myPivotCol)).NumberFormat = "_(* #,##0_);_(* (#,##0);_(* ""-""??_);_(@_)"
+        
+        
+        mySecondTable = Range("A" & Rows.Count).End(xlUp).Row + 4
+        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myActiveSheet & "!R3C1:R" & myTotal & "C" & myCol).CreatePivotTable TableDestination:="'SC Program'!R" & mySecondTable & "C1", TableName:="PivotTable3"
+        ActiveWorkbook.ShowPivotTableFieldList = True
+        ActiveSheet.PivotTables("PivotTable3").InGridDropZones = True
+        ActiveSheet.PivotTables("PivotTable3").ShowDrillIndicators = False
+        ActiveSheet.PivotTables("PivotTable3").RowAxisLayout xlTabularRow
+        ActiveSheet.PivotTables("PivotTable3").PivotFields("MPF").Orientation = xlRowField
+        ActiveSheet.PivotTables("PivotTable3").AddDataField ActiveSheet.PivotTables("PivotTable3").PivotFields("Value"), "Sum of Value", xlSum
+        ActiveSheet.PivotTables("PivotTable3").PivotFields("Type2_2").Orientation = xlColumnField
+        ActiveSheet.PivotTables("PivotTable3").PivotFields("Total Demand Qty").Orientation = xlPageField
+        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Columns(mySearchValue), 0) > 0 Then
+            ActiveSheet.PivotTables("PivotTable3").PivotFields("Total Demand Qty").PivotItems("0").Visible = False
+        End If
+        myPivotCol = Cells(mySecondTable + 1, Columns.Count).End(xlToLeft).Column
+        myPivotrow = Range("A" & Rows.Count).End(xlUp).Row
+        Range(Cells(mySecondTable + 2, 2), Cells(myPivotrow, myPivotCol)).NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+        Cells(mySecondTable - 1, 1).Value = "Amount"
+        Cells(mySecondTable - 1, 1).Font.Bold = True
+        Cells(mySecondTable - 1, 1).Font.Color = -16776961
+        Cells(2, 1).Value = "Part Count"
+        Cells(2, 1).Font.Bold = True
+        Cells(2, 1).Font.Color = -16776961
+
+'Ver1.1: No longer needed
+'        '*************ROP (Micron)*************************************************************************************************************
+'        Sheets.Add After:=ActiveSheet
+'        ActiveSheet.Name = "ROP (Micron)"
+'        Range("A3").Select
+'        ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:=myActiveSheet & "!R3C1:R" & myTotal & "C" & myCol).CreatePivotTable TableDestination:="'ROP (Micron)'!R3C1", TableName:="PivotTable2"
+'        ActiveWorkbook.ShowPivotTableFieldList = True
+'        ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+'        ActiveSheet.PivotTables("PivotTable2").ShowDrillIndicators = False
+'        ActiveSheet.PivotTables("PivotTable2").RowAxisLayout xlTabularRow
+'        ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").Orientation = xlPageField
+'        For Each myMpf In ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems
+'            If myMpf.Name <> "148" Then
+'                ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotItems(myMpf.Name).Visible = False
+'            End If
+'        Next myMpf
+'        Range("A6").Select
+'        ActiveSheet.PivotTables("PivotTable2").PivotFields("Family").Orientation = xlRowField
+'        ActiveSheet.PivotTables("PivotTable2").PivotFields("ROP On?").Orientation = xlColumnField
+'        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields("Part Number"), "Count of Part Number", xlCount
+'        ActiveSheet.PivotTables("PivotTable2").AddDataField ActiveSheet.PivotTables("PivotTable2").PivotFields("Value"), "Sum of Value", xlSum
+'        ActiveSheet.PivotTables("PivotTable2").PivotFields("Family").AutoSort xlDescending, "Sum of Value"
+'
+'        ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").Orientation = xlPageField
+'        If Application.WorksheetFunction.CountIf(Sheets(myActiveSheet).Columns(mySearchValue), 0) > 0 Then
+'            ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Demand Qty").PivotItems("0").Visible = False
+'        End If
+'
+'        myPivotrow = Range("A" & Rows.Count).End(xlUp).Row
+'        Range("B5").Select
+'
+'        Do Until ActiveCell.Value = ""
+'            Range(ActiveCell.Offset(2, 0), ActiveCell.Offset(myPivotrow - 5, 0)).NumberFormat = "_(* #,##0_);_(* (#,##0);_(* ""-""??_);_(@_)"
+'            Range(ActiveCell.Offset(2, 1), ActiveCell.Offset(myPivotrow - 5, 1)).NumberFormat = "_($* #,##0_);_($* (#,##0);_($* ""-""??_);_(@_)"
+'            ActiveCell.Offset(0, 2).Select
+'        Loop
+        
+    End If
+    
+        
+    'Check Folder Availbility
+'    'Year
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\"
+'    End If
+'    'MTM
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\"
+'    End If
+'    'Dashboard
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\"
+'    End If
+'    'Supplier Spend_SC Program_FLAR
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Supplier Spend_SC Program_FLAR\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Supplier Spend_SC Program_FLAR\"
+'    End If
+'    'Month  Year
+'    myMonthYear = Format(Date, "MM. MmmYYYY")
+'    myFolderCheck = Dir("\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Supplier Spend_SC Program_FLAR\" & myMonthYear & "\", vbDirectory)
+'    If myFolderCheck = "" Then
+'        MkDir "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Supplier Spend_SC Program_FLAR\" & myMonthYear & "\"
+'    End If
+'    mySavePath = "\\ap\penadata\Site\Islandview\Purchasing\Mgmt_Data\" & myYear & "\MTM\Dashboard\Supplier Spend_SC Program_FLAR\" & myMonthYear & "\"
+    
+
+    Application.EnableEvents = False
+    ActiveWorkbook.SaveAs Filename:=mySavePath & "Supplier Spend_SC Program_FLAR_ROP " & Format(Date - 1, "MMDDYYYY"), FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888" 'Password:="888"
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\Supplier Spend_SC Program_FLAR_ROP " & Format(Date - 1, "MMDDYYYY"), FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False, writeResPassword:="888" 'Password:="888"
+    ActiveWorkbook.Close False
+    Workbooks(myHarmonic).Close False
+    Workbooks(myMicron).Close False
+    'Workbooks(myCalendarFilename).Close False
+    'Workbooks(myThisWeekFilename).Close False
+    Workbooks(myRopFilename).Close False
+    Application.EnableEvents = True
+    
+    'With CreateObject("Outlook.Application").CreateItem(0)
+    '    .To = "Sing-Yee.Ho@plexus.com;sk.loon@plexus.com"
+    '    '.BCC = "sk.loon@plexus.com"
+    '    '.To = "PLXS-MFGIslandViewPurchasingDAs@plexus.com"
+    '    '.CC = "isl_purch_mtm@plexus.com; Sonia.Chor@plexus.com; Sing-Yee.Ho@plexus.com"
+    '    .Subject = "Supplier Spend_SC Program_FLAR_ROP file have been save in Share drive"
+    '    .HTMLBody = "<html><font style=""font-family: Trebuchet MS; font-size: 10.5pt;""/font><p>" & mySavePath & _
+    '              "<br><br>Thanks.<br/><br>This is an auto generated email. No reply required...</html>"
+    '    '.Display
+    '    .Send
+    'End With
+    Call SendSmtpEmail( _
+        "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+        "Sing-Yee.Ho@plexus.com", _
+        "", _
+        "sk.loon@plexus.com", _
+        "Supplier Spend_SC Program_FLAR_ROP file have been save in Share drive", _
+        "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>" & mySavePath & "</html>", _
+        myAttachement(), _
+        0, 0)
+
+'    Next myRetry
+myEnd:
+    Application.DisplayAlerts = False
+    Application.Quit
+
+End Sub
+Sub SheetSelect(mySheet)
+    On Error Resume Next
+    Sheets(mySheet).Select
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub ItemBpPurchasingSelect()
+    myItemBpPurchasingFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Item BP Purchasing Data file")
+    If myItemBpPurchasingFile = False Then
+    Else
+        Range("B8").Value = myItemBpPurchasingFile
+    End If
+End Sub
+Sub OpenPoSelect()
+    myOpenPoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO file")
+    If myOpenPoFile = False Then
+    Else
+        Range("B10").Value = myOpenPoFile
+    End If
+End Sub
+Sub SupplierAgreementSelect()
+    mySupplierAgreementFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Supplier Agreement file")
+    If mySupplierAgreementFile = False Then
+    Else
+        Range("B12").Value = mySupplierAgreementFile
+    End If
+End Sub
+Sub DataIntegritySelect()
+    myDataIntegrityFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Data Integrity file")
+    If myDataIntegrityFile = False Then
+    Else
+        Range("B14").Value = myDataIntegrityFile
+    End If
+End Sub
+Sub BucketsReportSelect()
+    myBucketsFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select 16 Buckets Report_Monthly (Buy) file")
+    If myBucketsFile = False Then
+    Else
+        Range("B16").Value = myBucketsFile
+    End If
+End Sub
+Sub OpenPoRrSelect()
+    myOpenPoRrFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO report (RR) file")
+    If myOpenPoRrFile = False Then
+    Else
+        Range("B18").Value = myOpenPoRrFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+End Sub
+Sub SharePath()
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select a Folder"
+        If .Show = -1 Then ' if OK is pressed
+            Range("B4").Value = .SelectedItems(1)
+        End If
+    End With
+    
+'    If sFolder <> "" Then ' if a file was chosen
+'        ' *********************
+'        ' put your code in here
+'        ' *********************
+'    End If
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .CC = myCc
+        .BCC = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+
