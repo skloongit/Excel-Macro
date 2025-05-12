@@ -1,0 +1,615 @@
+Dim mySuccess  As String
+Dim myMacroPath As String
+Dim myAttachement() As String
+Sub EmailTriggering()
+    ReDim myAttachement(0)
+    Dim myBody As String
+    On Error GoTo myErrorEnd
+    myMacrofile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+        
+    'Configuration File Check
+    myConfigCheck = Dir(myMacroPath & "\Receiving SharePoint Receipt Daily Notification Configuration.xlsx")
+    If myConfigCheck = "" Then
+        'Call SendEmail("sk.loon@plexus.com", "sk.loon@plexus.com", "", "Error:" & myMacrofile, "Unable to find Configuration.xlsx file!", "", "")
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ActiveWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to find Configuration.xlsx file!</html>", _
+                myAttachement(), _
+                0, 0)
+        
+        GoTo myEnd
+    End If
+    Workbooks.Open myMacroPath & "\Receiving SharePoint Receipt Daily Notification Configuration.xlsx", False, True
+    'To
+    If Sheets("To").Range("A1").Value <> "" Then
+        If Sheets("To").Range("A2").Value <> "" Then
+            myTempToTotal = Sheets("To").Range("A" & Rows.Count).End(xlUp).Row
+            myTo = Join(Application.WorksheetFunction.Transpose(Sheets("To").Range("A1:A" & myTempToTotal).Value), ";")
+        Else
+            myTo = Sheets("To").Range("A1").Value
+        End If
+    End If
+    'Cc
+    If Sheets("Cc").Range("A1").Value <> "" Then
+        If Sheets("Cc").Range("A2").Value <> "" Then
+            myTempCcTotal = Sheets("Cc").Range("A" & Rows.Count).End(xlUp).Row
+            myCc = Join(Application.WorksheetFunction.Transpose(Sheets("Cc").Range("A1:A" & myTempCcTotal).Value), ";")
+        Else
+            myCc = Sheets("Cc").Range("A1").Value
+        End If
+    End If
+    If Sheets("Subject").Range("A1").Value <> "" Then
+        mySubject = Sheets("Subject").Range("A1").Value
+    End If
+    If Sheets("Contents").Range("A1").Value <> "" Then
+        myBody = Sheets("Contents").Range("A1").Value
+    End If
+    ActiveWorkbook.Close False
+    
+    'Sheets("owssvr").Range("A1").ListObject.QueryTable.Refresh BackgroundQuery:=False
+    ActiveWorkbook.RefreshAll
+    myTotal = Sheets("owssvr").Range("A" & Rows.Count).End(xlUp).Row
+    Sheets("AGING SUMMARY").Copy
+    'Workbooks.Add
+    Sheets.Add
+    ActiveSheet.Name = "Sheet1"
+    myNewBook = ActiveWorkbook.Name
+    Workbooks(myMacrofile).Sheets("owssvr").Range("A1:W" & myTotal).Copy
+    Range("A1").PasteSpecial xlPasteValues
+    Workbooks(myMacrofile).Sheets("owssvr").Range("A1:W" & myTotal).Copy
+    Range("A1").PasteSpecial xlPasteFormats
+    Range("A1:W" & myTotal).VerticalAlignment = xlTop
+    Cells.Columns.AutoFit
+    Columns("B:C").NumberFormat = "dd mmm yyyy"
+    Columns("B:C").HorizontalAlignment = xlCenter
+    Columns("E:E").ColumnWidth = 10
+    Columns("H:J").ColumnWidth = 25
+    Columns("P:R").Delete Shift:=xlToLeft
+    Columns("R:R").HorizontalAlignment = xlCenter
+    Columns("D:D").NumberFormat = "General"
+    Columns("D:D").Replace What:="Days", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("D:D").Replace What:="Day", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("D:D").Font.Color = -16776961
+    Columns("D:D").HorizontalAlignment = xlCenter
+    ActiveWorkbook.Worksheets("Sheet1").Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Sheet1").Sort.SortFields.Add Key:=Range("D2:D" & myTotal), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Sheet1").Sort.SortFields.Add Key:=Range("C2:C" & myTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Sheet1").Sort.SortFields.Add Key:=Range("A2:A" & myTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    ActiveWorkbook.Worksheets("Sheet1").Sort.SetRange Range("A1:T" & myTotal)
+    ActiveWorkbook.Worksheets("Sheet1").Sort.Header = xlYes
+    ActiveWorkbook.Worksheets("Sheet1").Sort.MatchCase = False
+    ActiveWorkbook.Worksheets("Sheet1").Sort.Orientation = xlTopToBottom
+    ActiveWorkbook.Worksheets("Sheet1").Sort.SortMethod = xlPinYin
+    ActiveWorkbook.Worksheets("Sheet1").Sort.Apply
+    
+    'Remove  # and number
+    Columns("O:O").Replace What:=";#", Replacement:=";", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="#", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="0", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="1", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="2", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="3", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="4", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="5", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="6", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="7", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="8", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:="9", Replacement:="", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    Columns("O:O").Replace What:=";;", Replacement:=";", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    
+    'Ver1.1: Remove Resolution Date Column
+    Columns("S:S").Delete
+    Columns("L:N").HorizontalAlignment = xlCenter
+    
+    Sheets("AGING SUMMARY").Select
+    Range("B2").Value = Date - 1
+        'Range("B5").Value = "=COUNTIF(Sheet1!D:D,0)"
+        Range("B5").Value = "=COUNTIFS(Sheet1!D:D,0,Sheet1!F:F,""<>"")"
+    Range("B5").Value = Range("B5").Value
+        'Range("C5").Value = "=COUNTIFS(Sheet1!D:D,"">0"",Sheet1!D:D,""<6"")"
+        Range("C5").Value = "=COUNTIFS(Sheet1!D:D,"">0"",Sheet1!D:D,""<6"",Sheet1!F:F,""<>"")"
+    Range("C5").Value = Range("C5").Value
+        'Range("D5").Value = "=COUNTIFS(Sheet1!D:D,"">5"",Sheet1!D:D,""<11"")"
+        Range("D5").Value = "=COUNTIFS(Sheet1!D:D,"">5"",Sheet1!D:D,""<11"",Sheet1!F:F,""<>"")"
+    Range("D5").Value = Range("D5").Value
+        'Range("E5").Value = "=COUNTIFS(Sheet1!D:D,"">10"",Sheet1!D:D,""<21"")"
+        Range("E5").Value = "=COUNTIFS(Sheet1!D:D,"">10"",Sheet1!D:D,""<21"",Sheet1!F:F,""<>"")"
+    Range("E5").Value = Range("E5").Value
+        'Range("F5").Value = "=COUNTIF(Sheet1!D:D,"">20"")"
+        Range("F5").Value = "=COUNTIFS(Sheet1!D:D,"">20"",Sheet1!F:F,""<>"")"
+    Range("F5").Value = Range("F5").Value
+    Range("G5").Value = "=SUM(B5:F5)"
+    myTotalProblem = Range("G5").Value
+        'New Request
+        Sheets("Sheet1").Range("F2:F" & myTotal).Copy
+        Range("A6").PasteSpecial xlPasteValues
+        Selection.RemoveDuplicates Columns:=1, Header:=xlNo
+        myAgingMpf = Range("A" & Rows.Count).End(xlUp).Row
+        ActiveWorkbook.Worksheets("AGING SUMMARY").Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("AGING SUMMARY").Sort.SortFields.Add Key:=Range("A6:A" & myAgingMpf), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("AGING SUMMARY").Sort.SetRange Range("A6:A" & myAgingMpf)
+        ActiveWorkbook.Worksheets("AGING SUMMARY").Sort.Header = xlNo
+        ActiveWorkbook.Worksheets("AGING SUMMARY").Sort.MatchCase = False
+        ActiveWorkbook.Worksheets("AGING SUMMARY").Sort.Orientation = xlTopToBottom
+        ActiveWorkbook.Worksheets("AGING SUMMARY").Sort.SortMethod = xlPinYin
+        ActiveWorkbook.Worksheets("AGING SUMMARY").Sort.Apply
+        Range("B6:B" & myAgingMpf).Value = "=COUNTIFS(Sheet1!D:D,0,Sheet1!F:F,$A6)"
+        Range("B6:B" & myAgingMpf).Value = Range("B6:B" & myAgingMpf).Value
+        Range("C6:C" & myAgingMpf).Value = "=COUNTIFS(Sheet1!D:D,"">0"",Sheet1!D:D,""<6"",Sheet1!F:F,$A6)"
+        Range("C6:C" & myAgingMpf).Value = Range("C6:C" & myAgingMpf).Value
+        Range("D6:D" & myAgingMpf).Value = "=COUNTIFS(Sheet1!D:D,"">5"",Sheet1!D:D,""<11"",Sheet1!F:F,$A6)"
+        Range("D6:D" & myAgingMpf).Value = Range("D6:D" & myAgingMpf).Value
+        Range("E6:E" & myAgingMpf).Value = "=COUNTIFS(Sheet1!D:D,"">10"",Sheet1!D:D,""<21"",Sheet1!F:F,$A6)"
+        Range("E6:E" & myAgingMpf).Value = Range("E6:E" & myAgingMpf).Value
+        Range("F6:F" & myAgingMpf).Value = "=COUNTIFS(Sheet1!D:D,"">20"",Sheet1!F:F,$A6)"
+
+            
+        Range("F6:F" & myAgingMpf).Value = Range("F6:F" & myAgingMpf).Value
+        Range("G5:G" & myAgingMpf).Value = "=SUM(B5:F5)"
+        Rows("6:6").Insert
+        Range("A6").Copy
+        Range("B6:G6").PasteSpecial xlPasteFormats
+        Rows("6:6").RowHeight = 5
+        Range("A7:G" & myAgingMpf + 1).Borders(xlEdgeLeft).LineStyle = xlDash
+        Range("A7:G" & myAgingMpf + 1).Borders(xlEdgeTop).LineStyle = xlDash
+        Range("A7:G" & myAgingMpf + 1).Borders(xlEdgeBottom).LineStyle = xlDash
+        Range("A7:G" & myAgingMpf + 1).Borders(xlEdgeRight).LineStyle = xlDash
+        Range("A7:G" & myAgingMpf + 1).Borders(xlInsideVertical).LineStyle = xlDash
+        Range("A7:G" & myAgingMpf + 1).Borders(xlInsideHorizontal).LineStyle = xlDash
+        
+        Range("B7:G" & myAgingMpf + 1).NumberFormat = "0"
+        Range("B7:G" & myAgingMpf + 1).HorizontalAlignment = xlCenter
+        myTotalProblem = Range("G5").Value
+        
+    If Dir(myMacroPath & "\" & Year(Date), vbDirectory) = "" Then
+        MkDir myMacroPath & "\" & Year(Date)
+    End If
+    
+    'Ver1.2: Delete Empty MPF
+    If Range("A" & myAgingMpf + 1).Value = 0 Then
+       Rows(myAgingMpf + 1).Delete
+        myAgingMpf = myAgingMpf - 1
+    End If
+    'ActiveSheet.PivotTables("PivotTable2").PivotFields("MPF").PivotFilters.Add2 Type:=xlValueDoesNotEqual, DataField:=ActiveSheet.PivotTables("PivotTable2").PivotFields("Total Problematic"), Value1:=0
+    
+    
+    Application.DisplayAlerts = False
+    ActiveWorkbook.SaveAs Filename:=myMacroPath & "\" & Year(Date) & "\Receipt Daily Issue Log- " & Format(Date - 1, "DD Mmm Yyyy") & ".xlsx", FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    Application.DisplayAlerts = True
+    For myA = 1 To 10
+        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+            Kill myMacroPath & "\Chart.jpg"
+        End If
+        Sheets("AGING SUMMARY").Select
+        'Ver1.5:
+        'Range("A1:G5").Copy
+        Range("A1:G" & myAgingMpf + 1).Copy
+
+        
+        'Application.Wait (Now + TimeValue("00:00:01"))
+        'Range("J1").Select
+        'Application.Wait (Now + TimeValue("00:00:01"))
+        'ActiveSheet.Pictures.Paste.Select
+        ''asfd = Selection.Name
+        'ActiveSheet.Shapes.Range(Array(Selection.Name)).Select
+        'Selection.Copy
+        SaveGraph
+        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+            If Dir(myMacroPath & "\IncomingAgingSummary.jpg", vbNormal) <> "" Then
+                Kill myMacroPath & "\IncomingAgingSummary.jpg"
+            End If
+            Name myMacroPath & "\Chart.jpg" As myMacroPath & "\IncomingAgingSummary.jpg"
+            Exit For
+        End If
+    Next myA
+    
+    Workbooks("Receipt Daily Issue Log- " & Format(Date - 1, "DD Mmm Yyyy") & ".xlsx").Close False
+    
+    Workbooks(myMacrofile).Activate
+    For myA = 1 To 10
+        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+            Kill myMacroPath & "\Chart.jpg"
+        End If
+        Sheets("Pivot").Select
+        Range("A1:B" & Range("A" & Rows.Count).End(xlUp).Row).Copy
+        'Application.Wait (Now + TimeValue("00:00:01"))
+'        Range("P1").Select
+'        'Application.Wait (Now + TimeValue("00:00:01"))
+'        ActiveSheet.Pictures.Paste.Select
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        Selection.Copy
+        ''asfd = Selection.Name
+        ''ActiveSheet.Shapes.Range(Array(Selection.Name)).Select
+        SaveGraph
+        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+            If Dir(myMacroPath & "\MpfTable.jpg", vbNormal) <> "" Then
+                Kill myMacroPath & "\MpfTable.jpg"
+            End If
+            Name myMacroPath & "\Chart.jpg" As myMacroPath & "\MpfTable.jpg"
+            Exit For
+        End If
+    Next myA
+    
+    Workbooks(myMacrofile).Activate
+    For myA = 1 To 10
+        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+            Kill myMacroPath & "\Chart.jpg"
+        End If
+        Sheets("Pivot").Select
+        ActiveSheet.Shapes.Range(Array("Chart 1")).Select
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        Selection.Copy
+'        Application.Wait (Now + TimeValue("00:00:01"))
+'        'asfd = Selection.Name
+'        'ActiveSheet.Shapes.Range(Array(Selection.Name)).Select
+'        ActiveSheet.Pictures.Paste.Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Selection.Copy
+        
+        SaveGraph
+        If Dir(myMacroPath & "\Chart.jpg", vbNormal) <> "" Then
+            If Dir(myMacroPath & "\TotalProblematic.jpg", vbNormal) <> "" Then
+                Kill myMacroPath & "\TotalProblematic.jpg"
+            End If
+            Name myMacroPath & "\Chart.jpg" As myMacroPath & "\TotalProblematic.jpg"
+            Exit For
+        End If
+    Next myA
+    
+'        myRaci = "<span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><u>Report Owner:</u></span></span>" & _
+'            "                <table cellspacing=""0"" class=""Table"" style=""border-collapse:collapse; margin-left:-1px; width:3.25in"">" & _
+'            "                    <tbody>" & _
+'            "                        <tr>" & _
+'            "                            <td style=""background-color:#d9e1f2; border-bottom:1px solid black; border-left:1px solid black; border-right:1px solid black; border-top:1px solid black; height:20px; vertical-align:bottom; ""width:114px"">" & _
+'            "                            <p><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">R - Responsible</span></span></span></p>" & _
+'            "                            </td>" & _
+'            "                            <td style=""background-color:#d9e1f2; border-bottom:1px solid black; border-left:none; border-right:1px solid black; border-top:1px solid black; height:20px; vertical-align:bottom; width:198px"">" & _
+'            "                            <p><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">Goet-Sim Tan; Kin-Ming Kwok</span></span></span></p>" & _
+'            "                            </td>" & _
+'            "                        </tr>" & _
+'            "                        <tr>" & _
+'            "                            <td style=""background-color:#b4c6e7; border-bottom:1px solid black; border-left:1px solid black; border-right:1px solid black; border-top:none; height:20px; vertical-align:bottom; width:114px"">" & _
+'            "                            <p><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">A - Accountable</span></span></span></p>" & _
+'            "                            </td>" & _
+'            "                            <td style=""background-color:#b4c6e7; border-bottom:1px solid black; border-left:none; border-right:1px solid black; border-top:none; height:20px; vertical-align:bottom; width:198px"">" & _
+'            "                            <p><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">Goet-Sim Tan</span></span></span></p>" & _
+'            "                            </td>" & _
+'            "                        </tr>"
+'
+'        myRaci = myRaci & "                        <tr>" & _
+'            "                            <td style=""background-color:#8ea9db; border-bottom:1px solid black; border-left:1px solid black; border-right:1px solid black; border-top:none; height:20px; vertical-align:bottom; width:114px"">" & _
+'            "                            <p><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">C -Consulted</span></span></span></p>" & _
+'            "                            </td>" & _
+'            "                            <td style=""background-color:#8ea9db; border-bottom:1px solid black; border-left:none; border-right:1px solid black; border-top:none; height:20px; vertical-align:bottom; width:198px"">" & _
+'            "                            <p><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">Seng-Chung Khaw</span></span></span></p>" & _
+'            "                            </td>" & _
+'            "                        </tr>" & _
+'            "                        <tr>" & _
+'            "                            <td style=""background-color:#4472c4; border-bottom:1px solid black; border-left:1px solid black; border-right:1px solid black; border-top:none; height:20px; vertical-align:bottom; width:114px"">" & _
+'            "                            <p><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">I - Informed</span></span></span></p>" & _
+'            "                            </td>" & _
+'            "                            <td style=""background-color:#4472c4; border-bottom:1px solid black; border-left:none; border-right:1px solid black; border-top:none; height:20px; vertical-align:bottom; width:198px"">" & _
+'            "                            <p><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">Sk Loon</span></span></span></p>" & _
+'            "                            </td>" & _
+'            "                        </tr>" & _
+'            "                    </tbody>" & _
+'            "                </table>"
+    myRaci = "<span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><u>Report Owner:</u></span></span>" & _
+        "                <table cellspacing=""0"" class=""Table"" style=""border-collapse:collapse; margin-left:-1px; width:3.25in;"">" & _
+        "                    <tbody>" & _
+        "                        <tr>" & _
+        "                            <td style=""background-color:#d9e1f2; border-bottom:1px solid black; border-left:1px solid black; border-right:1px solid black; border-top:1px solid black; padding:2px; vertical-align:bottom; width:114px;"">" & _
+        "                            <p style=""margin:0; line-height:1.2;""><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">R - Responsible</span></span></span></p>" & _
+        "                            </td>" & _
+        "                            <td style=""background-color:#d9e1f2; border-bottom:1px solid black; border-left:none; border-right:1px solid black; border-top:1px solid black; padding:2px; vertical-align:bottom; width:198px;"">" & _
+        "                            <p style=""margin:0; line-height:1.2;""><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">Goet-Sim Tan; Kin-Ming Kwok</span></span></span></p>" & _
+        "                            </td>" & _
+        "                        </tr>" & _
+        "                        <tr>" & _
+        "                            <td style=""background-color:#b4c6e7; border-bottom:1px solid black; border-left:1px solid black; border-right:1px solid black; border-top:none; padding:2px; vertical-align:bottom; width:114px;"">" & _
+        "                            <p style=""margin:0; line-height:1.2;""><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">A - Accountable</span></span></span></p>" & _
+        "                            </td>" & _
+        "                            <td style=""background-color:#b4c6e7; border-bottom:1px solid black; border-left:none; border-right:1px solid black; border-top:none; padding:2px; vertical-align:bottom; width:198px;"">" & _
+        "                            <p style=""margin:0; line-height:1.2;""><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">Goet-Sim Tan</span></span></span></p>" & _
+        "                            </td>" & _
+        "                        </tr>"
+
+    myRaci = myRaci & "                        <tr>" & _
+        "                            <td style=""background-color:#8ea9db; border-bottom:1px solid black; border-left:1px solid black; border-right:1px solid black; border-top:none; padding:2px; vertical-align:bottom; width:114px;"">" & _
+        "                            <p style=""margin:0; line-height:1.2;""><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">C - Consulted</span></span></span></p>" & _
+        "                            </td>" & _
+        "                            <td style=""background-color:#8ea9db; border-bottom:1px solid black; border-left:none; border-right:1px solid black; border-top:none; padding:2px; vertical-align:bottom; width:198px;"">" & _
+        "                            <p style=""margin:0; line-height:1.2;""><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">Seng-Chung Khaw</span></span></span></p>" & _
+        "                            </td>" & _
+        "                        </tr>" & _
+        "                        <tr>" & _
+        "                            <td style=""background-color:#4472c4; border-bottom:1px solid black; border-left:1px solid black; border-right:1px solid black; border-top:none; padding:2px; vertical-align:bottom; width:114px;"">" & _
+        "                            <p style=""margin:0; line-height:1.2;""><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">I - Informed</span></span></span></p>" & _
+        "                            </td>" & _
+        "                            <td style=""background-color:#4472c4; border-bottom:1px solid black; border-left:none; border-right:1px solid black; border-top:none; padding:2px; vertical-align:bottom; width:198px;"">" & _
+        "                            <p style=""margin:0; line-height:1.2;""><span style=""font-size:11pt""><span style=""font-family:Calibri,sans-serif""><span style=""color:black"">Sk Loon</span></span></span></p>" & _
+        "                            </td>" & _
+        "                        </tr>" & _
+        "                    </tbody>" & _
+        "                </table>"
+
+    If Dir(myMacroPath & "\MpfTable.jpg", vbNormal) = "" Or Dir(myMacroPath & "\TotalProblematic.jpg", vbNormal) = "" Or Dir(myMacroPath & "\IncomingAgingSummary.jpg", vbNormal) = "" Then
+        'Call SendEmail("sk.loon@plexus.com", "sk.loon@plexus.com", "", "Error:" & myMacrofile, "Unable to generate Graph Picture!", "", "")
+        Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                "sk.loon@plexus.com", _
+                "", _
+                "", _
+                ActiveWorkbook.Name & " Error!", _
+                "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******<br>Unable to generate Graph Picture!</html>", _
+                myAttachement(), _
+                0, 0)
+        
+        
+        ActiveWorkbook.Close False
+        GoTo myEnd
+    End If
+    
+'    With CreateObject("Outlook.Application").CreateItem(0)
+'        .SentOnBehalfOfName = "PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com"
+'        '.To = "Goet-Sim.Tan@plexus.com;Kin-Ming.Kwok@plexus.com;Seng-Chung.Khaw@plexus.com"
+'        .To = myTo
+'        .Cc = myCc
+'        .Bcc = "Sk.loon@plexus.com"
+'        .Subject = "Receiving SharePoint Receipt Daily Issue Log on " & Format(Date - 1, "Dd Mmm Yyyy") & " - " & myTotalProblem & " problematic items"
+'        .Attachments.Add myMacroPath & "\" & Year(Date) & "\Receipt Daily Issue Log- " & Format(Date - 1, "DD Mmm Yyyy") & ".xlsx"
+'        .Attachments.Add myMacroPath & "\MpfTable.jpg"
+'        .Attachments.Add myMacroPath & "\TotalProblematic.jpg"
+'        .Attachments.Add myMacroPath & "\IncomingAgingSummary.jpg"
+'        'myEmailCode = myEmailCode & "<html><br><img src=cid:MpfTable.jpg></img><img src=cid:TotalProblematic.jpg></img><img src=cid:IncomingAgingSummary.jpg></img>"
+'
+'        .HTMLBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******" & Replace(Replace(myBody, "WW", "WW" & myCurWw), Chr(10), "<br>") & _
+'                "<html><br>Dear Buyers,<br>Please speed up to clear your share-point receipt daily issue log parts at receiving asap.<br>" & _
+'                "<html><br>Dear MTM & MM,<br>Please look into problematic aging parts that need immediate action to clear it from receiving.<br>" & _
+'                "<html><br><img src=cid:MpfTable.jpg><br></img><img src=cid:TotalProblematic.jpg></img><br><img src=cid:IncomingAgingSummary.jpg></img>" & _
+'                "<p>&nbsp;</p>" & _
+'                myRaci & "</p></BODY>© Copyright Plexus Islandview 2023. All rights reserved. <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Unsubscribe Receiving SharePoint Receipt Daily Notification'>Unsubscribe</a> | <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Subscribe Receiving SharePoint Receipt Daily Notification'>Subscribe</a></html>"
+'
+'        .Display
+'
+'        .Send
+'    End With
+    ReDim myAttachement(3)
+    myAttachement(0) = myMacroPath & "\MpfTable.jpg"
+    myAttachement(1) = myMacroPath & "\TotalProblematic.jpg"
+    myAttachement(2) = myMacroPath & "\IncomingAgingSummary.jpg"
+    myAttachement(3) = myMacroPath & "\" & Year(Date) & "\Receipt Daily Issue Log- " & Format(Date - 1, "DD Mmm Yyyy") & ".xlsx"
+'    myAttachement(0) = myMacroPath & "\Image1.jpg"
+'    myAttachement(1) = myMacroPath & "\Image2.jpg"
+'    myAttachement(2) = myMacroPath & "\Image3.jpg"
+    myBody = "<html><BODY style=font-size:11pt;font-family:Calibri><p>******** Automated Reporting *******" & Replace(Replace(myBody, "WW", "WW" & myCurWw), Chr(10), "<br>") & _
+                "<html><br>Dear Buyers,<br>Please speed up to clear your share-point receipt daily issue log parts at receiving asap.<br>" & _
+                "<html><br>Dear MTM & MM,<br>Please look into problematic aging parts that need immediate action to clear it from receiving.<br>" & _
+                "<html><br><img src=cid:Image1><br><img src=cid:Image2><br><img src=cid:Image3>" & _
+                "<p>&nbsp;</p>" & _
+                myRaci & "<p></BODY>© Copyright Plexus Islandview 2024. All rights reserved.</p>" '& "</p></BODY>© Copyright Plexus Islandview 2023. All rights reserved. <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Unsubscribe Receiving SharePoint Receipt Daily Notification'>Unsubscribe</a> | <a href='mailto:PLXS-MFG.IslandView.SystemAnalyticalAutomation@plexus.com?subject=Subscribe Receiving SharePoint Receipt Daily Notification'>Subscribe</a></html>"
+                
+    Call SendSmtpEmail( _
+                "PLXS-MFG Islandview SystemAnalyticalAutomation <PLXS-MFG.Islandview.SystemAnalyticalAutomation@plexus.com>", _
+                myTo & "", _
+                myCc & "", _
+                "Sk.loon@plexus.com", _
+                "Islandview Receiving SharePoint Receipt Daily Issue Log on " & Format(Date - 1, "Dd Mmm Yyyy") & " - " & myTotalProblem & " problematic items", _
+                myBody, _
+                myAttachement(), _
+                4, 3)
+    
+    
+    
+myEnd:
+Application.DisplayAlerts = False
+Application.Quit
+End
+myErrorEnd:
+Call SendEmail("sk.loon@plexus.com", "sk.loon@plexus.com", "", "Error:" & myMacrofile, "Unknown Error!", "", "")
+Application.DisplayAlerts = False
+Application.Quit
+End Sub
+Sub SendEmail(myFrom As String, myTo As String, myCc As String, mySubject As String, myBody As Variant, myAttchOne As String, myAttachTwo As String)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim strbody As String
+    Dim i As Integer
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .To = myTo
+        .Cc = myCc
+        .From = myFrom
+        .Subject = mySubject
+        .HTMLBody = myBody
+        If myAttchOne <> "" Then
+            .AddAttachment myAttchOne
+        End If
+        If myAttachTwo <> "" Then
+            .AddAttachment myAttachTwo
+        End If
+        .Send
+    End With
+    
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+
+End Sub
+Sub SaveGraph()
+    On Error GoTo Err1
+    Sheets.Add
+    Application.Wait (Now + TimeValue("00:00:01"))
+        'ActiveSheet.Range("I1").PasteSpecial
+        Range("I1").Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        ActiveSheet.Pictures.Paste.Select
+    myObject = Selection.Name
+    Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+    Selection.ShapeRange.PictureFormat.Brightness = 1:
+    Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+    Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+    Selection.ShapeRange.Fill.Visible = msoFalse:
+    Selection.ShapeRange.Line.Visible = msoFalse:
+    Selection.ShapeRange.Rotation = 0#:
+    Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+    Selection.ShapeRange.PictureFormat.CropRight = 0#:
+    Selection.ShapeRange.PictureFormat.CropTop = 0#:
+    Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+    Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+    Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+        'Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+        Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlBMP
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set oDia = ActiveSheet.ChartObjects.Add(0, 0, ActiveSheet.Shapes(1).Width, ActiveSheet.Shapes(1).Height)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Set oChartArea = oDia.Chart
+    Application.Wait (Now + TimeValue("00:00:01"))
+    oDia.Activate
+    Application.Wait (Now + TimeValue("00:00:01"))
+    oChartArea.ChartArea.Select
+    Application.Wait (Now + TimeValue("00:00:01"))
+        'oChartArea.Paste
+        oChartArea.Pictures.Paste
+    Application.Wait (Now + TimeValue("00:00:02"))
+    oChartArea.Export (myMacroPath & "\Chart.jpg")
+    Application.Wait (Now + TimeValue("00:00:01"))
+    Application.DisplayAlerts = False
+    ActiveSheet.Delete
+    Application.DisplayAlerts = True
+    mySuccess = "Yes"
+    Exit Sub
+Err1:
+End Sub
+Sub SendSmtpEmail(myFrom As String, myTo As String, myCc As String, myBcc As String, mySubject As String, myBody As String, myAttachment() As String, myTotalAtt As Integer, myTotalEmb As Integer)
+    Dim iMsg As Object
+    Dim iConf As Object
+    Dim Flds As Variant
+    Dim CDOMessage As Object
+    Dim Configuration As Object
+
+    
+    Set iMsg = CreateObject("CDO.Message")
+    Set iConf = CreateObject("CDO.Configuration")
+    'i = 100
+    iConf.Load -1 ' CDO Source Defaults
+    Set Flds = iConf.Fields
+    With Flds
+        .Item("http://schemas.microsoft.com/cdo/configuration/sendusing") = 2
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserver") = "internet-smtp.plexus.com"
+        .Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport") = 25
+        .Update
+    End With
+    
+    With iMsg
+        Set .Configuration = iConf
+        .From = myFrom '"PLXS-MFG Bangkok SystemAnalyticalAutomation <PLXS-MFG.Bangkok.SystemAnalyticalAutomation@plexus.com>"
+        .To = myTo '"sk.loon@plexus.com"
+        .Cc = myCc
+        .Bcc = myBcc
+        For myA = 1 To myTotalAtt
+            .AddAttachment myAttachment(myA - 1)
+        Next myA
+        For myB = 1 To myTotalEmb
+            Set iBp = .Attachments.Item(myB)
+            iBp.Fields.Item("urn:schemas:mailheader:content-id") = "Image" & myB
+            iBp.Fields.Update
+        Next myB
+        .Subject = mySubject
+        .HTMLBody = myBody
+        .Send
+    End With
+    
+    Set iMsg = Nothing
+    Set iConf = Nothing
+    Set Flds = Nothing
+End Sub
+Function RangetoHTML(rng As Range)
+    
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+    
+    On Error GoTo myQuit
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial Paste:=8
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .Cells(1).Select
+        Application.Wait (Now + TimeValue("00:00:01"))
+        Application.CutCopyMode = False
+        On Error Resume Next
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Visible = True
+        Application.Wait (Now + TimeValue("00:00:01"))
+        .DrawingObjects.Delete
+        Application.Wait (Now + TimeValue("00:00:01"))
+        On Error GoTo 0
+    End With
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = ts.ReadAll
+    Application.Wait (Now + TimeValue("00:00:01"))
+    ts.Close
+    Application.Wait (Now + TimeValue("00:00:01"))
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", "align=left x:publishsource=")
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Close TempWB
+    TempWB.Close savechanges:=False
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    'Delete the htm file we used in this function
+    Kill TempFile
+    Application.Wait (Now + TimeValue("00:00:01"))
+        
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+myQuit:
+End Function
+
