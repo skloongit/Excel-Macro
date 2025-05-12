@@ -1,0 +1,658 @@
+Dim myCutInsertCounter As Integer
+Dim myStatus As String
+Sub Waiting(ByVal Mili_Seconds&)
+Sleep Mili_Seconds
+End Sub
+Sub LotTraveller()
+    Dim myBomStatus As String
+    myStrTime = Time
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    myMacroFile = ActiveWorkbook.Name
+    myMacroPath = ActiveWorkbook.Path
+    mySharePath = Sheets("Configuration").Range("B1").Value
+    myPicSharePath = Sheets("Configuration").Range("B2").Value
+    myJdeSharePath = Sheets("Configuration").Range("B4").Value
+    myThisMonth = Format(Date, "MMYY")
+    myNextMonth = Format(DateAdd("m", 1, Date), "MMYY")
+                
+    If Range("A22").Value = "" Then
+        MsgBox "Top Level Part Number not found!"
+        End
+    End If
+    myTotalFg = Range("A21").End(xlDown).Row
+    For myZ = 22 To myTotalFg
+        If Right(Trim(Range("A" & myZ).Value), 4) = "-198" Then
+            Range("A" & myZ).Value = Trim(Range("A" & myZ).Value)
+        Else
+            Range("A" & myZ).Value = Trim(Range("A" & myZ).Value) & "-198"
+        End If
+    Next myZ
+    Range("F22:F" & Rows.Count).ClearContents
+    
+    'Ver1.1: Change file to include purchase and make part (level 0 & 1) [File:830_Indented BOM MPF198_Level 1_Buy&Make]
+    'If Dir(mySharePath & "830_Indented BOM MPF198*.xlsx") = "" Then
+    If Dir(mySharePath & "830_Indented BOM MPF198_Level 1_Buy&Mak*.xlsx") = "" Then
+        MsgBox "830_Indented BOM MPF198 file not found!"
+        End
+    End If
+    
+    If Dir(myPicSharePath & "Lot Traveller PIC.xlsx") = "" Then
+        MsgBox "PIC file not found!"
+        End
+    End If
+    
+    myThisMonthFile = Range("C4").Value
+    myNextMonthFile = Range("C6").Value
+    'myForecastFile = Range("C8").Value
+    
+    'Add SOFS
+    myOpenSoFile = Dir(myJdeSharePath & "R42620_PLXS0007*")
+    If myOpenSoFile = "" Then
+        If myOpenSoFile = "" Then
+            MsgBox "Open SO file not found!"
+            End
+        End If
+    End If
+    Do Until myOpenSoFile = ""
+        Set F = fso.GetFile(myJdeSharePath & myOpenSoFile)
+        'myLastModifiedDate = CDate(Format(f.DateLastModified, "m/d/yyyy"))
+        If Date = CDate(Format(F.DateLastModified, "m/d/yyyy")) Then
+            Workbooks.Open Filename:=myJdeSharePath & myOpenSoFile, ReadOnly:=True
+            Exit Do
+        End If
+        myOpenSoFile = Dir()
+    Loop
+    
+    If myOpenSoFile = "" Then
+        myOpenSoFile = Dir(Trim(myPath2) & Format(Date - 1, "d-Mmm-Yyyy") & "\R5541008_PLXS00006 *")
+        If myOpenSoFile = "" Then
+            MsgBox "Open SO file not found!"
+            End
+        Else
+            Workbooks.Open Filename:=Trim(myPath2) & Format(Date - 1, "d-Mmm-Yyyy") & "\" & myOpenSoFile, ReadOnly:=True
+        End If
+    End If
+    myOpenSoFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+    mySoTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A3:A" & mySoTotal).Value = "=Trim(J3)"
+    Range("A3:A" & mySoTotal).Value = Range("A3:A" & mySoTotal).Value
+    Range("J3:J" & mySoTotal).Value = Range("A3:A" & mySoTotal).Value
+    Range("A3:A" & mySoTotal).Value = "=IF(COUNTIF('[" & myMacroFile & "]Macro'!$B:$B,G3)>0,Row(G3),""Delete"")"
+    Range("A3:A" & mySoTotal).Value = Range("A3:A" & mySoTotal).Value
+    Range("A3:V" & mySoTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+    mySoTotal = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A4:A" & mySoTotal).Value = "=IF(COUNTIFS('[" & myMacroFile & "]Macro'!$B:$B,G4,'[" & myMacroFile & "]Macro'!$A:$A,J4)>0,""Delete"",Row(G4))"
+    Range("A4:A" & mySoTotal).Value = Range("A4:A" & mySoTotal).Value
+    Range("A3:V" & mySoTotal).RemoveDuplicates Columns:=1, Header:=xlNo
+    mySoTotal = Range("A" & Rows.Count).End(xlUp).Row
+    If mySoTotal > 3 Then
+        ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Clear
+        ActiveWorkbook.Worksheets("Temp").Sort.SortFields.Add Key:=Range("G4:G" & mySoTotal), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+        ActiveWorkbook.Worksheets("Temp").Sort.SetRange Range("A3:V7")
+        ActiveWorkbook.Worksheets("Temp").Sort.Header = xlYes
+        ActiveWorkbook.Worksheets("Temp").Sort.MatchCase = False
+        ActiveWorkbook.Worksheets("Temp").Sort.Orientation = xlTopToBottom
+        ActiveWorkbook.Worksheets("Temp").Sort.SortMethod = xlPinYin
+        ActiveWorkbook.Worksheets("Temp").Sort.Apply
+    End If
+    
+    myBom = Dir(mySharePath & "830_Indented BOM MPF198*.xlsx")
+    Do Until myBom = ""
+        myFileLastModified = fso.GetFile(mySharePath & myBom).DateLastModified
+        If myFileLastModified > myCompareFileLastModified Then
+            myCompareFileLastModified = fso.GetFile(mySharePath & myBom).DateLastModified
+            myFileName = fso.GetFile(mySharePath & myBom).Name
+        End If
+        myBom = Dir()
+    Loop
+    Workbooks.Open Filename:=mySharePath & myFileName, ReadOnly:=True
+    myBomFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Master"
+    myTotalBom = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A3:A" & myTotalBom).Value = "=IF(G3=0,B3,A2)"
+    Range("A3:A" & myTotalBom).Value = Range("A3:A" & myTotalBom).Value
+    Range("V2").Value = "Delete"
+    'Remain description that contain SYSTEM
+    Range("V3:V" & myTotalBom).Value = "=IF(G3=0,IF(Countif(F3,""*SYSTEM*"")>0,Row(G3),""Delete""),V2+1)"
+    Range("V3:V" & myTotalBom).Value = Range("V3:V" & myTotalBom).Value
+    Range("A2:V" & myTotalBom).RemoveDuplicates Columns:=22, Header:=xlNo
+    myTotalBom = Range("A" & Rows.Count).End(xlUp).Row
+    'Remain Level 0
+    Sheets("Master").Copy After:=Sheets(Sheets("Master").Name)
+    ActiveSheet.Name = "Level0"
+    Range("V3:V" & myTotalBom).Value = "=IF(G3=0,Row(G3),""Delete"")"
+    Range("V3:V" & myTotalBom).Value = Range("V3:V" & myTotalBom).Value
+    Range("A2:V" & myTotalBom).RemoveDuplicates Columns:=22, Header:=xlNo
+    Sheets("Master").Select
+    'Remain Level 1
+    Range("V3:V" & myTotalBom).Value = "=IF(G3=1,Row(G3),""Delete"")"
+    Range("V3:V" & myTotalBom).Value = Range("V3:V" & myTotalBom).Value
+    Range("A2:V" & myTotalBom).RemoveDuplicates Columns:=22, Header:=xlNo
+    myTotalBom = Range("A" & Rows.Count).End(xlUp).Row
+    
+    If myThisMonthFile <> "" Then
+        If Dir(myThisMonthFile) = "" Then
+            MsgBox myThisMonthFile & " file not found!"
+            End
+        End If
+        Workbooks.Open Filename:=myThisMonthFile
+    Else
+        Workbooks(myMacroFile).Activate
+        Sheets(Array("Summary", "Template")).Copy
+    End If
+    myThisMonthFilename = ActiveWorkbook.Name
+    
+    If myNextMonthFile <> "" Then
+        If Dir(myNextMonthFile) = "" Then
+            MsgBox myNextMonthFile & " file not found!"
+            End
+        End If
+        Workbooks.Open Filename:=myNextMonthFile
+    Else
+        Workbooks(myMacroFile).Activate
+        Sheets(Array("Summary", "Template")).Copy
+    End If
+    myNextMonthFilename = ActiveWorkbook.Name
+    
+
+    Workbooks.Open Filename:=myPicSharePath & "Lot Traveller PIC.xlsx", ReadOnly:=True
+    myPicFilename = ActiveWorkbook.Name
+    ActiveSheet.Name = "Temp"
+
+    
+'    If myForecastFile <> "" Then
+'        If Dir(myForecastFile) = "" Then
+'            MsgBox myForecastFile & " file not found!"
+'            End
+'        End If
+'        Workbooks.Open Filename:=myForecastFile
+'        myForecastFilename = ActiveWorkbook.Name
+'        ActiveSheet.Name = "Temp"
+'    End If
+    
+    For myA = 22 To myTotalFg
+        myOriFgPart = Trim(Workbooks(myMacroFile).Sheets("Macro").Range("A" & myA).Value)
+        'myShortPart = InStr(1, myOriFgPart, "-", vbBinaryCompare)
+        If Right(myOriFgPart, 4) = "-198" Then
+            myShortPart = Left(myOriFgPart, Len(myOriFgPart) - 4)
+        Else
+            myShortPart = myOriFgPart
+        End If
+'        If myShortPart > 0 Then
+'            myShortPart = Left(myOriFgPart, myShortPart - 1)
+'        Else
+'            myShortPart = myOriFgPart
+'        End If
+        'myFgPart = Replace(Trim(Workbooks(myMacroFile).Sheets("Macro").Range("A" & myA).Value), "-198", "", 1)
+        myFgPart = myOriFgPart
+        myFgPartCount = Application.WorksheetFunction.CountIf(Workbooks(myBomFilename).Sheets("Master").Columns("A:A"), myFgPart)
+        If myFgPartCount > 0 Then
+            'myRow = Application.WorksheetFunction.Match(myFgPart, Workbooks(myForecastFilename).Sheets("Temp").Columns("A:A"), 0)
+            myRow = myA
+            myTotalPartCount = Workbooks(myMacroFile).Sheets("Macro").Range("E" & myA).Value
+            'Check exisiting worksheet
+            mySheetExist = Workbooks(myMacroFile).Sheets("Macro").Range("D" & myA).Value
+            If myTotalPartCount = "" Then
+                myTotalPartCount = 1
+            End If
+            myBomStatus = ""
+            'For myB = 1 To myFgPartCount
+            For myB = 1 To myTotalPartCount
+                'myCrd = Workbooks(myForecastFilename).Sheets("Temp").Range("G" & myRow + myB - 1).Value
+                'myPo = Workbooks(myForecastFilename).Sheets("Temp").Range("E" & myRow + myB - 1).Value
+                'myDes = Workbooks(myForecastFilename).Sheets("Temp").Range("B" & myRow + myB - 1).Value
+                myCrd = Workbooks(myMacroFile).Sheets("Macro").Range("C" & myRow).Value
+                myPo = Workbooks(myMacroFile).Sheets("Macro").Range("B" & myRow).Value
+                myDes = ""
+                If Application.WorksheetFunction.CountIf(Workbooks(myBomFilename).Sheets("Level0").Columns("B:B"), myFgPart) > 0 Then
+                    'myDes = Application.WorksheetFunction.VLookup(myFgPart & "-198", Workbooks(myBomFilename).Sheets("Level0").Columns("B:F"), 5, 0)
+                    myDes = Application.WorksheetFunction.VLookup(myFgPart, Workbooks(myBomFilename).Sheets("Level0").Columns("B:F"), 5, 0)
+                End If
+                If Format(myCrd, "MMYY") = myThisMonth Then
+                    Workbooks(myThisMonthFilename).Activate
+                ElseIf Format(myCrd, "MMYY") = myNextMonth Then
+                    Workbooks(myNextMonthFilename).Activate
+                Else
+                    GoTo NextLine
+                End If
+                Sheets("Summary").Select
+                mySheetCheck = Application.WorksheetFunction.CountIf(Columns("E:E"), mySheetExist)
+                If mySheetCheck = 0 Then
+                    myLastRow = Range("B" & Rows.Count).End(xlUp).Row + 1
+                    mySheetCount = Application.WorksheetFunction.CountIf(Columns("B:B"), myFgPart) + 1
+                    'mySheetCount = Application.WorksheetFunction.CountIf(Columns("B:B"), myShortPart) + 1
+                    Range("E" & myLastRow).Value = myShortPart & "(" & mySheetCount & ")"
+                
+                Else
+                    myLastRow = Application.WorksheetFunction.Match(mySheetExist, Columns("E:E"), 0)
+                End If
+                
+                Range("B" & myLastRow).Value = myFgPart
+                Range("C" & myLastRow).Value = myPo
+                Range("D" & myLastRow).Value = myCrd
+                Range("F" & myLastRow).Value = myCompareFileLastModified
+                Range("G" & myLastRow).Value = Date
+                ActiveSheet.Hyperlinks.Add Anchor:=Range("A" & myLastRow), Address:="", SubAddress:="'" & myShortPart & "(" & mySheetCount & ")" & "'!A1", TextToDisplay:="Details"
+                If mySheetCheck = 0 Then
+                    Sheets("Template").Copy After:=Sheets(1)
+                    Sheets("Template (2)").Visible = True
+                    Sheets("Template (2)").Select
+                    Sheets("Template (2)").Name = myShortPart & "(" & mySheetCount & ")"
+                Else
+                    Sheets(mySheetExist).Select
+                    Range("A6:F37").ClearContents
+                End If
+                Range("A3").Value = myOriFgPart
+                Range("B3").Value = myDes
+                Range("E1").Value = "PO# " & myPo
+                Range("E2").Value = "SN#"
+                Range("E3").Value = "CRD: " & myCrd
+                Range("F49").Value = "Printed Date: " & Date
+                myUpdateFile = ActiveWorkbook.Name
+                If myBomStatus = "" Then
+                    myBomStatus = "Yes"
+                    Workbooks(myBomFilename).Activate
+                    ErrHnd
+                    Sheets("Master").Copy After:=Sheets(Sheets("Master").Name)
+                    ActiveSheet.Name = "Temp"
+                    'Range("V3:V" & myTotalBom).Value = "=IF(A3=""" & myFgPart & "-198"",Row(A3),""Delete"")"
+                    Range("V3:V" & myTotalBom).Value = "=IF(A3=""" & myFgPart & """,Row(A3),""Delete"")"
+                    Range("V3:V" & myTotalBom).Value = Range("V3:V" & myTotalBom).Value
+                    Range("A2:V" & myTotalBom).RemoveDuplicates Columns:=22, Header:=xlNo
+                    myTempTotalPart = Range("A" & Rows.Count).End(xlUp).Row
+                    Workbooks(myUpdateFile).Activate
+                End If
+                If myTempTotalPart > 2 Then
+                    Range("A6:A" & myTempTotalPart + 3).Value = Workbooks(myBomFilename).Sheets("Temp").Range("B3:B" & myTempTotalPart).Value
+                    Range("B6:B" & myTempTotalPart + 3).Value = Workbooks(myBomFilename).Sheets("Temp").Range("F3:F" & myTempTotalPart).Value
+                    Range("C6:C" & myTempTotalPart + 3).Value = Workbooks(myBomFilename).Sheets("Temp").Range("H3:H" & myTempTotalPart).Value
+                    'Range("D6:D" & myTempTotalPart + 3).Value = "=IFERROR(IFERROR(IFERROR(VLOOKUP(A6,'[" & myPicFilename & "]Temp'!$A:$B,2,0),VLOOKUP(LEFT(A6,LEN(A6)-4),'[" & myPicFilename & "]Temp'!$A:$B,2,0)),VLOOKUP(LEFT(A6,LEN(A6)-4)+0,'[" & myPicFilename & "]Temp'!$A:$B,2,0)),"""")"
+                    Range("D6:D" & myTempTotalPart + 3).Value = "=IFERROR(IFERROR(IFERROR(VLOOKUP(A6,'[" & myPicFilename & "]Temp'!$A:$C,3,0),VLOOKUP(LEFT(A6,LEN(A6)-4),'[" & myPicFilename & "]Temp'!$A:$C,3,0)),VLOOKUP(LEFT(A6,LEN(A6)-4)+0,'[" & myPicFilename & "]Temp'!$A:$C,3,0)),"""")"
+                    Range("D6:D" & myTempTotalPart + 3).Value = Range("D6:D" & myTempTotalPart + 3).Value
+                End If
+                'Workbooks(myMacroFile).Sheets("Macro").Range("B" & myA).Value = Workbooks(myMacroFile).Sheets("Macro").Range("B" & myA).Value + 1
+                myExtraPo = Application.WorksheetFunction.CountIf(Workbooks(myOpenSoFilename).Sheets("Temp").Columns("G:G"), myPo)
+                If myExtraPo > 0 Then
+                    Range("A" & myTempTotalPart + 5).Value = "PO Line"
+                    If myTempTotalPart + 5 + myExtraPo > 37 Then
+                        Range("A" & myTempTotalPart + 6).Value = "PO Line exceed the total lines..."
+                    Else
+                        myExtraPoLine = Application.WorksheetFunction.Match(myPo, Workbooks(myOpenSoFilename).Sheets("Temp").Columns("G:G"), 0)
+                        Range("A" & myTempTotalPart + 6 & ":B" & myTempTotalPart + 5 + myExtraPo).Value = Workbooks(myOpenSoFilename).Sheets("Temp").Range("J" & myExtraPoLine & ":K" & myExtraPoLine + myExtraPo - 1).Value
+                        Range("A" & myTempTotalPart + 6 & ":B" & myTempTotalPart + 5 + myExtraPo).Value = Range("A" & myTempTotalPart + 6 & ":B" & myTempTotalPart + 5 + myExtraPo).Value
+                        Range("C" & myTempTotalPart + 6 & ":C" & myTempTotalPart + 5 + myExtraPo).Value = Workbooks(myOpenSoFilename).Sheets("Temp").Range("P" & myExtraPoLine & ":P" & myExtraPoLine + myExtraPo - 1).Value
+                        Range("C" & myTempTotalPart + 6 & ":C" & myTempTotalPart + 5 + myExtraPo).Value = Range("C" & myTempTotalPart + 6 & ":C" & myTempTotalPart + 5 + myExtraPo).Value
+                        Range("D" & myTempTotalPart + 6 & ":D" & myTempTotalPart + 5 + myExtraPo).Value = "=IFERROR(IFERROR(IFERROR(VLOOKUP(A6,'[" & myPicFilename & "]Temp'!$A:$C,3,0),VLOOKUP(LEFT(A6,LEN(A6)-4),'[" & myPicFilename & "]Temp'!$A:$C,3,0)),VLOOKUP(LEFT(A6,LEN(A6)-4)+0,'[" & myPicFilename & "]Temp'!$A:$C,3,0)),"""")"
+                        Range("D" & myTempTotalPart + 6 & ":D" & myTempTotalPart + 5 + myExtraPo).Value = Range("D" & myTempTotalPart + 6 & ":D" & myTempTotalPart + 5 + myExtraPo).Value
+                    End If
+                End If
+NextLine:
+            Next myB
+        End If
+    Next myA
+    
+    Workbooks(myNextMonthFilename).Activate
+    Sheets("Summary").Select
+    myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A1:G" & myLastRow).Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    Columns("A:G").AutoFit
+                
+    Workbooks(myThisMonthFilename).Activate
+    Sheets("Summary").Select
+    myLastRow = Range("A" & Rows.Count).End(xlUp).Row
+    Range("A1:G" & myLastRow).Borders(xlEdgeLeft).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlEdgeTop).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlEdgeBottom).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlEdgeRight).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlInsideVertical).LineStyle = xlContinuous
+    Range("A1:G" & myLastRow).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+    Columns("A:G").AutoFit
+                
+    'ErrHnd
+    'Workbooks(myForecastFilename).Close False
+    Workbooks(myBomFilename).Close False
+    Workbooks(myPicFilename).Close False
+    Workbooks(myOpenSoFilename).Close False
+    
+    myEndTime = Time
+    MsgBox "Done in " & Format(myEndTime - myStrTime, "hh:mm:ss")
+End Sub
+Sub ErrHnd()
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Sheets("Temp").Delete
+    Application.DisplayAlerts = True
+End Sub
+Sub ErrHnd1(myWorkbook, mySheetname)
+    On Error Resume Next
+    Sheets(mySheetname).Select
+    adsdy = Workbooks("Book43").Sheets(mySheetname).Range("A5").Value
+End Sub
+Sub CopyTemp(myCnt)
+    
+    Sheets("temp").Select
+    ActiveSheet.Range("A1").PasteSpecial
+    myObject = Selection.Name
+    Selection.ShapeRange.PictureFormat.Contrast = 0.5:
+    Selection.ShapeRange.PictureFormat.Brightness = 0.5:
+    Selection.ShapeRange.PictureFormat.ColorType = msoPictureAutomatic:
+    Selection.ShapeRange.PictureFormat.TransparentBackground = msoFalse:
+    Selection.ShapeRange.Fill.Visible = msoFalse:
+    Selection.ShapeRange.Line.Visible = msoFalse:
+    Selection.ShapeRange.Rotation = 0#:
+    Selection.ShapeRange.PictureFormat.CropLeft = 0#:
+    Selection.ShapeRange.PictureFormat.CropRight = 0#:
+    Selection.ShapeRange.PictureFormat.CropTop = 0#:
+    Selection.ShapeRange.PictureFormat.CropBottom = 0#:
+    Selection.ShapeRange.ScaleHeight 1#, msoTrue, msoScaleFromTopLeft:
+    Selection.ShapeRange.ScaleWidth 1#, msoTrue, msoScaleFromTopLeft
+    Application.Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Set oDia = ActiveSheet.ChartObjects.Add(0, 0, ActiveSheet.Shapes(1).Width, ActiveSheet.Shapes(1).Height)
+    Set oChartArea = oDia.Chart
+    oDia.Activate
+    oChartArea.ChartArea.Select
+    oChartArea.Paste
+    oChartArea.Export (ActiveWorkbook.Path & "\MPS" & myCnt & ".jpg")
+    Selection.Delete
+    oDia.Delete
+    ActiveSheet.Shapes(myObject).Delete
+    Sheets("Summary").Select
+End Sub
+Sub CopyRetry(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV").Range("I" & myStr1 & ":L" & myPivotTotal1 - 1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ElseIf mySequence1 = "Last" Then
+        Sheets("PV").Range("I" & myPivotTotal1 & ":L" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    Else
+        Sheets("PV").Range("A4:" & mySequence1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub CopyRetry1(myStr1 As Long, myPivotTotal1 As Long, mySequence1 As String)
+    On Error GoTo ErrCopy
+    Application.Wait (Now + TimeValue("00:00:02"))
+    If mySequence1 = "" Then
+        Sheets("PV Aged>2 Weeks").Range("A" & myStr1 & ":C" & myPivotTotal1).CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    End If
+    myStatus = "OK"
+    Exit Sub
+ErrCopy:
+End Sub
+Sub PasteRetry(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        ElseIf mySequence2 = "Last" Then
+            ActiveSheet.Range("O" & myPicCnt1).PasteSpecial
+        Else
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub PasteRetry1(myPicCnt1 As Long, mySequence2 As String)
+    On Error GoTo ErrPaste
+    myStatus = ""
+    Application.Wait (Now + TimeValue("00:00:02"))
+        If mySequence2 = "" Then
+            ActiveSheet.Range("A1").PasteSpecial
+        End If
+    myStatus = "OK"
+    Exit Sub
+ErrPaste:
+End Sub
+Sub SendMails()
+    'Declare Send Mail Property
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    'Set OutMail = OutApp.CreateItem(0)
+    
+    
+    'Calculate number of the same vendor
+    myFileName = ActiveWorkbook.Name
+    
+    'generateHTMLEmail (1)
+    'mySubject = Sheets("Macro").Shapes("txtSubject1").TextFrame.Characters.Text
+    mySubject = "Test" 'Replace(mySubject, Chr(10), " ")
+    'myAttachPath = Range("G1").Value & "\"
+    
+    'Ver18: Change to HTML mail
+    'myBody = Range("F12").Value + vbCr + Range("F47").Value
+    
+    
+    For X = 2 To myTotalSend
+        If Cells(X, 3).Value = "Yes" Then
+            If Cells(X, 2).Value = "Yes" Then
+                Set OutMail = OutApp.CreateItem(0)
+                myTo = ""
+                myCc = ""
+                
+                'If Range("G2").Value <> "" Then
+                '    myTo = Range("G2").Value & ";"
+                'End If
+                'If Range("G3").Value Then
+                '    myCC = Range("G3").Value & ";"
+                'End If
+                
+                
+                
+                'imgEmbedComm = "<html><body><img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+                             & "<br><br><br></body></html>"
+                 imgEmbedComm = "<br><B>Embedded Image:</B><br>" _
+& "<img src=""<EMBEDDEDIMAGE:" & ActiveWorkbook.Path & "\1.jpg" & ">"" /><br>" _
+& "<br>Best Regards, <br>Sumit</font></span>"
+                htmlBodyCont = imgEmbedComm
+    
+                
+                With OutMail
+                .To = myTo
+                .CC = myCc
+                .Subject = mySubject '& " (" & Cells(X, 1).Value & ")"
+                '.Body = myBody
+
+                .HTMLBody = htmlBodyCont & "1"
+                
+
+                    
+                    If Sheets("Macro").Shapes("Rectangle 17").TextFrame.Characters.Text = "¤ Send" Then
+                        .Send
+                        Cells(X, 4).Value = "Sent"
+                    Else
+                        .Display
+                        Range("i1").Value = ActiveWorkbook.Path & "\1.jpg"
+                        Cells(X, 4).Value = "Displayed"
+                    End If
+                End With
+                
+
+            Else
+                MsgBox ("No Address Found!!!")
+                Cells(X, 1).Interior.Color = 255
+            End If
+        End If
+        'Set OutMail = Nothing
+        'Set OutApp = Nothing
+    Next X
+    MsgBox "Done!!!"
+End Sub
+Sub generateHTMLEmail(ByVal nTxtBox As Integer)
+    Dim testShape As Shape
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set testShape = mainWSD.Shapes("txtTest")
+    testShape.TextFrame.Characters.Text = "<html><body> "
+    
+    Call convertBoxToHTML("txtBody" & nTxtBox)
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "<br /><br /> "
+    Call convertBoxToHTML("txtSignature1")
+    
+    testShape.TextFrame.Characters.Text = testShape.TextFrame.Characters.Text & "</body></html> "
+End Sub
+Sub convertBoxToHTML(ByVal txtBoxName As String)
+
+Dim txtBox As String
+Dim nLen As Single, sLen As Single, eLen As Single, tLen As Single, contLen As Single
+Dim setting As String, setting1 As String, setting2 As String, nUnderline As String
+Dim nBold As Boolean, nItalic As Boolean
+Dim nSize As String, nFont As String, nColor As String
+Dim txtShape As Shape, testShape As Shape
+
+    txtBox = txtBoxName
+    
+    Set mainWSD = ThisWorkbook.Sheets("Macro")
+    Set txtShape = mainWSD.Shapes(txtBox)
+    
+    tLen = Len(txtShape.TextFrame.Characters.Text)
+    If tLen = 0 Then Exit Sub
+        eLen = 0
+        sLen = 1
+        setting1 = ""
+        setting2 = ""
+        For nLen = 1 To tLen
+                        
+            nBold = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Bold
+            nItalic = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Italic
+            nUnderline = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Underline
+            nColor = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Color
+            nSize = CStr(txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Size)
+            nFont = txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Font.Name
+                
+            'setting = setting & "D"
+            If nBold = True Then setting = setting & "B"
+            'setting = setting & "L"
+            If nItalic = True Then setting = setting & "I"
+            'setting = setting & "V"
+            If nUnderline = "2" Then setting = setting & "U"
+
+            setting = setting & nColor
+            setting = setting & nSize
+            setting = setting & nFont
+                
+            setting1 = setting
+            If setting2 = "" Then setting2 = setting
+            setting = ""
+            
+            If txtShape.TextFrame.Characters(Start:=nLen, Length:=1).Text = vbLf Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+                sLen = nLen
+                eLen = 1
+                setting2 = setting1
+            Else
+                If setting1 <> setting2 Then
+                    Call HTMLConvertor(sLen, eLen, txtBox)
+                    sLen = nLen
+                    eLen = 1
+                    setting2 = setting1
+                Else
+                    eLen = eLen + 1
+                End If
+            End If
+        
+            If nLen = tLen Then
+                Call HTMLConvertor(sLen, eLen, txtBox)
+            End If
+        Next
+        
+End Sub
+Sub HeaderSetting(myHeader)
+    'ActiveCell.EntireColumn.Insert
+    ActiveCell.Value = "AML"
+    ActiveCell.Interior.Color = 5296274
+    ActiveCell.Offset(0, 1).Value = "Agreement"
+    ActiveCell.Offset(0, 1).Interior.Color = 49407
+    ActiveCell.Offset(0, 2).Value = "Price Book"
+    ActiveCell.Offset(0, 2).Interior.Color = 15773696
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Merge
+    ActiveCell.Offset(-1, 0).Value = myHeader
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).Interior.Color = 14540253
+    Range(ActiveCell.Offset(-1, 0), ActiveCell.Offset(-1, 2)).HorizontalAlignment = xlCenter
+End Sub
+Sub CutInsertColumn(myHeader, myInsertColumn)
+    myCutInsertCounter = myCutInsertCounter + 1
+    Set mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+    If mySearchValue Is Nothing Then
+        MsgBox myHeader & " column not found! The Macro will stop here!"
+        End
+    Else
+        mySearchValue = Cells.Find(What:=myHeader, After:=Range("A2"), LookIn:=xlFormulas, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Column
+        If mySearchValue <> Columns(myInsertColumn).Column Then
+            Cells(1, mySearchValue).EntireColumn.Cut
+            Columns(myInsertColumn & ":" & myInsertColumn).Insert
+        End If
+    End If
+End Sub
+Sub CurrentSelect()
+    myCurrentFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Current Month file")
+    If myCurrentFile = False Then
+    Else
+        Range("C4").Value = myCurrentFile
+    End If
+End Sub
+Sub LastSelect()
+    myLastFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Next Month file")
+    If myLastFile = False Then
+    Else
+        Range("C6").Value = myLastFile
+    End If
+End Sub
+Sub ForecastSelect()
+    myForecastFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Forecast file")
+    If myForecastFile = False Then
+    Else
+        Range("C8").Value = myForecastFile
+    End If
+End Sub
+Sub OpoSelect()
+    myOpoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Open PO file")
+    If myOpoFile = False Then
+    Else
+        Range("C10").Value = myOpoFile
+    End If
+End Sub
+Sub RawMatSelect()
+    myRawMatFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Raw Material & Finish Good file")
+    If myRawMatFile = False Then
+    Else
+        Range("C12").Value = myRawMatFile
+    End If
+End Sub
+Sub RrPoSelect()
+    myRrPoFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select RR_PO Yet to Place & IPS file")
+    If myRrPoFile = False Then
+    Else
+        Range("C14").Value = myRrPoFile
+    End If
+End Sub
+Sub ExcessSelect()
+    myExcessFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select Excess All Initial Submission file")
+    If myExcessFile = False Then
+    Else
+        Range("C16").Value = myExcessFile
+    End If
+End Sub
+Sub IslTrendSelect()
+    myIslFile = Application.GetOpenFilename(FileFilter:="Excel Files (*.xls*), *.xls*", Title:="Please select ISL Trend file")
+    If myIslFile = False Then
+    Else
+        Range("C18").Value = myIslFile
+    End If
+End Sub
+Sub ErrorHandler1()
+    On Error Resume Next
+    
+End Sub
+
